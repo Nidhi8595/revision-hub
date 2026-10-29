@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Modern Data Engineering Platforms — Flashcard Revision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF7EF; --paper2:#F3EFE3; --rule:#D8D0BC;
+    --ink:#211F1B; --ink-soft:#5B5648;
+    --blue:#26518C; --blue-bg:#E7EEF7;
+    --green:#2C7A55; --green-bg:#E6F3EB;
+    --orange:#B15A1F; --orange-bg:#FBEADD;
+    --purple:#6A4A93; --purple-bg:#EFE7F5;
+    --red:#B23B2E; --red-bg:#FBE6E1;
+    --yellow:#8A6A12; --yellow-bg:#FBF0CD;
+    --teal:#1E7A72; --teal-bg:#E2F2EF;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper2);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.5;}
+  code,.mono{font-family:'JetBrains Mono',monospace;}
+  .shell{display:flex;min-height:100vh;}
+
+  nav.tabs{width:242px;flex:0 0 242px;background:#FFFDF7;border-right:1px solid var(--rule);position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 0 40px;}
+  nav.tabs .tabs-title{font-family:'Kalam',cursive;font-weight:700;font-size:15px;padding:0 18px 12px;color:var(--ink-soft);border-bottom:1px solid var(--rule);margin-bottom:6px;}
+  nav.tabs .tabs-title .tabs-sub{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);opacity:.7;margin-top:3px;}
+  nav.tabs .tabs-group{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);opacity:.75;padding:14px 18px 4px;}
+  nav.tabs a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 18px 7px 22px;font-size:12.5px;color:var(--ink);text-decoration:none;border-left:3px solid transparent;}
+  nav.tabs a .dot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;}
+  nav.tabs a .count{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-soft);opacity:.7;}
+  nav.tabs a:hover{background:var(--paper2);}
+  nav.tabs a.active{border-left:3px solid var(--ink);background:var(--paper2);font-weight:600;}
+  nav.tabs .nav-left{display:flex;align-items:center;gap:8px;}
+
+  main{flex:1;min-width:0;padding:36px 0 120px;}
+  .page{max-width:1060px;margin:0 auto 60px;background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:36px 42px 42px;position:relative;
+    background-image:linear-gradient(var(--paper) 0, var(--paper) 100%),repeating-linear-gradient(transparent 0 34px, rgba(216,208,188,0.35) 34px 35px);}
+  .page::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;border-radius:4px 0 0 4px;}
+  .page.p-blue::before{background:var(--blue);} .page.p-green::before{background:var(--green);}
+  .page.p-orange::before{background:var(--orange);} .page.p-purple::before{background:var(--purple);}
+  .page.p-red::before{background:var(--red);} .page.p-yellow::before{background:var(--yellow);}
+  .page.p-teal::before{background:var(--teal);} .page.p-mixed::before{background:linear-gradient(var(--blue),var(--orange),var(--purple),var(--teal),var(--green),var(--yellow),var(--red));}
+
+  .page-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .page h1{font-family:'Kalam',cursive;font-size:27px;margin:0 0 4px;color:var(--ink);}
+  .page .sub{color:var(--ink-soft);font-size:13.5px;margin-bottom:20px;max-width:800px;}
+
+  h2.section-h{font-family:'Kalam',cursive;font-size:17px;margin:26px 0 12px;display:flex;align-items:center;gap:8px;}
+  h2.section-h .tag{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--ink);color:var(--paper);padding:2px 6px;border-radius:3px;letter-spacing:.04em;}
+
+  .flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:16px 0;}
+  .hflow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin:16px 0;}
+  .hflow .node{margin:6px 4px;}
+  .node{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:9px 14px;border-radius:6px;text-align:center;line-height:1.35;border:1.5px solid transparent;min-width:110px;}
+  .node small{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:10.5px;margin-top:2px;opacity:.85;}
+  .n-blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .n-green{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+  .n-orange{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);}
+  .n-purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple);}
+  .n-red{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .n-yellow{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow);}
+  .n-teal{background:var(--teal-bg);color:var(--teal);border-color:var(--teal);}
+  .n-ink{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .arrow{font-size:16px;color:var(--ink-soft);line-height:1;margin:2px 0;}
+  .arrow-r{font-size:16px;color:var(--ink-soft);margin:0 6px;}
+  .arrow-label{font-family:'Kalam',cursive;font-size:11.5px;color:var(--ink-soft);margin:0 0 2px;text-align:center;max-width:340px;}
+
+  .note{font-size:12.5px;color:var(--ink-soft);background:var(--paper2);border:1px solid var(--rule);border-radius:6px;padding:10px 14px;margin:14px 0;}
+  .note b{color:var(--ink);}
+  .code-chip{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:var(--ink);color:var(--paper);padding:2px 7px;border-radius:4px;}
+  table.cmp{width:100%;border-collapse:collapse;margin:14px 0;font-size:12.2px;}
+  table.cmp th{font-family:'JetBrains Mono',monospace;font-size:10.2px;text-transform:uppercase;letter-spacing:.03em;background:var(--ink);color:var(--paper);padding:8px 10px;text-align:left;}
+  table.cmp td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  table.cmp tr:nth-child(even) td{background:rgba(216,208,188,0.18);}
+
+  .intro-banner{max-width:1060px;margin:0 auto 22px;padding:16px 26px;border:1.5px dashed var(--rule);border-radius:8px;background:#FFFDF7;}
+  .intro-banner-head{font-family:'Kalam',cursive;font-size:16px;color:var(--ink);}
+  .intro-banner-sub{font-size:12px;color:var(--ink-soft);margin-top:4px;max-width:860px;}
+
+  .deck-toolbar{display:flex;align-items:center;gap:10px;margin:6px 0 18px;flex-wrap:wrap;}
+  .deck-btn{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:6px 12px;border-radius:20px;border:1px solid var(--rule);background:#fff;color:var(--ink-soft);cursor:pointer;letter-spacing:.02em;}
+  .deck-btn:hover{background:var(--paper2);}
+  .deck-progress{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-soft);margin-left:auto;}
+
+  .flashcard-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(230px,1fr));gap:16px;margin:10px 0 8px;}
+  .flashcard{perspective:1200px;height:180px;cursor:pointer;}
+  .flashcard-inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
+  .flashcard-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:2px 3px 8px rgba(0,0,0,0.06);border:1.5px solid;}
+  .flashcard-front{font-family:'Kalam',cursive;font-size:14px;line-height:1.3;}
+  .flashcard-back{transform:rotateY(180deg);background:#fff;border-color:var(--rule);font-size:11.6px;color:var(--ink-soft);line-height:1.42;overflow-y:auto;}
+  .flashcard-back b{color:var(--ink);}
+  .card-tag{position:absolute;top:8px;left:10px;font-family:'JetBrains Mono',monospace;font-size:8.5px;opacity:.55;letter-spacing:.04em;}
+  .flip-hint{position:absolute;bottom:6px;right:10px;font-family:'JetBrains Mono',monospace;font-size:8.5px;opacity:.45;}
+  .deck-blue .flashcard-front{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .deck-green .flashcard-front{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+  .deck-orange .flashcard-front{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);}
+  .deck-purple .flashcard-front{background:var(--purple-bg);color:var(--purple);border-color:var(--purple);}
+  .deck-red .flashcard-front{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .deck-yellow .flashcard-front{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow);}
+  .deck-teal .flashcard-front{background:var(--teal-bg);color:var(--teal);border-color:var(--teal);}
+
+  .stickies{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0;}
+  .sticky{font-family:'Kalam',cursive;font-size:12.5px;padding:12px 14px;border-radius:2px;width:240px;box-shadow:2px 3px 6px rgba(0,0,0,0.08);}
+  .sticky b{display:block;font-size:11px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:5px;letter-spacing:.05em;}
+  .sticky.why{background:#FDE9C8;color:#6B4E10;transform:rotate(-1.2deg);}
+  .sticky.remember{background:#D9ECEB;color:#1F5652;transform:rotate(1deg);}
+  .sticky.interview{background:#F6D9D2;color:#7A2E22;transform:rotate(-0.5deg);}
+
+  footer.end{max-width:1060px;margin:0 auto;padding:0 42px 60px;color:var(--ink-soft);font-size:12px;font-family:'JetBrains Mono',monospace;text-align:center;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="tabs">
+    <div class="tabs-title">Data Platforms<span class="tabs-sub">click any card to flip</span></div>
+
+    <div class="tabs-group">Overview</div>
+    <a href="#big-picture"><span class="nav-left"><span class="dot" style="background:var(--ink)"></span>The Whole Picture</span></a>
+
+    <div class="tabs-group">Chapters</div>
+    <a href="#deck-foundations"><span class="nav-left"><span class="dot" style="background:var(--blue)"></span>① Foundations</span><span class="count">10</span></a>
+    <a href="#deck-platforms"><span class="nav-left"><span class="dot" style="background:var(--orange)"></span>② The Five Platforms</span><span class="count">15</span></a>
+    <a href="#deck-tradeoffs"><span class="nav-left"><span class="dot" style="background:var(--purple)"></span>③ Architectural Trade-offs</span><span class="count">10</span></a>
+    <a href="#deck-open"><span class="nav-left"><span class="dot" style="background:var(--teal)"></span>④ Understanding "Open"</span><span class="count">10</span></a>
+    <a href="#deck-workload"><span class="nav-left"><span class="dot" style="background:var(--green)"></span>⑤ Workload Fit</span><span class="count">10</span></a>
+    <a href="#deck-cost"><span class="nav-left"><span class="dot" style="background:var(--yellow)"></span>⑥ Cost &amp; Operations</span><span class="count">8</span></a>
+    <a href="#deck-decision"><span class="nav-left"><span class="dot" style="background:var(--red)"></span>⑦ Decision Framework</span><span class="count">8</span></a>
+  </nav>
+
+  <main>
+    <div class="intro-banner">
+      <div class="intro-banner-head">🗂️ Modern Data Engineering Platforms — Flashcard Revision</div>
+      <div class="intro-banner-sub">Built from the full "Databricks, Snowflake & Beyond" comparison — Foundations → the Five Platforms → Architectural Trade-offs → Open Formats → Workload Fit → Cost &amp; Operations → Decision Framework. Every deck opens with a one-glance map. Click a card to flip it, click again to flip back.</div>
+    </div>
+
+    <!-- BIG PICTURE -->
+    <section class="page p-mixed" id="big-picture">
+      <div class="page-eyebrow">Master map</div>
+      <h1>The Whole Picture</h1>
+      <div class="sub">One core idea runs through the entire document: similar features don't mean similar architectures. Every chapter below just zooms into a different angle of that one idea.</div>
+      <div class="flow">
+        <div class="node n-blue">① FOUNDATIONS<small>Warehouse → Lake → Two-Tier → Lakehouse → Multi-workload</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-orange">② FIVE PLATFORMS<small>Databricks · Snowflake · BigQuery · Fabric · AWS</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-purple">③ TRADE-OFFS<small>Integrated vs Composable, Abstraction vs Control...</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-teal">④ "OPEN"<small>File format ≠ table format ≠ portable platform</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-green">⑤ WORKLOAD FIT<small>Batch · SQL/BI · Streaming · ML/AI</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-yellow">⑥ COST &amp; OPS<small>Cost is an architectural outcome, not a price tag</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-red">⑦ DECISION FRAMEWORK<small>Requirements → architecture → platform fit</small></div>
+      </div>
+      <div class="stickies">
+        <div class="sticky why"><b>The one question that matters</b>Not "what can this platform do?" — every major platform can basically do everything now. The real question: "what does the platform manage for me, and what am I still responsible for designing and operating?"</div>
+        <div class="sticky remember"><b>Two phrases to keep straight</b>Open <i>data</i> ≠ open <i>platform</i>. Storage <i>portability</i> ≠ platform <i>portability</i>. Both pairs get mixed up constantly — and both distinctions are tested throughout this document.</div>
+      </div>
+    </section>
+
+    <!-- DECK 1 -->
+    <section class="page p-blue" id="deck-foundations">
+      <div class="page-eyebrow">Chapter ① · Foundations <span class="tag">10 CARDS</span></div>
+      <h1>Foundations</h1>
+      <div class="sub">How today's platforms got here, and the 8 layers every one of them has to deal with somehow.</div>
+      <div class="flow">
+        <div class="node n-blue">WAREHOUSE<small>structured, schema-first</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-green">DATA LAKE<small>flexible, cheap, raw</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-orange">TWO-TIER<small>both — but move data between them</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-purple">LAKEHOUSE<small>one shared foundation</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-ink">MULTI-WORKLOAD PLATFORM<small>engineering + SQL + streaming + ML/AI together</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-foundations',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-foundations',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-foundations"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-foundations"></div>
+    </section>
+
+    <!-- DECK 2 -->
+    <section class="page p-orange" id="deck-platforms">
+      <div class="page-eyebrow">Chapter ② · Platform Architectures <span class="tag">15 CARDS</span></div>
+      <h1>The Five Platforms</h1>
+      <div class="sub">Same workloads, five very different architectures — and five very different answers to "who manages what."</div>
+      <div class="hflow">
+        <div class="node n-blue">DATABRICKS<small>Lakehouse</small></div>
+        <div class="node n-green">SNOWFLAKE<small>Managed platform</small></div>
+        <div class="node n-orange">BIGQUERY<small>Serverless</small></div>
+        <div class="node n-purple">FABRIC<small>Unified SaaS</small></div>
+        <div class="node n-red">AWS<small>Composable</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-platforms',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-platforms',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-platforms"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-platforms"></div>
+    </section>
+
+    <!-- DECK 3 -->
+    <section class="page p-purple" id="deck-tradeoffs">
+      <div class="page-eyebrow">Chapter ③ · Architectural Trade-offs <span class="tag">10 CARDS</span></div>
+      <h1>Architectural Trade-offs</h1>
+      <div class="sub">Five axes that explain more about a platform than any feature list ever will.</div>
+      <div class="hflow">
+        <div class="node n-blue">Integrated<small>vs Composable</small></div>
+        <div class="node n-green">Open<small>vs Managed</small></div>
+        <div class="node n-orange">Abstraction<small>vs Control</small></div>
+        <div class="node n-purple">Shared Data<small>vs Specialized Engines</small></div>
+        <div class="node n-red">Breadth<small>vs Simplicity</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-tradeoffs',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-tradeoffs',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-tradeoffs"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-tradeoffs"></div>
+    </section>
+
+    <!-- DECK 4 -->
+    <section class="page p-teal" id="deck-open">
+      <div class="page-eyebrow">Chapter ④ · Understanding "Open" <span class="tag">10 CARDS</span></div>
+      <h1>Understanding "Open"</h1>
+      <div class="sub">"Open" is not one thing — it's a property of specific layers, and supporting one doesn't mean the whole platform is portable.</div>
+      <div class="flow">
+        <div class="node n-blue">Processing Engines</div>
+        <div class="arrow">↓</div>
+        <div class="node n-orange">Catalog / Metadata</div>
+        <div class="arrow">↓</div>
+        <div class="node n-teal">Open Table Format<small>e.g. Apache Iceberg</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-green">Data Files<small>e.g. Parquet</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-ink">Cloud Object Storage</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-open',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-open',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-open"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-open"></div>
+    </section>
+
+    <!-- DECK 5 -->
+    <section class="page p-green" id="deck-workload">
+      <div class="page-eyebrow">Chapter ⑤ · Workload Fit <span class="tag">10 CARDS</span></div>
+      <h1>Workload Fit</h1>
+      <div class="sub">Batch, SQL/BI, Streaming, ML/AI — the same four workloads, five different architectural stories.</div>
+      <div class="hflow">
+        <div class="node n-blue">BATCH<small>ingest → transform → curate</small></div>
+        <div class="node n-orange">SQL / BI<small>governed access + concurrency</small></div>
+        <div class="node n-purple">STREAMING<small>ingestion ≠ processing</small></div>
+        <div class="node n-green">ML / AI<small>data → model → deployment</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-workload',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-workload',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-workload"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-workload"></div>
+    </section>
+
+    <!-- DECK 6 -->
+    <section class="page p-yellow" id="deck-cost">
+      <div class="page-eyebrow">Chapter ⑥ · Cost &amp; Operations <span class="tag">8 CARDS</span></div>
+      <h1>Cost &amp; Operations</h1>
+      <div class="sub">"Platform X is cheaper" is almost always too broad a claim — cost is an architectural outcome, not a price tag.</div>
+      <div class="hflow">
+        <div class="node n-yellow">COMPUTE</div>
+        <div class="node n-orange">STORAGE</div>
+        <div class="node n-purple">DATA MOVEMENT</div>
+        <div class="node n-blue">PLATFORM SERVICES</div>
+        <div class="node n-green">WORKLOAD BEHAVIOR</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-cost',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-cost',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-cost"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-cost"></div>
+    </section>
+
+    <!-- DECK 7 -->
+    <section class="page p-red" id="deck-decision">
+      <div class="page-eyebrow">Chapter ⑦ · Engineering Decision Framework <span class="tag">8 CARDS</span></div>
+      <h1>Engineering Decision Framework</h1>
+      <div class="sub">The closing chapter, turned into a repeatable process — requirements first, platform names last.</div>
+      <div class="flow">
+        <div class="node n-blue">Requirements</div><div class="arrow">↓</div>
+        <div class="node n-green">Workload Characteristics</div><div class="arrow">↓</div>
+        <div class="node n-orange">Architectural Priorities</div><div class="arrow">↓</div>
+        <div class="node n-purple">Platform Characteristics</div><div class="arrow">↓</div>
+        <div class="node n-yellow">Cost + Operational Implications</div><div class="arrow">↓</div>
+        <div class="node n-red">Architecture Selection</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-decision',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-decision',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-decision"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-decision"></div>
+    </section>
+
+    <footer class="end">— built from "Modern Data Engineering Platforms: Databricks, Snowflake & Beyond" · click any card to flip it —</footer>
+  </main>
+</div>
+
+<script>
+const DECKS = {
+  "deck-foundations": {color:"blue", cards:[
+    {q:"The 5-stage evolution of data platforms?", a:"Traditional Data Warehouse (structured, schema-first) → Data Lake (flexible, raw, cheap storage) → Two-Tier Lake+Warehouse (both, but data has to move between them) → Lakehouse (one shared foundation with table management) → Modern Multi-Workload Platform (engineering + SQL + streaming + ML/AI together)."},
+    {q:"What problem did the Data Lake solve, and what did it NOT solve?", a:"It let organizations store large amounts of structured and semi-structured data flexibly, without fitting everything into a warehouse schema first. It did NOT provide table management, governance, or reliability on its own — teams needed extra tools for that."},
+    {q:"What was the core downside of the Two-Tier (Lake + Warehouse) architecture?", a:"It gave flexibility plus specialized analytics, but created real integration overhead — data had to physically move between the two systems, and teams had to manage metadata and governance separately across both environments."},
+    {q:"What did the Lakehouse actually change?", a:"It kept a lake-oriented storage foundation but added stronger table management, transactions, and governance on top — shifting the goal from 'move data between lake and warehouse' to 'run more workloads directly on one shared foundation.'"},
+    {q:"What makes a 'Modern Multi-Workload Platform' different from just a Lakehouse?", a:"It's not just one processing engine — it bundles storage, compute, governance, orchestration, and multiple consumption patterns (SQL, streaming, BI, ML, AI) so they can all operate against the same broader data environment."},
+    {q:"The 8 core architectural layers every modern data platform deals with?", a:"Storage, Compute, Data & Tables, Metadata, Governance & Security, Orchestration, Workloads, Consumption."},
+    {q:"Storage vs Data & Tables — what's the difference in this framework?", a:"Storage is where raw/intermediate/curated data physically sits. Data & Tables is a layer above that — how datasets are represented, versioned, and updated (schemas, transactions, table state) on top of that storage."},
+    {q:"Why does 'Governance' get its own layer separate from 'Metadata'?", a:"Metadata just describes the data (schemas, definitions). Governance controls who can access it and what they're allowed to do with it — permissions, policies, auditing, lineage, regulatory controls. Description vs control are different jobs."},
+    {q:"The single most important question this layered view raises?", a:"Not 'what does the platform provide?' but 'how are these layers connected and managed — and by whom?' Same workload, very different engineering experience, depending on the answer."},
+    {q:"Integrated platform vs composable architecture — in terms of these 8 layers?", a:"An integrated platform manages most of the 8 layers as one coordinated service, reducing what an engineering team has to configure and connect. A composable architecture exposes more independent services for more choice — but the team owns designing the connections between them."},
+  ]},
+  "deck-platforms": {color:"orange", cards:[
+    {q:"Databricks — the one-line architecture summary?", a:"Lakehouse architecture on cloud object storage (AWS/Azure/GCP), with Delta Lake providing the table layer (plus Iceberg interoperability), Unity Catalog as the central governance layer, and multiple compute options (Spark/Photon/SQL warehouses) over one shared, governed data foundation."},
+    {q:"Databricks — what's the engineering trade-off in one sentence?", a:"Databricks manages much of the underlying infrastructure, but engineers still make real decisions about storage, tables, compute, networking, deployment, monitoring, governance, and cost — 'significant platform and workload choices' remain with the team."},
+    {q:"Snowflake — the one-line architecture summary?", a:"A managed cloud architecture with storage and compute separated: Snowflake manages storage for native tables (plus Iceberg support), Virtual Warehouses provide independent compute clusters per workload, and a Cloud Services layer handles auth/metadata/optimization centrally."},
+    {q:"Snowflake — what does a Virtual Warehouse actually give you?", a:"An independent compute cluster that can be started, suspended, resized, and configured on its own — letting you separate BI, data loading, and transformation workloads from each other while they all still access the same platform-managed data."},
+    {q:"BigQuery — the one-line architecture summary?", a:"A fully managed, serverless architecture — Google handles infrastructure provisioning and resource management, storage and compute scale independently, and compute capacity is measured in 'slots' rather than clusters or VMs."},
+    {q:"BigQuery — what does 'serverless' actually mean here?", a:"It does NOT mean compute disappears — it means Google manages the infrastructure, scaling, and resource allocation behind the scenes. The engineering focus shifts toward query design, data organization, governance, and cost instead of provisioning."},
+    {q:"Microsoft Fabric — the one-line architecture summary?", a:"A unified SaaS approach built around OneLake as the shared storage foundation — Lakehouse (Spark) and Warehouse (SQL-focused) experiences both sit on top of it, plus Real-Time Intelligence and Power BI, all sharing capacity."},
+    {q:"Microsoft Fabric — Lakehouse vs Warehouse, when to use which?", a:"Lakehouse suits data engineering, data science, Spark processing, and structured/unstructured data. Warehouse is more focused on structured, SQL-based analytics. Both work over the same OneLake foundation — the choice is about workload shape, not data location."},
+    {q:"AWS — the one-line architecture summary?", a:"A composable ecosystem, not one platform: S3 (storage), Glue (ETL/catalog), Athena (serverless SQL), Redshift (warehousing), EMR (big-data processing), Kinesis (streaming), SageMaker (ML) — engineers choose and connect the pieces themselves."},
+    {q:"AWS — what's the core engineering trade-off?", a:"Maximum architectural choice, but the team owns deciding which services to use, how they connect, how data moves between them, how access is managed, and how the whole system is monitored — 'flexible building blocks,' not a pre-integrated platform."},
+    {q:"Match each platform to its governance layer.", a:"Databricks → Unity Catalog. Snowflake → Integrated platform governance services. BigQuery → Knowledge Catalog + Google Cloud IAM. Microsoft Fabric → Fabric governance + Microsoft Purview. AWS → Glue Data Catalog (metadata) + Lake Formation (fine-grained access)."},
+    {q:"Match each platform to its main compute model.", a:"Databricks → multiple workload-based options (Spark/Photon/SQL warehouses). Snowflake → virtual warehouses. BigQuery → serverless, slot-based. Microsoft Fabric → workload-specific engines on shared capacity. AWS → multiple specialized services."},
+    {q:"Rank the five platforms by 'engineering control,' per the comparison table.", a:"High: Databricks, AWS. Moderate: Snowflake. Lower infrastructure control: BigQuery, Microsoft Fabric. More control = more decisions owned by the team; less control = more abstraction, less to manage."},
+    {q:"What's the single biggest difference across all five platforms, according to the cross-platform comparison?", a:"Where each platform draws the line between platform-managed work and engineer-managed work. Snowflake exposes virtual warehouses; BigQuery hides most compute; Databricks offers several compute choices; AWS makes you choose between services entirely."},
+    {q:"Why is 'What can this platform do?' the wrong first question when comparing these five?", a:"All five can now support data engineering, SQL, streaming, governance, ML, and AI — the feature lists converge. The useful question is 'what does the platform manage for us, and what do we still need to design and operate ourselves?'"},
+  ]},
+  "deck-tradeoffs": {color:"purple", cards:[
+    {q:"Integrated vs Composable — the core distinguishing question?", a:"Who handles the integration? Integrated platforms are designed to work together out of the box (less service selection, more coordination handled by the platform). Composable architectures (like AWS) give more service-level choice, but engineers own connecting them."},
+    {q:"Open vs Managed — why aren't these exact opposites?", a:"Open architecture improves interoperability across tools; managed handles more infrastructure/operational work for you. You can have both at once — e.g. an open table format (Iceberg) inside a platform that still has its own catalog, governance, and orchestration."},
+    {q:"The trap in 'open data means an open platform'?", a:"Open data does NOT automatically mean an open platform. Even with fully portable data, you may still be dependent on the platform's metadata/catalogs, governance/permissions, pipelines, orchestration, monitoring, applications, and platform-specific features."},
+    {q:"Abstraction vs Control — what does more abstraction actually remove?", a:"It removes infrastructure work (servers, provisioning), NOT engineering work overall. It shifts the work toward query performance, workload concurrency, data layout, capacity, compute selection, cost, and workload isolation instead."},
+    {q:"Which platform is the strongest example of 'high abstraction,' and why?", a:"BigQuery — Google manages nearly all infrastructure provisioning and scaling, leaving engineers to focus on queries, data organization, and cost rather than compute or cluster management."},
+    {q:"Shared Data vs Specialized Engines — what's the underlying tension?", a:"Different workloads (batch, SQL, streaming, ML) often want different compute engines, but keeping separate data copies per workload creates duplication, extra pipelines, and synchronization work. The goal: let workloads share one trusted data foundation while still using engines suited to their needs."},
+    {q:"What's the hidden cost of 'shared data,' even though it reduces duplication?", a:"Shared data creates dependencies — a change to a table, schema, permission, or data-quality rule can ripple out and affect every workload relying on that same data."},
+    {q:"Platform Breadth vs Operational Simplicity — the two types of 'simplicity'?", a:"Service-level simplicity: one service does one job well, in isolation. System-level simplicity: fewer separate services need to be connected and operated overall. Many 'simple' services can still add up to a complex system."},
+    {q:"What actually drives operational complexity, according to this chapter?", a:"The number of boundaries you have to manage — not simply the number of features. Several individually-simple services can become hard to operate once you have to connect, monitor, and secure all of them together."},
+    {q:"The single sentence that summarizes ALL five trade-offs?", a:"The main difference between modern data platforms isn't how many features they provide — it's where they place responsibility. Every trade-off in this chapter is really the same question asked from a different angle."},
+  ]},
+  "deck-open": {color:"teal", cards:[
+    {q:"The single most important idea in this whole chapter?", a:"Openness is not a binary property — it's a property of specific architectural layers (file, table, storage, compute, metadata, governance, workloads, platform). Supporting one open technology doesn't make the entire platform open."},
+    {q:"File format vs Table format — the precise distinction?", a:"File format = how data is stored inside a file (e.g. Apache Parquet — column-based, many tools can read it). Table format = a higher-level layer that ALSO tracks schema, metadata, versions, transactions, updates/deletes, and file organization on top of the files."},
+    {q:"Why does reading the same Parquet files not guarantee two platforms can 'work with the same table'?", a:"Because the table layer (schema, versioning, transactional behavior, updates/deletes) sits above the raw file format. Two platforms can both read Parquet perfectly and still disagree about the table's current state if they don't share a table format."},
+    {q:"What is Apache Iceberg's role, per this document?", a:"An open table format that lets different processing engines work with the same table instead of tying it to one engine — useful for multi-engine analytics, data sharing, and reducing dependence on a single engine."},
+    {q:"The trap with 'both platforms support Iceberg'?", a:"Support isn't identical across platforms — two platforms can both support Iceberg while differing in which table features, metadata handling, governance, or operations they actually implement well."},
+    {q:"The 5-layer stack this document uses to locate where openness actually lives?", a:"Processing Engines → Catalog/Metadata → Open Table Format → Data Files → Cloud Object Storage. An open table format sits in the middle — it doesn't make the catalog or processing-engine layers above it automatically open too."},
+    {q:"Storage portability vs Platform portability — the key difference?", a:"Storage portability: the underlying DATA can move to another compatible engine. Platform portability: the surrounding architecture (tables, metadata, governance, pipelines, orchestration, compute logic, monitoring, applications) can ALSO move without major redesign. The second is much bigger."},
+    {q:"Why is 'moving the data' so much easier than 'moving the workload'?", a:"Data can often sit in an open format while everything built around it — orchestration, governance rules, compute logic, semantic models — stays tied to the original platform. Portability of the file is not portability of the system that runs on it."},
+    {q:"Why don't open formats eliminate platform lock-in?", a:"A data workload depends on far more than its files — platform APIs, catalogs, governance mechanisms, orchestration, and applications all typically remain platform-specific even when the underlying data format is open."},
+    {q:"The practical question this chapter tells you to ask before claiming portability?", a:"'Which part of the architecture is open, and what does that actually allow me to change or move?' — identify exactly which layer (file, table, storage, compute, metadata, governance, pipelines, or the complete platform) needs to stay independent."},
+  ]},
+  "deck-workload": {color:"green", cards:[
+    {q:"The typical Batch data engineering flow?", a:"Source systems → Ingestion → Raw data → Transformation → Curated data → Analytics/BI/ML. Requirements: scalable processing, reliable transforms, orchestration, incremental processing, data quality, monitoring, recovery, governance, cost control."},
+    {q:"For batch workloads, what's actually different across the five platforms if they all 'support ETL'?", a:"WHERE the engineering decisions happen. Databricks: compute/pipeline/governance choices on the lakehouse. Snowflake: warehouse config + isolation. BigQuery: query design, no clusters. Fabric: Lakehouse vs Warehouse choice. AWS: which of 5 services to use and how they connect."},
+    {q:"SQL/BI workloads — what do they fundamentally need, architecturally?", a:"Interactive access to governed data, predictable query performance, concurrency handling, BI tool connectivity, and appropriate workload isolation — the real differentiator is HOW analytical compute connects to the underlying shared data."},
+    {q:"Streaming ingestion vs Stream processing — why does this distinction matter?", a:"Streaming ingestion = continuously bringing events INTO the platform. Stream processing = continuously processing those events with application/analytical logic. A platform can make ingestion easy while still needing another engine for real stream processing."},
+    {q:"BigQuery and streaming — what's the specific limitation called out?", a:"BigQuery supports streaming ingestion well into its managed analytical environment, but for specialized stream-PROCESSING requirements, other technologies in the broader Google Cloud ecosystem may be needed — ingestion ≠ processing."},
+    {q:"The typical ML/AI workload flow, and the key architectural question it raises?", a:"Data sources → Data engineering → Governed data → Model development → Model serving/AI application. Key question: how closely are data, governance, compute, and ML/AI tooling actually connected — not just 'does it have an ML feature.'"},
+    {q:"Why does 'where the training data already lives' matter so much for ML/AI workloads?", a:"If training/evaluation data is already in a governed environment, there are fewer data-movement boundaries to cross before model development — but that doesn't mean every ML/AI workload should run on the same platform as the data."},
+    {q:"Name the ML/AI approach for each: Databricks, Snowflake, BigQuery, AWS.", a:"Databricks: ML/AI on the same governed lakehouse data. Snowflake: Snowpark + broader AI/ML tooling, close to Snowflake-managed data. BigQuery: BigQuery ML directly on managed data. AWS: S3+Glue as the data foundation, SageMaker for ML workflows — composable, not co-located by default."},
+    {q:"What's the one-line 'main architectural question' for each of the 4 workloads?", a:"Batch: how do data, transform compute, and orchestration work together? SQL/BI: how does analytical compute access governed data and handle concurrency? Streaming: how are ingestion, processing, state, and recovery handled? ML/AI: how easily can governed data move through model development and deployment?"},
+    {q:"The chapter's closing reframe of 'workload fit'?", a:"Don't ask which platform supports the most workloads — every major platform supports all four now. Ask: how NATURALLY does each workload fit the platform's architecture, and how much engineering work does that fit actually require?"},
+  ]},
+  "deck-cost": {color:"yellow", cards:[
+    {q:"The 5 main cost drivers in a modern data platform?", a:"Compute (transforms/queries/streaming/ML), Storage (raw/intermediate/curated), Data movement (copying between services/regions/platforms), Platform services (governance/orchestration/metadata), Workload behavior (concurrency, query patterns, inefficient pipelines)."},
+    {q:"Why is 'Platform cost is an architectural outcome, not simply a product attribute' the key insight of this chapter?", a:"How you store data, select compute, isolate workloads, move data, and operate pipelines can influence cost just as much as the platform's underlying pricing model — meaning two teams on the same platform can see very different bills based on architecture choices alone."},
+    {q:"Why is 'Platform X is cheaper' usually too broad a claim?", a:"Actual cost depends on the specific workload, configuration, usage pattern, and architecture chosen — not just the vendor's list pricing. The same workload can produce very different cost patterns on the same platform depending on how it's architected."},
+    {q:"More managed vs More composable — how does 'Governance' differ operationally between them?", a:"More managed: governance is more centralized (one system to configure). More composable: governance may span several services, each needing its own configuration and coordination."},
+    {q:"What does a highly managed platform shift your operational attention TOWARD?", a:"Workload design, governance, capacity planning, performance tuning, and cost optimization — infrastructure is handled for you, but these other areas still require real ongoing engineering attention."},
+    {q:"What does a composable architecture ADD in terms of operational responsibility?", a:"Service selection, integration work, networking, monitoring across services, and cross-service governance — more freedom, but also more surface area the team has to actively manage."},
+    {q:"Why can a 'cheaper' individual service end up costing more overall?", a:"An architecture might use inexpensive individual services but require many integrations, duplicated pipelines, data transfers, and separate monitoring systems — the total operational model matters more than any single line-item price."},
+    {q:"The chapter's reframed cost question?", a:"Not 'how much does this platform cost?' but 'what does this architecture cost to run, operate, integrate, and maintain?' — cost and operational effort are treated as one combined decision, not two separate ones."},
+  ]},
+  "deck-decision": {color:"red", cards:[
+    {q:"The full decision flow, start to finish?", a:"Requirements → Workload characteristics → Architectural priorities → Platform characteristics → Cost and operational implications → Architecture selection. Platform names only enter at the very end."},
+    {q:"The 9 requirement categories to clarify before comparing any platforms?", a:"Data workloads, Data scale, Latency, Concurrency, Data foundation (shared object storage / managed / unified logical layer), Portability, Governance, Cloud ecosystem, Engineering capacity."},
+    {q:"How do you turn a general requirement into an 'architectural requirement'?", a:"Map it onto the 5 trade-off axes from Chapter 3: Integrated vs Composable, Open vs Managed, Abstraction vs Control, Shared Data vs Specialized Engines, Platform Breadth vs Operational Simplicity — that's what converts 'we need X' into 'we therefore prefer architecture Y.'"},
+    {q:"Why is the platform-characteristics table in this chapter called 'a characteristics map, not a scorecard'?", a:"It's not meant to rank platforms by points — it's meant to show how each architecture's actual characteristics (storage model, compute flexibility, governance, control) line up against the requirements you already identified for your own workload."},
+    {q:"Why do 'existing cloud ecosystem constraints' matter even in a purely architectural decision?", a:"Identity, networking, governance, and operations may already be tied to a particular cloud ecosystem — meaning the 'best' architecture on paper can still be the wrong practical choice if it fights your existing investment."},
+    {q:"The 3 things a useful platform decision must make clear, per the chapter's own summary?", a:"① What workloads must the platform support? ② Which architectural properties matter most? ③ Which engineering responsibilities am I willing to own?"},
+    {q:"Give 3 questions from the Final Decision Checklist.", a:"Examples: 'Where should our data live?' / 'How much infrastructure should the platform manage?' / 'How will workload behavior affect cost?' — (the full checklist has 12, spanning workloads, portability, governance, cost, and cloud constraints)."},
+    {q:"The document's actual closing thesis, in one line?", a:"The purpose isn't to find a universal winner among Databricks, Snowflake, BigQuery, Fabric, and AWS — it's to understand which architectural trade-offs fit YOUR workloads, engineering capacity, and operational model. That's what turns platform selection from a feature comparison into an engineering decision."},
+  ]},
+};
+
+function buildDecks(){
+  Object.keys(DECKS).forEach(deckId=>{
+    const deck = DECKS[deckId];
+    const grid = document.getElementById('grid-'+deckId);
+    deck.cards.forEach((c,i)=>{
+      const card = document.createElement('div');
+      card.className = 'flashcard deck-'+deck.color;
+      card.id = deckId+'-card-'+i;
+      card.onclick = ()=>card.classList.toggle('flipped');
+      card.innerHTML = `
+        <div class="flashcard-inner">
+          <div class="flashcard-face flashcard-front">
+            <span class="card-tag">Q${i+1}</span>
+            ${c.q}
+            <span class="flip-hint">tap to flip</span>
+          </div>
+          <div class="flashcard-face flashcard-back">
+            <span class="card-tag">A${i+1}</span>
+            ${c.a}
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+    document.getElementById('prog-'+deckId).textContent = deck.cards.length + ' cards';
+  });
+}
+function flipAll(deckId, state){
+  document.querySelectorAll('#grid-'+deckId+' .flashcard').forEach(c=>{
+    c.classList.toggle('flipped', state);
+  });
+}
+buildDecks();
+
+const links = document.querySelectorAll('nav.tabs a');
+const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href')));
+window.addEventListener('scroll', () => {
+  let idx = 0;
+  sections.forEach((s,i) => { if (s && s.getBoundingClientRect().top < 140) idx = i; });
+  links.forEach((a,i) => a.classList.toggle('active', i===idx));
+});
+</script>
+</body>
+</html>

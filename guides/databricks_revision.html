@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Databricks Revision — Before the Interview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF7EF;
+    --paper2:#F3EFE3;
+    --rule:#D8D0BC;
+    --ink:#211F1B;
+    --ink-soft:#5B5648;
+    --blue:#26518C;    /* core databricks */
+    --blue-bg:#E7EEF7;
+    --green:#2C7A55;   /* data flow / success */
+    --green-bg:#E6F3EB;
+    --orange:#B15A1F;  /* sql / transformation */
+    --orange-bg:#FBEADD;
+    --purple:#6A4A93;  /* security / auth */
+    --purple-bg:#EFE7F5;
+    --red:#B23B2E;     /* troubleshooting / failure */
+    --red-bg:#FBE6E1;
+    --yellow:#8A6A12;  /* interview memory */
+    --yellow-bg:#FBF0CD;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper2);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:15px;
+    line-height:1.5;
+  }
+  code, .mono{font-family:'JetBrains Mono',monospace;}
+  .hand{font-family:'Kalam',cursive;}
+
+  /* ---------- layout shell ---------- */
+  .shell{display:flex;min-height:100vh;}
+  nav.tabs{
+    width:236px;flex:0 0 236px;
+    background:#FFFDF7;
+    border-right:1px solid var(--rule);
+    position:sticky;top:0;height:100vh;overflow-y:auto;
+    padding:18px 0 40px;
+  }
+  nav.tabs .tabs-title{
+    font-family:'Kalam',cursive;font-weight:700;font-size:15px;
+    padding:0 18px 12px;color:var(--ink-soft);
+    border-bottom:1px solid var(--rule);margin-bottom:6px;
+  }
+  nav.tabs .tabs-title .tabs-sub{
+    display:block;font-family:'JetBrains Mono',monospace;font-weight:400;
+    font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--ink-soft);opacity:.7;margin-top:3px;
+  }
+  nav.tabs .tabs-group{
+    font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ink-soft);opacity:.75;
+    padding:14px 18px 4px;
+  }
+  nav.tabs a{
+    display:flex;align-items:center;gap:8px;
+    padding:6px 18px 6px 22px;font-size:12.5px;color:var(--ink);
+    text-decoration:none;border-left:3px solid transparent;
+  }
+  nav.tabs a .dot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;background:var(--blue);}
+  nav.tabs a:hover{background:var(--paper2);}
+  nav.tabs a.active{border-left:3px solid var(--ink);background:var(--paper2);font-weight:600;}
+
+  main{flex:1;min-width:0;padding:36px 0 120px;}
+  .page{
+    max-width:960px;margin:0 auto 60px;background:var(--paper);
+    border:1px solid var(--rule);border-radius:4px;
+    padding:36px 42px 42px;position:relative;
+    background-image:
+      linear-gradient(var(--paper) 0, var(--paper) 100%),
+      repeating-linear-gradient(transparent 0 34px, rgba(216,208,188,0.35) 34px 35px);
+  }
+  .page::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:8px;
+    border-radius:4px 0 0 4px;
+  }
+  .page.p-blue::before{background:var(--blue);}
+  .page.p-mixed::before{background:linear-gradient(var(--blue),var(--orange),var(--purple));}
+  .page.p-orange::before{background:var(--orange);}
+  .page.p-green::before{background:var(--green);}
+  .page.p-purple::before{background:var(--purple);}
+  .page.p-yellow::before{background:var(--yellow);}
+  .page.p-red::before{background:var(--red);}
+
+  .page-eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;
+  }
+  .page h1{
+    font-family:'Kalam',cursive;font-size:28px;margin:0 0 4px;color:var(--ink);
+  }
+  .page .sub{color:var(--ink-soft);font-size:13.5px;margin-bottom:22px;max-width:640px;}
+
+  h2.section-h{
+    font-family:'Kalam',cursive;font-size:17px;margin:30px 0 12px;
+    display:flex;align-items:center;gap:8px;
+  }
+  h2.section-h .tag{
+    font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--ink);color:var(--paper);
+    padding:2px 6px;border-radius:3px;letter-spacing:.04em;
+  }
+
+  /* ---------- badges ---------- */
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;padding:3px 8px;border-radius:20px;font-weight:600;letter-spacing:.02em;
+  }
+  .badge-hands{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+  .badge-concept{background:var(--blue-bg);color:var(--blue);border:1px dashed var(--blue);}
+  .badge-progress{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow);}
+
+  /* ---------- flow / node system ---------- */
+  .flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:18px 0;}
+  .hflow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin:18px 0;}
+  .hflow .node{margin:6px 4px;}
+  .node{
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;
+    padding:9px 16px;border-radius:6px;text-align:center;line-height:1.35;
+    border:1.5px solid transparent;min-width:120px;
+  }
+  .node small{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:10.5px;margin-top:2px;opacity:.85;}
+  .n-blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .n-green{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+  .n-orange{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);}
+  .n-purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple);}
+  .n-red{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .n-yellow{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow);}
+  .n-ink{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+
+  .arrow{font-size:16px;color:var(--ink-soft);line-height:1;margin:2px 0;}
+  .arrow-r{font-size:16px;color:var(--ink-soft);margin:0 6px;}
+  .arrow-label{font-family:'Kalam',cursive;font-size:11.5px;color:var(--ink-soft);margin:0 0 2px;text-align:center;max-width:260px;}
+
+  /* branching decision tree */
+  .branch-wrap{margin:18px 0;}
+  .branch-row{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin-top:6px;}
+  .branch-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1 1 150px;max-width:210px;}
+  .branch-col .q{font-family:'Kalam',cursive;font-size:12.5px;color:var(--ink-soft);text-align:center;}
+
+  /* comparison tables */
+  table.cmp{width:100%;border-collapse:collapse;margin:14px 0;font-size:12.5px;}
+  table.cmp th{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;text-transform:uppercase;
+    letter-spacing:.03em;background:var(--ink);color:var(--paper);padding:8px 10px;text-align:left;
+  }
+  table.cmp td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  table.cmp tr:nth-child(even) td{background:rgba(216,208,188,0.18);}
+
+  /* sticky notes / callouts */
+  .stickies{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0;}
+  .sticky{
+    font-family:'Kalam',cursive;font-size:12.5px;padding:12px 14px;border-radius:2px;
+    width:220px;box-shadow:2px 3px 6px rgba(0,0,0,0.08);position:relative;
+  }
+  .sticky b{display:block;font-size:11px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:5px;letter-spacing:.05em;}
+  .sticky.why{background:#FDE9C8;color:#6B4E10;transform:rotate(-1.4deg);}
+  .sticky.remember{background:#D9ECEB;color:#1F5652;transform:rotate(1.1deg);}
+  .sticky.interview{background:#F6D9D2;color:#7A2E22;transform:rotate(-0.6deg);}
+
+  /* interview Q/A cards */
+  .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;}
+  @media (max-width:700px){.qa-grid{grid-template-columns:1fr;}}
+  .qa{background:#fff;border:1px solid var(--rule);border-left:4px solid var(--yellow);border-radius:4px;padding:12px 14px;}
+  .qa .q{font-family:'Kalam',cursive;font-size:13px;color:var(--ink);margin-bottom:6px;}
+  .qa .q::before{content:"Q — ";color:var(--yellow);font-weight:700;}
+  .qa .a{font-size:12px;color:var(--ink-soft);}
+  .qa .a::before{content:"A — ";color:var(--green);font-weight:700;font-family:'JetBrains Mono',monospace;}
+
+  /* keyword cluster board */
+  .cluster-board{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0;}
+  @media (max-width:760px){.cluster-board{grid-template-columns:1fr 1fr;}}
+  .cluster{border:1.5px dashed var(--rule);border-radius:8px;padding:12px 14px;}
+  .cluster h4{margin:0 0 8px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+  .cluster .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:3px 8px;border-radius:12px;background:var(--paper2);border:1px solid var(--rule);}
+
+  .code-chip{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:var(--ink);color:var(--paper);padding:2px 7px;border-radius:4px;}
+
+  .note{
+    font-size:12.5px;color:var(--ink-soft);background:var(--paper2);
+    border:1px solid var(--rule);border-radius:6px;padding:10px 14px;margin:14px 0;
+  }
+  .note b{color:var(--ink);}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:18px 0;}
+  @media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+  .col-head{
+    font-family:'Kalam',cursive;font-size:14px;margin-bottom:10px;padding-bottom:6px;
+    border-bottom:2px solid;
+  }
+  .col-head.ingest{border-color:var(--green);color:var(--green);}
+  .col-head.writeback{border-color:var(--purple);color:var(--purple);}
+
+  .margin-tag{
+    font-family:'Kalam',cursive;font-size:11.5px;color:var(--ink-soft);text-align:center;margin-top:4px;
+  }
+
+  .intro-banner{
+    max-width:960px;margin:0 auto 22px;padding:16px 26px;
+    border:1.5px dashed var(--rule);border-radius:8px;background:#FFFDF7;
+  }
+  .intro-banner-head{font-family:'Kalam',cursive;font-size:16px;color:var(--ink);}
+  .intro-banner-sub{font-size:12px;color:var(--ink-soft);margin-top:4px;max-width:760px;}
+
+  footer.end{
+    max-width:960px;margin:0 auto;padding:0 42px 60px;color:var(--ink-soft);font-size:12px;
+    font-family:'JetBrains Mono',monospace;text-align:center;
+  }
+
+  @media print{
+    nav.tabs{display:none;}
+    .page{break-inside:avoid;box-shadow:none;}
+  }
+
+  /* ---------- Partner Academy zone (deliberately different from the notebook pages) ---------- */
+  .academy-intro{
+    max-width:960px;margin:36px auto 18px;padding:18px 26px;
+    background:#0F172A;border-radius:8px;border:1px solid #1E293B;
+    display:flex;align-items:center;gap:16px;
+  }
+  .academy-intro .cap{font-size:26px;}
+  .academy-intro-text h2{margin:0 0 4px;color:#F8FAFC;font-family:'Kalam',cursive;font-size:18px;}
+  .academy-intro-text p{margin:0;color:#94A3B8;font-size:12.5px;max-width:680px;}
+
+  .page.academy{
+    background:#111827;border:1px solid #1E293B;
+    background-image:none;
+    color:#CBD5E1;
+  }
+  .page.academy::before{background:linear-gradient(#3B82F6,#22C55E,#A855F7);}
+  .page.academy .page-eyebrow{color:#94A3B8;}
+  .page.academy h1{color:#F8FAFC;font-family:'Kalam',cursive;}
+  .page.academy .sub{color:#94A3B8;}
+  .page.academy h2.section-h{color:#F8FAFC;}
+  .page.academy h2.section-h .tag{background:#334155;color:#F8FAFC;}
+  .page.academy h3{color:#94A3B8 !important;}
+
+  .page.academy .node{background:rgba(255,255,255,0.04);border-width:1.5px;}
+  .page.academy .n-blue{color:#7DB6F5;border-color:#7DB6F5;}
+  .page.academy .n-green{color:#6FDDA8;border-color:#6FDDA8;}
+  .page.academy .n-orange{color:#F5B27D;border-color:#F5B27D;}
+  .page.academy .n-purple{color:#C9A6F0;border-color:#C9A6F0;}
+  .page.academy .n-red{color:#F5877D;border-color:#F5877D;}
+  .page.academy .n-yellow{color:#F0D882;border-color:#F0D882;}
+  .page.academy .n-ink{background:#1E293B;color:#F8FAFC;border-color:#334155;}
+  .page.academy .arrow, .page.academy .arrow-r, .page.academy .arrow-label{color:#64748B;}
+
+  .page.academy table.cmp th{background:#1E293B;color:#F8FAFC;}
+  .page.academy table.cmp td{border-color:#1E293B;color:#CBD5E1;}
+  .page.academy table.cmp tr:nth-child(even) td{background:rgba(255,255,255,0.025);}
+
+  .page.academy .note{background:#0F172A;border-color:#1E293B;color:#94A3B8;}
+  .page.academy .note b{color:#F8FAFC;}
+  .page.academy .code-chip{background:#334155;color:#F8FAFC;}
+
+  .page.academy .qa{background:#0F172A;border-color:#1E293B;border-left-color:var(--yellow);}
+  .page.academy .qa .q{color:#F8FAFC;}
+  .page.academy .qa .a{color:#94A3B8;}
+
+  .page.academy .cluster{border-color:#334155;}
+  .page.academy .cluster h4{color:#94A3B8;}
+  .page.academy .chip{background:#1E293B;border-color:#334155;color:#CBD5E1;}
+
+  .course-progress{
+    display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;
+    font-size:10px;padding:3px 9px;border-radius:20px;letter-spacing:.03em;font-weight:600;
+    background:#1E293B;color:#F0D882;border:1px solid #F0D882;
+  }
+  .module-badge{
+    display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;
+    background:#1E293B;color:#7DB6F5;padding:2px 8px;border-radius:4px;margin-right:6px;
+  }
+  nav.tabs .nav-academy{
+    background:#0F172A;margin:0 10px 4px;border-radius:6px;padding:4px 0;
+  }
+  nav.tabs .nav-academy a{color:#CBD5E1;padding:7px 14px;}
+  nav.tabs .nav-academy a:hover{background:rgba(255,255,255,0.06);}
+  nav.tabs .nav-academy a.active{background:rgba(255,255,255,0.08);border-left-color:#F8FAFC;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="tabs">
+    <div class="tabs-title">Revision Notes<span class="tabs-sub">— living document, keeps growing</span></div>
+
+    <div class="tabs-group">Foundations</div>
+    <a href="#journey"><span class="dot" style="background:var(--blue)"></span>Learning Journey</a>
+    <a href="#platform"><span class="dot" style="background:var(--blue)"></span>Platform Mental Model</a>
+
+    <div class="tabs-group">SQL</div>
+    <a href="#sql-toolbox"><span class="dot" style="background:var(--orange)"></span>SQL Toolbox</a>
+    <a href="#sql-execution"><span class="dot" style="background:var(--orange)"></span>What Happens When SQL Runs</a>
+
+    <div class="tabs-group">Data Engineering</div>
+    <a href="#lakeflow"><span class="dot" style="background:var(--green)"></span>Lakeflow Pipeline Map</a>
+    <a href="#medallion-jobs"><span class="dot" style="background:var(--green)"></span>Bronze/Silver/Gold + Jobs</a>
+    <a href="#gold-dashboards"><span class="dot" style="background:var(--green)"></span>Gold Layer &amp; AI/BI Dashboards</a>
+    <a href="#etl-cdf-scd"><span class="dot" style="background:var(--green)"></span>ETL/ELT, CDF &amp; SCD</a>
+
+    <div class="tabs-group">Security &amp; Integration</div>
+    <a href="#security-access"><span class="dot" style="background:var(--purple)"></span>Security &amp; Access</a>
+    <a href="#pat-impl"><span class="dot" style="background:var(--purple)"></span>PAT Implementation</a>
+    <a href="#secrets-rowsec"><span class="dot" style="background:var(--purple)"></span>Secrets API &amp; Row Filters</a>
+    <a href="#pat-vs-oauth"><span class="dot" style="background:var(--purple)"></span>PAT vs Salesforce OAuth</a>
+    <a href="#ingestion-writeback"><span class="dot" style="background:var(--purple)"></span>Ingestion vs Write-Back</a>
+    <a href="#e2e-architecture"><span class="dot" style="background:var(--blue)"></span>End-to-End Architecture</a>
+
+    <div class="tabs-group">My Project</div>
+    <a href="#project"><span class="dot" style="background:var(--red)"></span>Salesforce Lead Anomaly Detection</a>
+
+    <div class="tabs-group">Partner Academy 🎓</div>
+    <div class="nav-academy">
+      <a href="#course-1"><span class="dot" style="background:#7DB6F5"></span>① Data Engineering</a>
+      <a href="#course-2"><span class="dot" style="background:#6FDDA8"></span>② Python + BrightCart</a>
+      <a href="#course-3"><span class="dot" style="background:#C9A6F0"></span>③ Generative AI</a>
+    </div>
+
+    <div class="tabs-group">Interview Prep</div>
+    <a href="#interview-recall"><span class="dot" style="background:var(--yellow)"></span>Interview Rapid Recall</a>
+    <a href="#one-pager"><span class="dot" style="background:var(--yellow)"></span>One Page Before Interview</a>
+  </nav>
+
+  <main>
+
+  <div class="intro-banner">
+    <div class="intro-banner-head">📓 Databricks Training — Revision Notes</div>
+    <div class="intro-banner-sub">A living companion to the full report — grows as new mentor sessions, the Lead Anomaly Detection project, and Partner Academy coursework get added. Not a replacement for the detailed chapters, just the fast path back into them. The dark cards near the bottom are Partner Academy — separate, self-paced, and still in progress, so they're kept apart from what's actually been learned hands-on above.</div>
+  </div>
+
+  <!-- LEARNING JOURNEY -->
+  <section class="page p-mixed" id="journey">
+    <div class="page-eyebrow">Master map</div>
+    <h1>My Databricks Learning Journey</h1>
+    <div class="sub">The master map — how one concept made the next one necessary. Read top to bottom, not as a syllabus, but as the actual order things clicked.</div>
+
+    <div class="flow">
+      <div class="node n-blue">DATABRICKS PLATFORM<small>Workspace · Catalog · Compute · Notebook</small></div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">Notebook can't execute anything on its own —</div>
+      <div class="node n-blue">COMPUTE<small>Classic Cluster vs Serverless</small></div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">needed a place to actually write &amp; run code —</div>
+      <div class="node n-blue">FIRST NOTEBOOK<small>Python / SQL / Markdown cells</small></div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">code needs data to work on —</div>
+      <div class="node n-green">DATA INGESTION (CSV)<small>spark.read.csv() · schema inference</small></div>
+      <div class="arrow">↓</div>
+    </div>
+
+    <div class="hflow">
+      <div class="node n-orange">SQL LOGIC<small>DDL/DML · Subquery/CTE/View · Aggregates<br>Joins · Window Fns · Query Execution</small></div>
+      <div class="arrow-r">↔</div>
+      <div class="node n-blue">SPARK DATAFRAMES<small>select/filter/groupBy · lazy eval</small></div>
+    </div>
+
+    <div class="flow">
+      <div class="arrow-label">once queries work locally, the next question is scale + real sources —</div>
+      <div class="arrow">↓</div>
+      <div class="node n-purple">CONNECTING EXTERNAL SYSTEMS<small>Salesforce · OAuth (ingestion)</small></div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">a one-time connection isn't a pipeline —</div>
+      <div class="node n-green">LAKEFLOW INGESTION PIPELINE<small>objects → destination → refresh mode</small></div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">raw ingested data still isn't reportable —</div>
+      <div class="node n-green">BRONZE → SILVER → GOLD<small>medallion architecture</small></div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">raw layers exist, but nobody reads Delta tables directly —</div>
+      <div class="node n-green">AI/BI DASHBOARDS<small>one Gold table = one business question</small></div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">someone has to trigger this daily, in order —</div>
+      <div class="node n-green">JOBS, SCHEDULING &amp; ORCHESTRATION<small>manual → scheduled · task order</small></div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">now real company data is flowing — who's allowed to touch it? —</div>
+      <div class="node n-purple">SECURITY: USERS &amp; SERVICE PRINCIPALS<small>Unity Catalog · Least Privilege</small></div>
+      <div class="arrow">↓</div>
+    </div>
+
+    <div class="hflow">
+      <div class="node n-purple">PAT<small>Databricks-side auth</small></div>
+      <div class="arrow-r">+</div>
+      <div class="node n-purple">SALESFORCE OAUTH<small>Client Credentials Flow</small></div>
+    </div>
+    <div class="flow">
+      <div class="arrow">↓</div>
+      <div class="arrow-label">the loop closes — changes made in Databricks travel back —</div>
+      <div class="node n-ink">WRITE-BACK TO SALESFORCE<small>PATCH /sobjects/Account/&#123;id&#125;</small></div>
+    </div>
+
+    <div class="note"><b>Note on order:</b> Apache Spark internals (Driver/Executor/DAG/Shuffle) and deep Spark Execution were covered later in the report, after the SQL and ingestion chapters — not because Spark is used last, but because it was taught last. Spark is actually running underneath every step above. Page 4 explains why.</div>
+    <div class="note">🎓 <b>Not shown here:</b> Partner Academy coursework (Python, BrightCart, Generative AI) runs on its own track — self-paced, still in progress, and deliberately kept separate from this mentor-led journey until it's actually been used hands-on. Find it in the dark cards further down.</div>
+  </section>
+
+  <!-- PAGE 2 -->
+  <section class="page p-blue" id="platform">
+    <div class="page-eyebrow">Architecture diagram</div>
+    <h1>Databricks Platform Mental Model</h1>
+    <div class="sub">The three sections everything else builds on, plus the restaurant analogy the report keeps returning to.</div>
+
+    <h2 class="section-h">The core relationship <span class="tag">WHAT · HOW</span></h2>
+    <div class="flow">
+      <div class="node n-blue">WORKSPACE<small>write code (notebooks/folders)</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">COMPUTE<small>process it (CPU/RAM/Spark)</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">CATALOG<small>store it (Catalog → Schema → Table)</small></div>
+    </div>
+
+    <h2 class="section-h">The restaurant analogy <span class="tag">MEMORABLE</span></h2>
+    <table class="cmp">
+      <tr><th>Restaurant</th><th>Databricks</th></tr>
+      <tr><td>You (customer)</td><td>Data Engineer</td></tr>
+      <tr><td>Waiter</td><td>Notebook — takes the order, never cooks</td></tr>
+      <tr><td>Kitchen</td><td>Compute — where work actually happens</td></tr>
+      <tr><td>Chef</td><td>Spark — does the processing</td></tr>
+      <tr><td>Recipe</td><td>Your code / SQL</td></tr>
+      <tr><td>Food</td><td>The result</td></tr>
+    </table>
+
+    <h2 class="section-h">Classic vs Serverless Compute <span class="tag">COMPARISON</span></h2>
+    <table class="cmp">
+      <tr><th></th><th>Classic Compute</th><th>Serverless Compute</th></tr>
+      <tr><td>Who configures it</td><td>You choose machines, size, Spark version</td><td>Databricks provisions automatically</td></tr>
+      <tr><td>Analogy</td><td>Renting your own office</td><td>Uber — request, use, release</td></tr>
+      <tr><td>"No server" myth</td><td colspan="2">Servers still exist either way — serverless just means you don't manage them (like Gmail)</td></tr>
+    </table>
+
+    <div class="stickies">
+      <div class="sticky why"><b>Why?</b>Notebook can't process a 3TB file on your 16GB laptop. It has to hand the work to Compute.</div>
+      <div class="sticky remember"><b>Remember</b>Compute ≠ Cluster. Cluster is one type of Compute; Serverless is another.</div>
+      <div class="sticky interview"><b>Interview</b>"Is the compute running?" is the first thing senior engineers check when a notebook fails — before the code.</div>
+    </div>
+  </section>
+
+  <!-- PAGE 3 -->
+  <section class="page p-orange" id="sql-toolbox">
+    <div class="page-eyebrow">Decision tree</div>
+    <h1>SQL Toolbox — Which Concept Do I Reach For?</h1>
+    <div class="sub">Not definitions. A routing map from business question → SQL clause, built the way the report actually teaches it.</div>
+
+    <h2 class="section-h">The SQL decision flow <span class="tag">CORE</span></h2>
+    <div class="hflow">
+      <div class="node n-orange">Which table?</div><div class="arrow-r">→</div>
+      <div class="node n-orange">Which columns?</div><div class="arrow-r">→</div>
+      <div class="node n-orange">Filter? <small>WHERE</small></div><div class="arrow-r">→</div>
+      <div class="node n-orange">Group? <small>GROUP BY</small></div><div class="arrow-r">→</div>
+      <div class="node n-orange">Filter groups? <small>HAVING</small></div><div class="arrow-r">→</div>
+      <div class="node n-orange">Sort? <small>ORDER BY</small></div><div class="arrow-r">→</div>
+      <div class="node n-orange">Top N? <small>LIMIT</small></div>
+    </div>
+
+    <div class="note"><b>WHERE vs HAVING</b> — the report's #1 flagged interview question. WHERE filters rows and runs before grouping; it can't use aggregates directly. HAVING filters groups and runs after GROUP BY — that's why <code class="code-chip">SUM(amount) &gt; 50000</code> goes in HAVING, not WHERE.</div>
+
+    <h2 class="section-h">Subquery vs CTE vs View <span class="tag">DECISION</span></h2>
+    <div class="branch-wrap">
+      <div class="q hand" style="text-align:center;font-family:'Kalam',cursive;color:var(--ink-soft)">Need the result…</div>
+      <div class="branch-row">
+        <div class="branch-col">
+          <div class="q">just once, inside one query</div>
+          <div class="arrow">↓</div>
+          <div class="node n-orange">SUBQUERY<small>sticky note — quick, temporary</small></div>
+        </div>
+        <div class="branch-col">
+          <div class="q">broken into readable steps</div>
+          <div class="arrow">↓</div>
+          <div class="node n-orange">CTE<small>whiteboard — organized, still temporary</small></div>
+        </div>
+        <div class="branch-col">
+          <div class="q">reused daily by dashboards/analysts</div>
+          <div class="arrow">↓</div>
+          <div class="node n-orange">VIEW<small>notice board — saved for everyone</small></div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-h">SQL Joins <span class="tag">VISUAL</span></h2>
+    <table class="cmp">
+      <tr><th>Join</th><th>Returns</th><th>Report's scenario</th></tr>
+      <tr><td>INNER</td><td>Only matching rows</td><td>Customers who placed orders</td></tr>
+      <tr><td>LEFT</td><td>All left + matches</td><td>Find customers who never ordered (unmatched → NULL)</td></tr>
+      <tr><td>RIGHT</td><td>All right + matches</td><td>Rarely used — swap tables + LEFT JOIN instead</td></tr>
+      <tr><td>FULL</td><td>Everything, matched or not</td><td>Comparing two datasets for gaps</td></tr>
+    </table>
+    <div class="note">Forgetting the <code class="code-chip">ON</code> condition creates a <b>Cartesian Product</b> — every row matched with every other row.</div>
+
+    <h2 class="section-h">Window Functions <span class="tag">RANKING</span></h2>
+    <table class="cmp">
+      <tr><th>Function</th><th>Ties behave like</th><th>Numbers skipped?</th></tr>
+      <tr><td><code class="code-chip">ROW_NUMBER()</code></td><td>every row gets a unique number</td><td>n/a — always unique</td></tr>
+      <tr><td><code class="code-chip">RANK()</code></td><td>tied rows share a rank</td><td>yes, next rank is skipped</td></tr>
+      <tr><td><code class="code-chip">DENSE_RANK()</code></td><td>tied rows share a rank</td><td>no gaps</td></tr>
+    </table>
+    <div class="note">Key distinction from GROUP BY: <code class="code-chip">AVG(salary) OVER (PARTITION BY department)</code> keeps <b>every employee row</b> while still attaching the group average — GROUP BY alone collapses rows into one per department.</div>
+  </section>
+
+  <!-- PAGE 4 -->
+  <section class="page p-orange" id="sql-execution">
+    <div class="page-eyebrow">Lifecycle</div>
+    <h1>What Actually Happens When I Run SQL?</h1>
+    <div class="sub">The exact model taught in the report — deliberately <i>not</i> the generic Catalyst/logical-plan/physical-plan version, because that's not what was covered.</div>
+
+    <div class="flow">
+      <div class="node n-orange">You write SQL<small>SELECT * FROM customers;</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">Databricks checks<small>is SQL valid? does table exist? is compute running?</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">Spark SQL Engine<small>locates the table</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">Catalog → Schema → Table<small>main → default → customers</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-green">Read + process<small>apply filters, load only what's needed</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-ink">Result displayed</div>
+    </div>
+
+    <h2 class="section-h">Library analogy <span class="tag">MEMORABLE</span></h2>
+    <table class="cmp">
+      <tr><td>Catalog</td><td>the whole library building</td></tr>
+      <tr><td>Schema</td><td>a bookshelf</td></tr>
+      <tr><td>Table</td><td>a book on the shelf</td></tr>
+      <tr><td>Spark</td><td>the librarian who knows exactly where it is</td></tr>
+      <tr><td>You</td><td>the student asking for the book</td></tr>
+    </table>
+
+    <h2 class="section-h">Connects to: PySpark side <span class="tag">SAME ENGINE</span></h2>
+    <div class="hflow">
+      <div class="node n-blue">SQL query</div>
+      <div class="arrow-r">↕</div>
+      <div class="node n-blue">DataFrame API</div>
+    </div>
+    <div class="note">Both <code class="code-chip">SELECT city, COUNT(*)... GROUP BY city</code> and <code class="code-chip">df.groupBy("city").agg(count("*"))</code> compile down to the same Spark engine — "only the interface is different."</div>
+
+    <div class="qa-grid">
+      <div class="qa"><div class="q">What is Lazy Evaluation?</div><div class="a">Transformations (filter, select, withColumn) don't execute immediately — Spark builds a plan and only runs it when an Action (show, count, collect) is called.</div></div>
+      <div class="qa"><div class="q">Does the notebook execute the SQL?</div><div class="a">No — the notebook is only the interface. Compute provides the resources and Spark performs the actual execution.</div></div>
+    </div>
+  </section>
+
+  <!-- PAGE 5 -->
+  <section class="page p-green" id="lakeflow">
+    <div class="page-eyebrow">Pipeline map <span class="badge badge-hands">Hands-on implementation</span></div>
+    <h1>Data Engineering / Lakeflow Pipeline Map</h1>
+    <div class="sub">Salesforce → Databricks, end to end — the ingestion direction only. (Write-back is a separate page.)</div>
+
+    <div class="flow">
+      <div class="node n-purple">SALESFORCE<small>Accounts · Contacts · Leads · Opportunities · Cases</small></div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">OAuth: prove Databricks is allowed in</div>
+      <div class="node n-purple">OAUTH LOGIN + CONSENT<small>Access Token + Refresh Token</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">CONNECTION CREATED<small>Catalog → Connections</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-green">LAKEFLOW CONNECT<small>choose objects · choose destination catalog/schema</small></div>
+      <div class="arrow">↓</div>
+    </div>
+
+    <div class="hflow">
+      <div class="node n-green">FULL REFRESH<small>delete + reload everything</small></div>
+      <div class="arrow-r">vs</div>
+      <div class="node n-green">INCREMENTAL REFRESH<small>only new/changed rows — used in production</small></div>
+    </div>
+
+    <div class="flow">
+      <div class="arrow">↓</div>
+      <div class="node n-green">SCHEDULE + RUN AS<small>hourly/daily/weekly · User vs Service Principal</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-ink">DELTA TABLES CREATED<small>main.salesforce.account …</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">SQL / VIEWS / DASHBOARDS</div>
+    </div>
+
+    <h2 class="section-h">Behind the "Run Now" click <span class="tag">LIFECYCLE</span></h2>
+    <div class="hflow" style="font-size:11px">
+      <div class="node n-blue">Trigger</div><div class="arrow-r">→</div>
+      <div class="node n-purple">Validate connection</div><div class="arrow-r">→</div>
+      <div class="node n-purple">Validate/refresh OAuth token</div><div class="arrow-r">→</div>
+      <div class="node n-green">Read objects</div><div class="arrow-r">→</div>
+      <div class="node n-green">Spark processes</div><div class="arrow-r">→</div>
+      <div class="node n-ink">Write Delta</div><div class="arrow-r">→</div>
+      <div class="node n-ink">Register in Catalog</div><div class="arrow-r">→</div>
+      <div class="node n-yellow">Notify</div>
+    </div>
+
+    <div class="stickies">
+      <div class="sticky why"><b>Why?</b>If the connection is invalid, the pipeline stops before touching Spark — no partial/incorrect data ever gets imported.</div>
+      <div class="sticky remember"><b>Remember</b>Access Token expires → Refresh Token silently gets a new one. No re-login needed.</div>
+      <div class="sticky interview"><b>Interview</b>Why not query Salesforce live every time? — slow, hits API limits, and reporting breaks if Salesforce is down. Ingesting into Delta gives fast, reliable, historical data.</div>
+    </div>
+  </section>
+
+  <!-- PAGE 6 -->
+  <section class="page p-green" id="medallion-jobs">
+    <div class="page-eyebrow">Funnel + orchestration</div>
+    <h1>Bronze → Silver → Gold, then Jobs &amp; Orchestration</h1>
+    <div class="sub">Why raw data isn't reportable, and who makes sure the layers run in the right order.</div>
+
+    <h2 class="section-h">Medallion Architecture <span class="tag">FUNNEL</span></h2>
+    <div class="flow">
+      <div class="node n-red">🥉 BRONZE — raw, untouched<small>duplicates &amp; nulls preserved on purpose</small></div>
+      <div class="arrow">↓ <span style="font-family:'Kalam',cursive;font-size:11px">Spark cleans</span></div>
+      <div class="node n-orange">🥈 SILVER — cleaned, validated<small>dedup · handle missing · standardize</small></div>
+      <div class="arrow">↓ <span style="font-family:'Kalam',cursive;font-size:11px">Spark aggregates</span></div>
+      <div class="node n-green">🥇 GOLD — business-ready<small>summarized · dashboard-ready</small></div>
+    </div>
+    <div class="note"><b>Why not skip Bronze?</b> If the Silver transformation has a bug, Bronze is the safety net — the pipeline can be re-run from the original data. Never build dashboards directly on Bronze.</div>
+
+    <h2 class="section-h">Jobs, Schedule, Orchestration <span class="tag">MANAGER, NOT COOK</span></h2>
+    <table class="cmp">
+      <tr><td>Job</td><td>Starts work automatically — the manager</td></tr>
+      <tr><td>Task</td><td>What the job actually runs (notebook / pipeline / SQL)</td></tr>
+      <tr><td>Schedule / Cron</td><td>When it runs — interval = simple, cron = flexible ("every weekday at 6am")</td></tr>
+      <tr><td>Orchestration</td><td>Correct <i>order</i> — bronze must finish before silver, silver before gold, before the dashboard refreshes</td></tr>
+      <tr><td>Spark</td><td>The one that actually processes the data — the chef, never the manager</td></tr>
+    </table>
+
+    <div class="hflow">
+      <div class="node n-green">Read Salesforce</div><div class="arrow-r">→</div>
+      <div class="node n-orange">Validate</div><div class="arrow-r">→</div>
+      <div class="node n-red">Bronze</div><div class="arrow-r">→</div>
+      <div class="node n-orange">Silver</div><div class="arrow-r">→</div>
+      <div class="node n-green">Gold</div><div class="arrow-r">→</div>
+      <div class="node n-blue">Dashboard Refresh</div>
+    </div>
+    <div class="note">If the dashboard refreshed <i>before</i> the pipeline finished, it would show stale data — this ordering guarantee is exactly what Orchestration solves.</div>
+  </section>
+
+  <section class="page p-green" id="gold-dashboards">
+    <div class="page-eyebrow">Deep dive · Gold layer <span class="badge badge-hands">Hands-on implementation</span></div>
+    <h1>Gold Layer &amp; AI/BI Dashboards</h1>
+    <div class="sub">The point of Gold isn't "clean data" — it's business-ready answers. This is where I stopped thinking like a data engineer for a minute and started thinking like the analyst who has to read the dashboard.</div>
+
+    <div class="hflow">
+      <div class="node n-red">Bronze<small>"what happened?"</small></div>
+      <div class="arrow-r">→</div>
+      <div class="node n-orange">Silver<small>"can I trust this?"</small></div>
+      <div class="arrow-r">→</div>
+      <div class="node n-green">Gold<small>"what does the business need to know?"</small></div>
+      <div class="arrow-r">→</div>
+      <div class="node n-ink">Dashboard<small>"10-second understanding?"</small></div>
+    </div>
+
+    <h2 class="section-h">One Gold table = one business question <span class="tag">GOLDEN RULE</span></h2>
+    <table class="cmp">
+      <tr><th>Business question</th><th>Gold table</th></tr>
+      <tr><td>How is revenue changing every month?</td><td><code class="code-chip">monthly_revenue</code></td></tr>
+      <tr><td>Which customers are most valuable?</td><td><code class="code-chip">customer_ltv</code></td></tr>
+      <tr><td>Which categories perform best?</td><td><code class="code-chip">category_performance</code></td></tr>
+      <tr><td>Which channel generates more revenue?</td><td><code class="code-chip">channel_analysis</code></td></tr>
+      <tr><td>What's the customer health distribution?</td><td><code class="code-chip">customer_status_summary</code></td></tr>
+      <tr><td>Which cities generate the most business?</td><td><code class="code-chip">city_performance</code></td></tr>
+    </table>
+    <div class="note">Not: "I need another transformed DataFrame." A Gold table earns its place by answering something someone will actually ask.</div>
+
+    <h2 class="section-h">The three aggregations I reach for constantly <span class="tag">SUM · COUNT · COUNTDISTINCT</span></h2>
+    <table class="cmp">
+      <tr><th>Function</th><th>Answers</th><th>Gotcha</th></tr>
+      <tr><td><code class="code-chip">sum()</code></td><td>How much?</td><td>—</td></tr>
+      <tr><td><code class="code-chip">count()</code></td><td>How many rows?</td><td>Rows ≠ orders if one order has multiple product rows</td></tr>
+      <tr><td><code class="code-chip">countDistinct(order_id)</code></td><td>How many unique orders?</td><td>Usually what the business actually meant</td></tr>
+    </table>
+    <div class="sticky remember" style="width:auto;transform:rotate(0)"><b>AOV — Average Order Value</b><code class="code-chip">sum(total_revenue) / countDistinct(order_id)</code>. Revenue tells you how much business happened. Orders tell you how much activity happened. AOV tells you how valuable one transaction is — Store A can out-revenue Store B on volume while Store B wins on AOV. Keep all three.</div>
+
+    <h2 class="section-h">The LEFT JOIN lesson <span class="tag">DON'T LOSE THE LEFT TABLE</span></h2>
+    <div class="hflow">
+      <div class="node n-blue">customers</div>
+      <div class="arrow-r">LEFT JOIN</div>
+      <div class="node n-orange">orders</div>
+      <div class="arrow-r">→</div>
+      <div class="node n-green">every customer appears, even with zero orders</div>
+    </div>
+    <div class="note">"Show every customer, even if they never purchased" = LEFT JOIN, customers on the left. After the join, a zero-order customer gets NULL orders/revenue — coalesce those to <b>0</b>, but leave <code class="code-chip">last_order_date</code> as NULL. 0 isn't a date; a customer who never ordered has no last order, and that's a meaningful NULL, not a bug.</div>
+
+    <h2 class="section-h">Chart selection cheat sheet <span class="tag">MATCH THE CHART TO THE QUESTION</span></h2>
+    <table class="cmp">
+      <tr><th>Question</th><th>Best visual</th></tr>
+      <tr><td>How is something changing over time?</td><td>Line / Area</td></tr>
+      <tr><td>Which category is biggest?</td><td>Bar</td></tr>
+      <tr><td>What's the share of a whole?</td><td>Donut / Pie</td></tr>
+      <tr><td>What are the KPIs?</td><td>Counter</td></tr>
+      <tr><td>Which items rank highest?</td><td>Horizontal Bar</td></tr>
+      <tr><td>Exact records</td><td>Table</td></tr>
+      <tr><td>Geographic distribution</td><td>Map <span class="badge badge-concept" style="font-size:9px">— unreliable if cities aren't geocoded well; a correct bar beats a fancy wrong map</span></td></tr>
+    </table>
+    <div class="sticky why" style="width:auto;transform:rotate(0)"><b>Rule to remember</b>Comparison → Bar. Composition → Donut. Trend → Line. Exact detail → Table. KPI → Counter. Choose the chart because of the question, never because it looks cool.</div>
+
+    <h2 class="section-h">Dashboard design lessons that actually mattered <span class="tag">FROM THE BUILD</span></h2>
+    <div class="stickies">
+      <div class="sticky remember"><b>Semantic color</b>Active=Green, Inactive=Amber, Churned=Red communicates meaning instantly. Electronics=purple, Fitness=green is just decoration — don't confuse the two.</div>
+      <div class="sticky why"><b>F-pattern layout</b>Top = headline KPIs. Upper-middle = main trend. Middle = major drivers. Bottom = detail. People scan left→right, top→bottom — build for that.</div>
+      <div class="sticky interview"><b>Dashboard ≠ Gold layer</b>6 Gold tables can produce 5 visuals (or 12). Gold tables are reusable analytical assets — the dashboard is just one consumer. The same table can feed ML features, alerts, or an API later.</div>
+    </div>
+
+    <h2 class="section-h">Grain — the concept worth remembering <span class="tag">1 ROW = ?</span></h2>
+    <div class="cluster-board" style="grid-template-columns:repeat(3,1fr)">
+      <div class="cluster"><h4>1 row = 1 month</h4><div class="chips"><span class="chip">monthly_revenue</span></div></div>
+      <div class="cluster"><h4>1 row = 1 customer</h4><div class="chips"><span class="chip">customer_ltv</span></div></div>
+      <div class="cluster"><h4>1 row = 1 category / channel / city</h4><div class="chips"><span class="chip">category_performance</span><span class="chip">channel_analysis</span><span class="chip">city_performance</span></div></div>
+    </div>
+    <div class="note"><b>Before any <code class="code-chip">groupBy()</code>:</b> ① what does one Silver row represent? ② what should one Gold row represent? ③ which columns are dimensions (group/filter by — customer, category, month)? ④ which are measures (calculated — revenue, quantity, orders)?</div>
+
+    <h2 class="section-h">Two mistakes I actually made <span class="tag">LEARNED THE HARD WAY</span></h2>
+    <table class="cmp">
+      <tr><th>Mistake</th><th>Fix</th></tr>
+      <tr><td>Double counting — <code class="code-chip">count(*)</code> on multi-row orders</td><td>Use <code class="code-chip">countDistinct(order_id)</code> when the question means "how many orders," not "how many rows"</td></tr>
+      <tr><td>Wrong join direction — <code class="code-chip">orders LEFT JOIN customers</code></td><td>The table whose records must never disappear goes on the LEFT — <code class="code-chip">customers LEFT JOIN orders</code></td></tr>
+    </table>
+
+    <div class="qa-grid">
+      <div class="qa"><div class="q">Why did you create Gold tables?</div><div class="a">To give downstream analytics and BI a business-oriented aggregate so they're not repeatedly processing transactional Silver data. Each Gold table has a specific grain — monthly, customer, category, channel, status, or city — and holds exactly the metrics that grain needs.</div></div>
+      <div class="qa"><div class="q">Why not just put every Gold table on the dashboard?</div><div class="a">A dashboard is a visual answer to specific business questions, not an inventory of everything that exists. More charts isn't more insight — it's more scanning effort.</div></div>
+    </div>
+  </section>
+
+  <!-- PAGE 7 -->
+  <!-- PAGE 13 -->
+  <section class="page p-green" id="etl-cdf-scd">
+    <div class="page-eyebrow">Comparison + lifecycle</div>
+    <h1>ETL vs ELT, Job Orchestration, CDF &amp; SCD</h1>
+    <div class="sub">The problem each concept solves, how it slots into the Bronze→Silver→Gold pipeline, and when to reach for it.</div>
+
+    <h2 class="section-h">ETL vs ELT <span class="tag">WHERE DOES TRANSFORM HAPPEN?</span></h2>
+    <div class="two-col">
+      <div>
+        <div class="col-head ingest" style="border-color:var(--orange);color:var(--orange)">ETL — Transform before Load</div>
+        <div class="hflow"><div class="node n-blue">Source</div><div class="arrow-r">→</div><div class="node n-orange">Extract</div><div class="arrow-r">→</div><div class="node n-orange">Transform</div><div class="arrow-r">→</div><div class="node n-green">Load</div><div class="arrow-r">→</div><div class="node n-ink">Target</div></div>
+        <div class="note">Target receives data that's already been cleaned/shaped.</div>
+      </div>
+      <div>
+        <div class="col-head writeback" style="border-color:var(--green);color:var(--green)">ELT — Load before Transform</div>
+        <div class="hflow"><div class="node n-blue">Source</div><div class="arrow-r">→</div><div class="node n-orange">Extract</div><div class="arrow-r">→</div><div class="node n-green">Load</div><div class="arrow-r">→</div><div class="node n-orange">Transform</div><div class="arrow-r">→</div><div class="node n-ink">Ready Data</div></div>
+        <div class="note">Raw data lands first; the platform's own compute does the transforming — this is exactly the Bronze→Silver→Gold pattern.</div>
+      </div>
+    </div>
+    <div class="sticky remember" style="width:auto;transform:rotate(0)"><b>Memory trick — position of T</b>ETL: E → T → L (Transform, then Load). ELT: E → L → T (Load, then Transform). Databricks fits ELT naturally because it has the compute to transform large data <i>after</i> it's already landed.</div>
+
+    <h2 class="section-h">Job Orchestration <span class="tag">NOTEBOOK = LOGIC · JOB = EXECUTION</span></h2>
+    <div class="flow">
+      <div class="node n-ink">JOB</div>
+      <div class="arrow">↓</div>
+      <div class="node n-red">Bronze Task<small>Source → Bronze</small></div>
+      <div class="arrow">↓ SUCCESS</div>
+      <div class="node n-orange">Silver Task<small>Clean / Validate</small></div>
+      <div class="arrow">↓ SUCCESS</div>
+      <div class="node n-green">Gold Task<small>Business Summary</small></div>
+    </div>
+    <div class="note"><b>Why dependencies matter:</b> if Silver fails, Gold must not run on incomplete input. The dependency chain (not just three tasks sitting side by side) is what protects the pipeline. <b>Job vs Pipeline:</b> the pipeline is the overall data flow (Bronze→Silver→Gold); the Job is one way of orchestrating and scheduling the tasks that make up that flow.</div>
+
+    <h2 class="section-h">Change Data Feed (CDF) <span class="tag">WHAT CHANGED?</span></h2>
+    <div class="hflow">
+      <div class="node n-blue">Delta Table<small>10,000 records</small></div>
+      <div class="arrow-r">→</div>
+      <div class="node n-green">Change Data Feed<small>INSERT · UPDATE · DELETE</small></div>
+      <div class="arrow-r">→</div>
+      <div class="node n-ink">Changed Records<small>e.g. 20 rows</small></div>
+    </div>
+    <div class="note">Normal table = "what does the data look like <i>now</i>?" CDF = "what <i>changed</i> between versions?" Batch access via <code class="code-chip">table_changes('table', start_version)</code>.</div>
+    <div class="sticky interview" style="width:auto;transform:rotate(0)"><b>Important nuance</b>CDF is <i>not</i> the same thing as the CDC pattern used for Lakeflow streaming-table pipelines. <code class="code-chip">table_changes()</code> is a batch-style read of change info; Lakeflow's <code class="code-chip">AUTO CDC</code> is the mechanism for streaming CDC, and can implement SCD Type 1 or Type 2 behavior directly. Don't over-generalize this to "CDF can't be used with streaming" — CDF itself can be consumed by streaming mechanisms; it's specifically <code class="code-chip">table_changes()</code> that isn't the streaming-CDC pattern.</div>
+
+    <h2 class="section-h">Slowly Changing Dimensions — Type 1 vs Type 2 <span class="tag">HOW DO WE HANDLE THE CHANGE?</span></h2>
+    <div class="branch-wrap">
+      <div class="q hand" style="text-align:center;font-family:'Kalam',cursive;color:var(--ink-soft)">Customer moves Delhi → Noida. What happens to "Delhi"?</div>
+      <div class="branch-row">
+        <div class="branch-col">
+          <div class="q">Only the current value matters</div>
+          <div class="arrow">↓</div>
+          <div class="node n-red">TYPE 1 — Overwrite<small>Delhi is gone; Noida replaces it</small></div>
+        </div>
+        <div class="branch-col">
+          <div class="q">Need to know what it used to be</div>
+          <div class="arrow">↓</div>
+          <div class="node n-green">TYPE 2 — Preserve History<small>Delhi row expired, Noida row inserted</small></div>
+        </div>
+      </div>
+    </div>
+    <table class="cmp">
+      <tr><th></th><th>SCD Type 1</th><th>SCD Type 2</th></tr>
+      <tr><td>Main idea</td><td>Overwrite</td><td>Preserve history</td></tr>
+      <tr><td>Old value</td><td>Lost</td><td>Retained</td></tr>
+      <tr><td>New row inserted?</td><td>Usually no</td><td>Yes</td></tr>
+      <tr><td>Typical metadata</td><td>—</td><td><code class="code-chip">start_date</code> / <code class="code-chip">end_date</code> / <code class="code-chip">is_current</code></td></tr>
+      <tr><td>Complexity</td><td>Simpler</td><td>More complex</td></tr>
+    </table>
+
+    <h2 class="section-h">Putting it together <span class="tag">MENTAL MODEL</span></h2>
+    <div class="flow">
+      <div class="node n-blue">Source Data</div>
+      <div class="arrow">↓ what changed?</div>
+      <div class="node n-green">CDF</div>
+      <div class="arrow">↓ how should we maintain the change?</div>
+    </div>
+    <div class="hflow">
+      <div class="node n-red">SCD Type 1 <small>Overwrite</small></div>
+      <div class="arrow-r">or</div>
+      <div class="node n-green">SCD Type 2 <small>Preserve History</small></div>
+    </div>
+    <div class="flow">
+      <div class="arrow">↓</div>
+      <div class="node n-ink">Target Data</div>
+    </div>
+    <div class="sticky why" style="width:auto;transform:rotate(0);margin-top:14px"><b>Two-word split</b>CDF = <i>detect</i> the change. SCD = <i>decide what to do</i> with it. This whole flow still runs inside the same Bronze → Silver → Gold Job you already built — CDF/SCD just make the Silver step incremental instead of full-reprocess.</div>
+
+    <h2 class="section-h">If interviewer asks… <span class="tag">FLASHCARDS</span></h2>
+    <div class="qa-grid">
+      <div class="qa"><div class="q">ETL vs ELT?</div><div class="a">ETL transforms before loading into the target. ELT loads first, then transforms inside the target platform — Databricks favors ELT because it has compute to transform after landing the data.</div></div>
+      <div class="qa"><div class="q">What is orchestration?</div><div class="a">Coordinating the execution order and dependencies of multiple data-processing tasks — e.g. making sure Silver only runs after Bronze succeeds.</div></div>
+      <div class="qa"><div class="q">What problem does CDF solve?</div><div class="a">It identifies row-level INSERT/UPDATE/DELETE changes so downstream processing can work on just the changed records instead of the whole table.</div></div>
+      <div class="qa"><div class="q">Does CDF implement SCD Type 2?</div><div class="a">No — CDF only detects what changed. SCD logic decides how that change is represented in the target (overwrite vs preserve history).</div></div>
+      <div class="qa"><div class="q">SCD Type 1 vs Type 2, in one line?</div><div class="a">Type 1 answers "what is the value now?" Type 2 answers "what was it before, and what is it now?"</div></div>
+      <div class="qa"><div class="q">Is table_changes() the same as Lakeflow CDC?</div><div class="a">No. table_changes() is a batch-style read of change data. Lakeflow's AUTO CDC is the mechanism built for streaming-table CDC pipelines and can implement SCD Type 1/2 directly.</div></div>
+    </div>
+
+    <div class="cluster-board" style="grid-template-columns:repeat(5,1fr);margin-top:10px">
+      <div class="cluster"><h4>ETL</h4><div class="chips"><span class="chip">Transform → Load</span></div></div>
+      <div class="cluster"><h4>ELT</h4><div class="chips"><span class="chip">Load → Transform</span></div></div>
+      <div class="cluster"><h4>Job</h4><div class="chips"><span class="chip">Orchestrate</span></div></div>
+      <div class="cluster"><h4>CDF</h4><div class="chips"><span class="chip">Detect Change</span></div></div>
+      <div class="cluster"><h4>SCD</h4><div class="chips"><span class="chip">Type 1 = Replace</span><span class="chip">Type 2 = Preserve</span></div></div>
+    </div>
+  </section>
+
+  <section class="page p-purple" id="security-access">
+    <div class="page-eyebrow">Comparison + hierarchy</div>
+    <h1>Security &amp; Access Map</h1>
+    <div class="sub">Two questions every secure system asks, then who's allowed to answer them.</div>
+
+    <div class="hflow">
+      <div class="node n-purple">WHO ARE YOU?<small>Authentication</small></div>
+      <div class="arrow-r">≠</div>
+      <div class="node n-purple">WHAT CAN YOU DO?<small>Authorization</small></div>
+    </div>
+
+    <h2 class="section-h">Unity Catalog privilege chain <span class="tag">DEPENDENCY</span></h2>
+    <div class="hflow">
+      <div class="node n-blue">USE CATALOG</div><div class="arrow-r">→</div>
+      <div class="node n-blue">USE SCHEMA</div><div class="arrow-r">→</div>
+      <div class="node n-blue">SELECT (read)</div><div class="arrow-r">→</div>
+      <div class="node n-red">MODIFY (write) — separate, higher privilege</div>
+    </div>
+    <div class="note">All three (catalog + schema + select) are needed just to <i>read</i> one table — permissions aren't a single on/off switch.</div>
+
+    <h2 class="section-h">User vs Service Principal <span class="tag">RUN AS</span></h2>
+    <table class="cmp">
+      <tr><th></th><th>User</th><th>Service Principal</th></tr>
+      <tr><td>Represents</td><td>a human</td><td>an application / automated workload</td></tr>
+      <tr><td>Used for</td><td>interactive work</td><td>pipelines, automation</td></tr>
+      <tr><td>Risk</td><td>if the person leaves, pipelines relying on them break</td><td>independent of any one employee — production standard</td></tr>
+    </table>
+
+    <h2 class="section-h">OAuth vocabulary from ingestion setup <span class="tag">TERMS</span></h2>
+    <div class="cluster-board" style="grid-template-columns:repeat(3,1fr)">
+      <div class="cluster"><h4>Identity</h4><div class="chips"><span class="chip">Client ID</span><span class="chip">Client Secret</span><span class="chip">Credentials</span></div></div>
+      <div class="cluster"><h4>Access</h4><div class="chips"><span class="chip">Access Token</span><span class="chip">Refresh Token</span><span class="chip">Scope</span></div></div>
+      <div class="cluster"><h4>Session</h4><div class="chips"><span class="chip">Session</span><span class="chip">Expiration</span><span class="chip">Permissions</span></div></div>
+    </div>
+
+    <div class="sticky remember" style="width:auto;transform:rotate(0)"><b>Remember</b>Least Privilege: grant only the access a user or service principal actually needs — nothing "just in case."</div>
+  </section>
+
+  <!-- PAGE 8 -->
+  <section class="page p-purple" id="pat-impl">
+    <div class="page-eyebrow">Lifecycle <span class="badge badge-hands">Hands-on implementation</span></div>
+    <h1>PAT — Practical Implementation</h1>
+    <div class="sub">Databricks-side only. This connects Python to a Databricks SQL Warehouse — it never touches Salesforce.</div>
+
+    <div class="flow">
+      <div class="node n-purple">Generate PAT<small>Databricks → Developer / Access Tokens</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-purple">Store in Secret Scope<small>key: <code>databricks-pat</code></small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue"><code class="code-chip">dbutils.secrets.get()</code><small>token never appears in source code</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue"><code class="code-chip">sql.connect()</code><small>server_hostname + http_path + access_token</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-green">Test — <code class="code-chip">SELECT 1</code></div>
+      <div class="arrow">↓</div>
+      <div class="node n-green">Query — <code class="code-chip">workspace.default.account</code></div>
+      <div class="arrow">↓</div>
+      <div class="node n-orange">Modify — <code class="code-chip">UPDATE ... SET Description</code></div>
+      <div class="arrow">↓</div>
+      <div class="node n-green">Verify — re-SELECT the row</div>
+      <div class="arrow">↓</div>
+      <div class="node n-ink"><code class="code-chip">connection.close()</code></div>
+    </div>
+
+    <div class="note"><b>Memory trick from the report:</b> Store → Retrieve → Connect → Execute → Fetch → Verify → Close.</div>
+
+    <h2 class="section-h">Connection parameters <span class="tag">WHO / WHERE / WHICH</span></h2>
+    <table class="cmp">
+      <tr><td>Server Hostname</td><td>WHERE — <code class="code-chip">dbc-xxxx.cloud.databricks.com</code></td></tr>
+      <tr><td>HTTP Path</td><td>WHICH warehouse — <code class="code-chip">/sql/1.0/warehouses/xxxx</code></td></tr>
+      <tr><td>PAT (access_token)</td><td>WHO — the credential itself</td></tr>
+    </table>
+
+    <div class="stickies">
+      <div class="sticky interview"><b>Interview</b>401 → think PAT (invalid/expired). 403 → think permissions. A PAT only works for the one workspace it was created in.</div>
+    </div>
+  </section>
+
+  <section class="page p-purple" id="secrets-rowsec">
+    <div class="page-eyebrow">Lifecycle + mechanism <span class="badge badge-hands">Hands-on implementation</span></div>
+    <h1>Secrets API &amp; Row-Level Security</h1>
+    <div class="sub">Two different security muscles in the same session: managing secrets <i>programmatically</i>, and restricting <i>which rows</i> a query is allowed to see.</div>
+
+    <h2 class="section-h">Storing a secret via the REST API <span class="tag">PROGRAMMATIC, NOT UI</span></h2>
+    <div class="flow">
+      <div class="node n-blue">Python / REST client</div>
+      <div class="arrow">↓</div>
+      <div class="node n-purple">Workspace Host + PAT<small>Authorization: Bearer &lt;PAT&gt;</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-purple">POST <code class="code-chip">/api/2.0/secrets/put</code></div>
+      <div class="arrow">↓</div>
+      <div class="node n-green">Secret Scope → Key → Value<small>scope + key + string_value</small></div>
+    </div>
+    <div class="note"><b>Important distinction:</b> the PAT authenticates the API request — it is not the secret being stored. Two separate credentials doing two separate jobs, same idea as Page "PAT vs Salesforce OAuth."</div>
+
+    <div class="hflow">
+      <div class="node n-blue">Does key already exist?</div>
+      <div class="arrow-r">→</div>
+      <div class="node n-green">YES → Update value</div>
+      <div class="arrow-r">/</div>
+      <div class="node n-orange">NO → Create key/value</div>
+    </div>
+
+    <div class="stickies">
+      <div class="sticky remember"><b>Verify safely</b>Retrieve with <code class="code-chip">dbutils.secrets.get()</code> and check <i>truthiness</i> only — never <code class="code-chip">print(secret_value)</code>, that leaks it into notebook output.</div>
+      <div class="sticky interview"><b>Troubleshooting</b>401 → check PAT validity + Bearer header. 403 → identity is authenticated but lacks scope permission (READ / WRITE / MANAGE). Scope not found → check exact name + workspace.</div>
+    </div>
+
+    <h2 class="section-h">Row Filters <span class="tag">TABLE-LEVEL, NOT QUERY-LEVEL</span></h2>
+    <div class="flow">
+      <div class="node n-blue">TABLE</div>
+      <div class="arrow">↓</div>
+      <div class="node n-purple">ROW FILTER FUNCTION<small>SQL UDF returning BOOLEAN</small></div>
+    </div>
+    <div class="hflow">
+      <div class="node n-green">TRUE → row shown</div>
+      <div class="arrow-r">vs</div>
+      <div class="node n-red">FALSE → row hidden</div>
+    </div>
+
+    <div class="note"><b>The practical build:</b> <code class="code-chip">CREATE FUNCTION department_filter(department STRING) RETURNS BOOLEAN RETURN department = 'IT'</code>, then attach it — <code class="code-chip">ALTER TABLE employee_security_demo SET ROW FILTER department_filter ON (department)</code>. The other rows aren't deleted, they're just excluded from query results.</div>
+
+    <h2 class="section-h">Row Filter vs WHERE clause <span class="tag">SHARPEST DISTINCTION HERE</span></h2>
+    <table class="cmp">
+      <tr><th></th><th>WHERE clause</th><th>ROW FILTER</th></tr>
+      <tr><td>Scope</td><td>That one query only</td><td>Attached to the table itself</td></tr>
+      <tr><td>Bypassable?</td><td>Yes — a plain <code class="code-chip">SELECT *</code> sees everything</td><td>No — applies automatically to every query</td></tr>
+      <tr><td>Removal</td><td>n/a</td><td><code class="code-chip">ALTER TABLE ... DROP ROW FILTER</code> — always before <code class="code-chip">DROP FUNCTION</code></td></tr>
+      <tr><td>Required privileges</td><td>SELECT</td><td>EXECUTE on function + USE SCHEMA + USE CATALOG (row filtering doesn't replace normal table privileges — both are checked)</td></tr>
+    </table>
+
+    <div class="sticky why" style="width:auto;transform:rotate(0)"><b>Why this matters</b>A WHERE clause is a promise the query makes. A ROW FILTER is a promise the <i>table</i> makes — it can't be bypassed just by writing a different query. Made user-aware with <code class="code-chip">CURRENT_USER()</code>, this becomes real fine-grained access control: admin sees all rows, an IT user sees only IT rows, and so on.</div>
+
+    <div class="qa-grid">
+      <div class="qa"><div class="q">Does a row filter delete rows?</div><div class="a">No — it restricts which rows are returned. The underlying data is untouched.</div></div>
+      <div class="qa"><div class="q">Why remove the row filter before the function?</div><div class="a">Dropping the function first can leave an orphaned filter reference and make the table inaccessible — always DROP ROW FILTER, then DROP FUNCTION.</div></div>
+    </div>
+  </section>
+
+  <section class="page p-purple" id="pat-vs-oauth">
+    <div class="page-eyebrow">Sharpest trap in the whole report</div>
+    <h1>PAT vs Salesforce OAuth — Two Different Doors</h1>
+    <div class="sub">The most common conceptual mistake, straight from the report: thinking a Databricks PAT will also authenticate to Salesforce. It won't.</div>
+
+    <div class="hflow">
+      <div class="node n-purple">DOOR 1 — DATABRICKS<small>PAT → Databricks resources</small></div>
+      <div class="arrow-r">✗ not interchangeable ✗</div>
+      <div class="node n-purple">DOOR 2 — SALESFORCE<small>OAuth 2.0 Client Credentials → Salesforce REST API</small></div>
+    </div>
+
+    <table class="cmp">
+      <tr><th>Feature</th><th>Databricks PAT</th><th>Salesforce OAuth (write-back)</th></tr>
+      <tr><td>Authenticates</td><td>Databricks</td><td>Salesforce</td></tr>
+      <tr><td>Purpose</td><td>Workspace / SQL Warehouse access</td><td>Calling the Salesforce REST API</td></tr>
+      <tr><td>Credential store</td><td>Secret scope, key <code class="code-chip">databricks-pat</code></td><td>Secret scope <code class="code-chip">salesforce-training</code>, keys <code class="code-chip">client_id</code>/<code class="code-chip">client_secret</code></td></tr>
+      <tr><td>Can reach Salesforce?</td><td>❌ No</td><td>✅ Yes</td></tr>
+      <tr><td>Can reach Databricks?</td><td>✅ Yes</td><td>❌ No</td></tr>
+      <tr><td>Databricks' own recommendation</td><td>Legacy — migrate to OAuth where possible</td><td>—</td></tr>
+    </table>
+
+    <div class="sticky remember" style="width:auto;transform:rotate(0);margin:16px 0"><b>Memory trick</b>PAT talks to Databricks. OAuth talks to Salesforce. Two systems, two doors, two separate credentials.</div>
+
+    <div class="qa-grid">
+      <div class="qa"><div class="q">Could the write-back have used a PAT instead of Salesforce OAuth?</div><div class="a">No — a PAT would only add another authentication layer on the Databricks side. Salesforce's REST API doesn't recognize a Databricks PAT at all.</div></div>
+      <div class="qa"><div class="q">Where does the PAT sit in the full write-back architecture?</div><div class="a">Only if an external application needs to authenticate <i>to Databricks</i> first — it never replaces the Salesforce OAuth step.</div></div>
+    </div>
+  </section>
+
+  <!-- PAGE 10 -->
+  <section class="page p-purple" id="ingestion-writeback">
+    <div class="page-eyebrow">Direction map <span class="badge badge-hands">Hands-on implementation</span></div>
+    <h1>Salesforce Integration — Ingestion vs Write-Back</h1>
+    <div class="sub">Same record, two completely separate authentication flows, moving in opposite directions.</div>
+
+    <div class="two-col">
+      <div>
+        <div class="col-head ingest">← INGESTION (Salesforce → Databricks)</div>
+        <div class="flow">
+          <div class="node n-purple">Salesforce<small>login + user consent</small></div>
+          <div class="arrow">↓</div>
+          <div class="node n-purple">OAuth — Access + Refresh Token</div>
+          <div class="arrow">↓</div>
+          <div class="node n-green">Lakeflow Connect<small>Account, Contact, Lead…</small></div>
+          <div class="arrow">↓</div>
+          <div class="node n-ink">Delta table<small>main.salesforce.account</small></div>
+        </div>
+      </div>
+      <div>
+        <div class="col-head writeback">WRITE-BACK (Databricks → Salesforce) →</div>
+        <div class="flow">
+          <div class="node n-ink">workspace.default.account<small>SQL UPDATE Description</small></div>
+          <div class="arrow">↓</div>
+          <div class="node n-blue"><code class="code-chip">spark.sql()</code> reads changed row</div>
+          <div class="arrow">↓</div>
+          <div class="node n-purple">OAuth 2.0 — Client Credentials Flow<small>External Client App · Run As user</small></div>
+          <div class="arrow">↓</div>
+          <div class="node n-purple">PATCH /sobjects/Account/&#123;id&#125;<small>only changed fields sent</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note" style="text-align:center"><b>The bridge between both systems:</b> the same Salesforce Record <code class="code-chip">Id</code> (e.g. <code class="code-chip">001XXXXXXXXXXXXXXX</code>) exists in both the Databricks table and the Salesforce record — without it, Salesforce has no way to know which record to update.</div>
+
+    <div class="stickies">
+      <div class="sticky remember"><b>Remember</b>Changing the Databricks table does NOT auto-change Salesforce. It's a separate, explicit API call.</div>
+      <div class="sticky interview"><b>Interview</b>Why send only the changed field, not the whole record? — PATCH updates just the fields provided; everything else stays untouched.</div>
+      <div class="sticky why"><b>Status codes</b>200 = read OK · 204 = update OK, no content · 401 = bad/expired token · 403 = valid token, no permission · 404 = wrong endpoint/object/id</div>
+    </div>
+  </section>
+
+  <!-- PAGE 11 -->
+  <section class="page p-mixed" id="e2e-architecture">
+    <div class="page-eyebrow">Architecture</div>
+    <h1>End-to-End Architecture</h1>
+    <div class="sub">Everything from Page 1 through Page 10, drawn as one system.</div>
+
+    <div class="flow">
+      <div class="node n-purple">SALESFORCE</div>
+      <div class="arrow">↓ OAuth (ingestion)</div>
+      <div class="node n-green">LAKEFLOW PIPELINE<small>Full / Incremental refresh · Scheduled</small></div>
+      <div class="arrow">↓</div>
+    </div>
+    <div class="hflow">
+      <div class="node n-orange">SQL</div>
+      <div class="arrow-r">↔</div>
+      <div class="node n-blue">SPARK<small>Driver · Executors · DAG</small></div>
+      <div class="arrow-r">↔</div>
+      <div class="node n-ink">DELTA TABLES</div>
+    </div>
+    <div class="flow">
+      <div class="arrow">↓</div>
+      <div class="node n-red">BRONZE</div>
+      <div class="arrow">↓ clean</div>
+      <div class="node n-orange">SILVER</div>
+      <div class="arrow">↓ aggregate</div>
+      <div class="node n-green">GOLD</div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">SQL ANALYTICS / DASHBOARDS</div>
+      <div class="arrow">↓ a record needs correcting</div>
+      <div class="node n-orange">SQL UPDATE on Databricks table</div>
+      <div class="arrow">↓ authenticate the write-back</div>
+    </div>
+    <div class="hflow">
+      <div class="node n-purple">PAT<small>(if an external app needs Databricks access)</small></div>
+      <div class="arrow-r">+</div>
+      <div class="node n-purple">Salesforce OAuth Client Credentials<small>(actually reaches Salesforce)</small></div>
+    </div>
+    <div class="flow">
+      <div class="arrow">↓</div>
+      <div class="node n-ink">SALESFORCE RECORD UPDATED</div>
+    </div>
+
+    <div class="note" style="margin-top:20px"><b>Governing this whole diagram:</b> Users &amp; Service Principals (who can run what) · Unity Catalog privileges (who can read/write which table) · Least Privilege throughout.</div>
+  </section>
+
+  <section class="page p-red" id="project">
+    <div class="page-eyebrow">Mentor project <span class="badge badge-progress">In progress</span></div>
+    <h1>My Project — Salesforce Lead Anomaly Detection</h1>
+    <div class="sub">The project my mentor assigned, tying together everything above: Salesforce ⇄ Databricks, Medallion architecture, feature engineering, and a rule-based scoring engine. Think of it as a Lead Quality Detective — Salesforce hands over raw Leads, Databricks investigates them, and the verdict goes back to Salesforce.</div>
+
+    <h2 class="section-h">The complete journey <span class="tag">MASTER FLOW</span></h2>
+    <div class="flow">
+      <div class="node n-purple">SALESFORCE<small>raw Leads</small></div>
+      <div class="arrow">↓ ingestion</div>
+      <div class="node n-green">BRONZE<small>"don't mess with the evidence" — raw + ingestion_timestamp</small></div>
+      <div class="arrow">↓ clean &amp; investigate</div>
+      <div class="node n-orange">SILVER<small>standardize email/phone/country · handle missing · dedupe</small></div>
+      <div class="arrow">↓ turn data into signals</div>
+      <div class="node n-blue">FEATURE ENGINEERING<small>email valid? phone valid? completeness% · duplicate?</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-yellow">GOLD<small>final Lead intelligence table</small></div>
+      <div class="arrow">↓ how genuine is this?</div>
+      <div class="node n-purple">LEAD SCORING<small>rule-based, 0–100</small></div>
+      <div class="arrow">↓</div>
+    </div>
+    <div class="hflow">
+      <div class="node n-green">🟢 GENUINE<small>80–100</small></div>
+      <div class="node n-yellow">🟡 SUSPICIOUS<small>50–79</small></div>
+      <div class="node n-red">🔴 ANOMALOUS<small>0–49</small></div>
+    </div>
+    <div class="flow">
+      <div class="arrow">↓ write back</div>
+      <div class="node n-ink">DATABRICKS → SALESFORCE<small>update the SAME Lead</small></div>
+    </div>
+
+    <div class="note"><b>The bridge, again:</b> <code class="code-chip">Salesforce Lead Id</code> (e.g. <code class="code-chip">00Q123ABC</code>) is captured at ingestion and carried through every layer untouched — Bronze, Silver, Gold — because after Databricks decides "this Lead is Suspicious, score 67," it has to know exactly which Salesforce record to update.</div>
+
+    <h2 class="section-h">Full load vs Incremental load <span class="tag">ETL CONCEPT, APPLIED</span></h2>
+    <div class="hflow">
+      <div class="node n-blue">FULL LOAD<small>bring everything, every run</small></div>
+      <div class="arrow-r">vs</div>
+      <div class="node n-green">INCREMENTAL LOAD<small>bring only new/changed Leads</small></div>
+    </div>
+    <div class="note">For v1 of this project both are understood, but the first version won't over-complicate this — full load first, incremental later.</div>
+
+    <h2 class="section-h">The scoring engine <span class="tag">TRANSPARENT, RULE-BASED — NOT ML YET</span></h2>
+    <table class="cmp">
+      <tr><th>Signal</th><th>Points</th></tr>
+      <tr><td>Email validity</td><td>20</td></tr>
+      <tr><td>Phone validity</td><td>10</td></tr>
+      <tr><td>Company information present</td><td>15</td></tr>
+      <tr><td>Revenue consistency</td><td>15</td></tr>
+      <tr><td>Employee count consistency</td><td>10</td></tr>
+      <tr><td>Lead Source quality</td><td>10</td></tr>
+      <tr><td>Required-field completeness</td><td>10</td></tr>
+      <tr><td>No duplicate/suspicious signals</td><td>10</td></tr>
+      <tr><td><b>Total</b></td><td><b>100</b></td></tr>
+    </table>
+    <div class="sticky why" style="width:auto;transform:rotate(0)"><b>Why rule-based first?</b> A transparent, explainable scoring system is genuinely good engineering practice before reaching for ML — every score can be justified signal-by-signal, which matters a lot when Salesforce users start asking "why is this Lead marked Anomalous?"</div>
+
+    <h2 class="section-h">Write-back: new custom fields on the Salesforce Lead <span class="tag">UPDATE, NEVER CREATE</span></h2>
+    <div class="hflow">
+      <div class="node n-purple">Lead_Genuine_Score__c</div>
+      <div class="node n-red">Lead_Anomaly_Score__c</div>
+      <div class="node n-yellow">Lead_Quality__c</div>
+    </div>
+    <div class="note">Write-back uses the Python <code class="code-chip">simple-salesforce</code> library. Rule to remember: ❌ never create new Leads, ✅ only update existing ones — then conditional formatting on <code class="code-chip">Lead_Quality__c</code> makes 🟢🟡🔴 visible directly in the Salesforce UI, so nobody has to open Databricks to judge a Lead.</div>
+
+    <h2 class="section-h">Build order — 12 phases <span class="tag">ROADMAP</span></h2>
+    <div class="cluster-board" style="grid-template-columns:repeat(4,1fr)">
+      <div class="cluster"><h4>1–3</h4><div class="chips"><span class="chip">Prep Salesforce fields</span><span class="chip">Connect DBX Free Edition</span><span class="chip">Ingest Leads</span></div></div>
+      <div class="cluster"><h4>4–6</h4><div class="chips"><span class="chip">Build Bronze</span><span class="chip">Build Silver</span><span class="chip">Engineer features</span></div></div>
+      <div class="cluster"><h4>7–9</h4><div class="chips"><span class="chip">Build Gold</span><span class="chip">Scoring logic</span><span class="chip">Classify Leads</span></div></div>
+      <div class="cluster"><h4>10–12</h4><div class="chips"><span class="chip">Salesforce update code</span><span class="chip">Update existing Leads</span><span class="chip">Conditional formatting</span></div></div>
+    </div>
+
+    <div class="qa-grid">
+      <div class="qa"><div class="q">Why does the pipeline never create new Salesforce Leads?</div><div class="a">The project's job is to score and classify Leads that already exist in Salesforce — creating new ones would duplicate data the sales team already owns.</div></div>
+      <div class="qa"><div class="q">What keeps Genuine Score and Anomaly Score in sync?</div><div class="a">They're two views of the same underlying signal set — high genuine-quality signals push the score toward Genuine, and the same weighted signals in reverse push toward Anomalous.</div></div>
+    </div>
+    <div class="note" style="text-align:center">📝 This section updates as each phase gets implemented — next up: <i>[fill in current phase]</i>.</div>
+  </section>
+
+  <div class="academy-intro">
+    <div class="cap">🎓</div>
+    <div class="academy-intro-text">
+      <h2>Databricks Partner Academy</h2>
+      <p>Self-paced coursework, tracked separately from the mentor-led sessions above. Dark cards = academy zone, on purpose — so it's obvious at a glance this is a different track, still in progress, not yet folded into "what I actually know."</p>
+    </div>
+  </div>
+
+  <section class="page academy" id="course-1">
+    <div class="page-eyebrow"><span class="module-badge">COURSE 1</span> Data Engineering fundamentals</div>
+    <h1>Get Started with Databricks for Data Engineering</h1>
+    <div class="course-progress">● IN PROGRESS</div>
+    <div class="sub" style="margin-top:10px">Delta Lake's version history, a looser take on Medallion Architecture than I first learned it, and the governance features sitting on top of every table.</div>
+
+    <h2 class="section-h">Delta Lake versioning &amp; Time Travel</h2>
+    <div class="flow">
+      <div class="node n-blue">Version 0<small>CREATE TABLE</small></div>
+      <div class="arrow">↓ every DML/DDL adds an entry</div>
+      <div class="node n-blue">Version 1, 2, 3…<small>INSERT / UPDATE / DELETE / MERGE / ALTER</small></div>
+    </div>
+    <div class="note">The transaction log records operation type, timestamp, user, and which data files changed. Normal queries always read the latest version; <code class="code-chip">VERSION AS OF</code> / <code class="code-chip">TIMESTAMP AS OF</code> (or shorthand <code class="code-chip">@v1</code>) read a specific past version. Old versions live for the retention window (default 30 days) until <code class="code-chip">VACUUM</code> cleans them up.</div>
+
+    <table class="cmp">
+      <tr><th>Use case</th><th>How Time Travel helps</th></tr>
+      <tr><td>Auditing</td><td>Prove exactly what changed, when, and who did it</td></tr>
+      <tr><td>Debugging</td><td>Compare current version to yesterday's to find a bad write</td></tr>
+      <tr><td>Recovery</td><td>Query the version before an accidental delete, restore from it</td></tr>
+    </table>
+
+    <h2 class="section-h">Medallion architecture — the less rigid version</h2>
+    <div class="note">Multiple Gold tables often share the same Silver tables. The pattern isn't fixed: some teams add a <b>Platinum</b> layer for ML features, others skip Gold and let analysts query Silver directly. The core principle stays constant regardless: separate raw ingestion → transformation → consumption. Bronze/Silver are shared infrastructure; Gold tables are usually built for one specific team, dashboard, or report.</div>
+
+    <h2 class="section-h">Data governance features</h2>
+    <div class="cluster-board" style="grid-template-columns:repeat(3,1fr)">
+      <div class="cluster"><h4>Lineage</h4><div class="chips"><span class="chip">Trace Gold back to source</span><span class="chip">notebooks → tables → files</span></div></div>
+      <div class="cluster"><h4>Permissions</h4><div class="chips"><span class="chip">SELECT / MODIFY / manage</span><span class="chip">analysts: Gold only, not Bronze</span></div></div>
+      <div class="cluster"><h4>Insights</h4><div class="chips"><span class="chip">Who's querying what</span><span class="chip">how often, what kind</span></div></div>
+    </div>
+
+    <h2 class="section-h">Loose ends worth remembering</h2>
+    <div class="stickies">
+      <div class="sticky remember"><b>CSV read options</b><code style="font-size:10.5px">format=&gt;'csv'</code>, <code style="font-size:10.5px">header=&gt;true</code>, <code style="font-size:10.5px">inferSchema=&gt;true</code></div>
+      <div class="sticky why"><b>STREAM keyword</b>Tells SDP (Spark Declarative Pipelines) to track which files were already processed — same idea as COPY INTO, but fully managed.</div>
+    </div>
+  </section>
+
+  <section class="page academy" id="course-2">
+    <div class="page-eyebrow"><span class="module-badge">COURSE 2</span> Python + a full capstone</div>
+    <h1>Python for Data Science and Data Engineering</h1>
+    <div class="course-progress">● IN PROGRESS</div>
+    <div class="sub" style="margin-top:10px">Started with Python fundamentals, then the course threw a proper capstone at me — BrightCart — that ties Salesforce security, Unity Catalog row filters, and a genuinely humbling lesson about what a dashboard dropdown can and can't do.</div>
+
+    <h2 class="section-h">Python collections — which one, when <span class="tag">FOUNDATIONS</span></h2>
+    <table class="cmp">
+      <tr><th>Type</th><th>Mutable?</th><th>Ordered?</th><th>Duplicates?</th><th>Use when</th></tr>
+      <tr><td><code class="code-chip">list</code></td><td>✅</td><td>✅</td><td>✅</td><td>ordered, changeable collection</td></tr>
+      <tr><td><code class="code-chip">tuple</code></td><td>❌</td><td>✅</td><td>✅</td><td>fixed record, returning multiple values, unpacking</td></tr>
+      <tr><td><code class="code-chip">set</code></td><td>✅</td><td>❌</td><td>❌</td><td>uniqueness matters</td></tr>
+      <tr><td><code class="code-chip">dict</code></td><td>✅</td><td>✅ (insertion)</td><td>keys unique</td><td>API/JSON work — the one I use constantly</td></tr>
+    </table>
+    <div class="note"><b>Tuple unpacking, worth remembering:</b> <code class="code-chip">lead_id, lead_name, lead_score = lead_record</code> — cleaner than indexing <code class="code-chip">lead_record[0]</code>, <code class="code-chip">[1]</code>, <code class="code-chip">[2]</code> one by one.</div>
+
+    <h2 class="section-h">Capstone: BrightCart <span class="tag">SALESFORCE SECURITY + MEDALLION + WRITE-BACK</span></h2>
+    <div class="note">The scenario: BrightCart sells through Salesforce. Regional sales managers can't see their own region's performance, and stale Leads need flagging back in Salesforce automatically. My job — pull 4 Salesforce objects in, secure it properly, refine Bronze→Silver→Gold, dashboard on top, push one field back.</div>
+
+    <div class="flow">
+      <div class="node n-purple">SALESFORCE<small>Account · Contact · Opportunity · Lead</small></div>
+      <div class="arrow">↓ security token + secret scope</div>
+      <div class="node n-red">BRONZE<small>bronze.sf_* — raw, +_ingested_at only</small></div>
+      <div class="arrow">↓ filter junk, dedupe, standardize, derive Region</div>
+      <div class="node n-orange">SILVER<small>silver.account/contact/opportunity/lead</small></div>
+      <div class="arrow">↓ groupBy(Region)</div>
+      <div class="node n-green">GOLD<small>gold.sales_summary — Won Amount, Win Rate, Open Pipeline, Lead Conversion</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">DASHBOARD<small>region filter + row-level security</small></div>
+      <div class="arrow">↓ Lead_Score__c / Is_Stale__c</div>
+      <div class="node n-ink">SALESFORCE LEAD — updated</div>
+    </div>
+
+    <h2 class="section-h">Why a security token on top of a password? <span class="tag">SELF-ANSWERED</span></h2>
+    <div class="note">A username + password authenticates the Salesforce user. The security token is an extra verification factor for API access — especially useful when the request comes from an untrusted network, which a Databricks notebook technically is from Salesforce's point of view. All three (username, password, token) go in a Secret Scope; none in the notebook.</div>
+
+    <h2 class="section-h">Roles, enforced at the table — not the dashboard <span class="tag">UNITY CATALOG GROUPS</span></h2>
+    <table class="cmp">
+      <tr><th>Role</th><th>Can view</th><th>Can edit</th><th>Restriction</th></tr>
+      <tr><td><code class="code-chip">data_engineer</code></td><td>Bronze + Silver</td><td>Yes</td><td>None — not given Gold access, not needed for the role</td></tr>
+      <tr><td><code class="code-chip">analyst</code></td><td>Gold</td><td>No</td><td>All regions</td></tr>
+      <tr><td><code class="code-chip">sales_manager</code></td><td>Gold</td><td>No</td><td>Own region only — row filter on <code class="code-chip">Region</code></td></tr>
+    </table>
+    <div class="note">Unity Catalog privileges are hierarchical: catalog → schema → table. A group needs <code class="code-chip">USE CATALOG</code> + <code class="code-chip">USE SCHEMA</code> + the relevant privilege at each level — access isn't a single grant, it's a chain. <code class="code-chip">Region</code> is derived from <code class="code-chip">BillingState</code> in Silver, since row-level security only makes sense once Region actually exists on the data.</div>
+
+    <h2 class="section-h">The best lesson in the whole capstone <span class="tag">DASHBOARD PARAMETER ≠ USER IDENTITY</span></h2>
+    <div class="note"><b>What went wrong first:</b> I built a Role dropdown (Sales Manager / Analyst / Data Engineer) on top of the real, row-filtered <code class="code-chip">gold.sales_summary</code> table. Selecting "Analyst" in the dropdown didn't change anything — the table still only returned South-region rows, because the row filter evaluates <code class="code-chip">CURRENT_USER()</code>, and the actual logged-in user was still the Sales Manager account. The dropdown is just a UI control; it has zero effect on who Unity Catalog thinks is asking.</div>
+    <div class="hflow">
+      <div class="node n-red">gold.sales_summary<small>row filter ON — real security</small></div>
+      <div class="arrow-r">vs</div>
+      <div class="node n-green">gold.sales_summary_dashboard<small>row filter OFF — a plain copy, for demoing role switching</small></div>
+    </div>
+    <div class="note"><b>The fix:</b> temporarily <code class="code-chip">DROP ROW FILTER</code>, <code class="code-chip">CREATE TABLE ... AS SELECT * FROM sales_summary</code> to snapshot an unfiltered copy, then immediately <code class="code-chip">SET ROW FILTER</code> back on the original. The dashboard points at the unfiltered copy and simulates roles with its own dropdown; the real table stays genuinely secured the whole time. Two tables, two jobs — one is truth, one is a demo.</div>
+    <div class="sticky interview" style="width:auto;transform:rotate(0)"><b>One sentence for an interview</b>Dashboard controls should never be confused with data-layer security — the real access control has to be enforced at the table with Unity Catalog row filtering, not trusted to a dropdown in the BI tool.</div>
+
+    <h2 class="section-h">Write-back: one field, nothing else <span class="tag">SIMPLE-SALESFORCE .UPDATE()</span></h2>
+    <div class="note"><code class="code-chip">Lead_Score__c = 3</code> if <code class="code-chip">LeadSource = 'Web'</code> and <code class="code-chip">Status = 'Open'</code>, else <code class="code-chip">1</code> — <code class="code-chip">lower()</code> + <code class="code-chip">trim()</code> first so "Web"/"web"/"WEB" all match. Verify the Lead IDs exist in Salesforce before writing, update just that one field via <code class="code-chip">.update()</code>, then check the change actually landed by opening the Lead in Salesforce itself.</div>
+
+    <div class="qa-grid">
+      <div class="qa"><div class="q">Why did switching the dashboard Role dropdown not change the data?</div><div class="a">Because the row filter checks the real authenticated Databricks user via CURRENT_USER(), not a UI parameter — a dashboard control can't impersonate a different identity.</div></div>
+      <div class="qa"><div class="q">Why not just drop the row filter permanently to make the demo easier?</div><div class="a">That defeats the assignment's actual requirement — sales managers must only see their own region. The unfiltered copy exists purely for simulation; the production table stays protected.</div></div>
+    </div>
+  </section>
+
+  <section class="page academy" id="course-3">
+    <div class="page-eyebrow"><span class="module-badge">COURSE 3</span> Generative AI on Databricks</div>
+    <h1>Get Started with Databricks for Generative AI</h1>
+    <div class="course-progress">● JUST STARTED</div>
+    <div class="sub" style="margin-top:10px">Module 1–2 plus a hands-on ML detour — how Databricks thinks about RAG, Vector Search, prompting, and the basic ML vocabulary underneath all of it.</div>
+
+    <h2 class="section-h">Module 1 — the shape of the problem <span class="tag">RAG · VECTOR SEARCH · MOSAIC AI</span></h2>
+    <div class="flow">
+      <div class="node n-blue">Question</div>
+      <div class="arrow">↓ instead of asking the LLM directly</div>
+      <div class="node n-green">Retrieve relevant context<small>Vector Search</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-orange">Prompt<small>context + instructions</small></div>
+      <div class="arrow">↓</div>
+      <div class="node n-ink">LLM → Answer</div>
+    </div>
+    <div class="note"><b>RAG = Retrieval-Augmented Generation.</b> An LLM doesn't know my company's Leads, policies, or tickets — RAG retrieves the relevant piece first, then hands it to the model as context. Vector Search finds by <i>meaning</i>, not exact words — "find content about unusual customer behavior" matches a document that never says the word "unusual," which keyword search would miss entirely.</div>
+    <div class="note"><b>Mosaic AI ≠ one LLM.</b> It's Databricks' umbrella for Model development, Model Serving, Vector Search, Agent Framework, MLflow for GenAI, evaluation, AI Gateway, and Agent Bricks — governed underneath by the same Unity Catalog I already use for tables.</div>
+
+    <h2 class="section-h">Module 2 — Prompt Engineering <span class="tag">HOW THE MODEL USES WHAT IT'S GIVEN</span></h2>
+    <table class="cmp">
+      <tr><th>Term</th><th>Meaning</th></tr>
+      <tr><td>Zero-shot</td><td>Task, no examples</td></tr>
+      <tr><td>Few-shot</td><td>Task + examples</td></tr>
+      <tr><td>Temperature</td><td>Controls output randomness/variability</td></tr>
+      <tr><td>AI Playground</td><td>Rapid experimentation before wiring a prompt into an app</td></tr>
+    </table>
+    <div class="note"><b>Vector Search vs Prompt Engineering</b> — Vector Search answers "what information should I retrieve?" Prompt Engineering answers "how should the model use that information?" The LLM just generates the response; Evaluation decides if that response was actually good.</div>
+    <div class="sticky why" style="width:auto;transform:rotate(0)"><b>Tied to my own project</b>If I built an assistant on top of Lead Anomaly Detection: user asks "why was Lead 10045 flagged?" → Vector Search retrieves that Lead's engagement/conversion numbers + the company policy on stale high-engagement leads → prompt says "use only the supplied context, don't invent information, cite the strongest indicator" → LLM explains it. That's a real GenAI architecture, not a chatbot demo.</div>
+    <div class="note"><b>Hallucinations:</b> a confident-sounding answer that isn't actually supported by the retrieved context. A good prompt reduces this risk (supplied-context-only instructions, retrieval, evaluation, guardrails) but does <b>not</b> eliminate it on its own.</div>
+
+    <h2 class="section-h">Vector Search internals <span class="tag">WHERE DO EMBEDDINGS COME FROM?</span></h2>
+    <table class="cmp">
+      <tr><th>Option</th><th>Who computes the embeddings</th></tr>
+      <tr><td>Databricks-managed</td><td>Databricks computes them from a Delta table; index stays synced automatically — easiest starting point</td></tr>
+      <tr><td>Self-managed</td><td>I provide pre-computed embeddings; can't later convert to managed without recomputing</td></tr>
+      <tr><td>Direct Vector Access</td><td>I manually update the index via REST API — know it exists, not needed yet</td></tr>
+      <tr><td>Full-text (BM25)</td><td>Keyword-based, no embeddings — best when exact terms/IDs matter more than meaning</td></tr>
+    </table>
+    <div class="note"><b>Index vs Endpoint:</b> the Index is the searchable representation built from a Delta table (governed by Unity Catalog); the Endpoint is the serving layer I actually query. Think Index = prepared data, Endpoint = the service that lets me reach it.</div>
+
+    <h2 class="section-h">Detour: AI/ML basics <span class="tag">BEFORE THE HANDS-ON PROJECT</span></h2>
+    <div class="hflow">
+      <div class="node n-blue">AI<small>the broad field</small></div>
+      <div class="arrow-r">⊃</div>
+      <div class="node n-green">ML<small>learns patterns from data</small></div>
+      <div class="arrow-r">⊃</div>
+      <div class="node n-orange">Deep Learning<small>multi-layer neural nets</small></div>
+    </div>
+    <table class="cmp">
+      <tr><th></th><th>Supervised</th><th>Unsupervised</th></tr>
+      <tr><td>Has a known answer?</td><td>Yes — "I have the answer"</td><td>No — "find the pattern yourself"</td></tr>
+      <tr><td>Example</td><td>Predict churn from labeled history</td><td>Group customers by behavior (clustering)</td></tr>
+      <tr><td>Two problem types</td><td>Classification (category) / Regression (number)</td><td>—</td></tr>
+    </table>
+    <div class="cluster-board" style="grid-template-columns:repeat(2,1fr)">
+      <div class="cluster"><h4>Feature</h4><div class="chips"><span class="chip">Input the model learns from</span><span class="chip">tenure, spend, tickets…</span></div></div>
+      <div class="cluster"><h4>Target</h4><div class="chips"><span class="chip">What's being predicted</span><span class="chip">churned</span></div></div>
+    </div>
+    <div class="note"><b>Training vs Inference</b> — <code class="code-chip">model = rf.fit(train_df)</code> is training (the model learns). <code class="code-chip">predictions = model.transform(test_df)</code> is inference (the model applies what it learned to new data). An <b>epoch</b> is one full pass through the training data — not the same as one record. <b>Loss</b> tells the model how wrong a prediction was; training tries to shrink it.</div>
+
+    <h2 class="section-h">Hands-on: Random Forest customer churn <span class="tag">FIRST REAL ML BUILD</span></h2>
+    <div class="flow">
+      <div class="node n-blue">Features (X)<small>tenure, monthly_spend, support_tickets, days_since_last_login, payment_delays</small></div>
+      <div class="arrow">↓ VectorAssembler</div>
+      <div class="node n-orange">Single feature vector</div>
+      <div class="arrow">↓ 75:25 split, seed=42 for reproducibility</div>
+      <div class="node n-green">Train set → RandomForestClassifier(numTrees=20)</div>
+      <div class="arrow">↓ .transform() on the held-out 25%</div>
+      <div class="node n-ink">Predictions vs actual churned (y)</div>
+    </div>
+    <div class="note">Accuracy came back 1.0 on a 3-record test set — a fact worth stating honestly, not celebrating: <b>useful for understanding the workflow, not a real performance number</b> on a dataset that small. <code class="code-chip">tenure_months</code> and <code class="code-chip">payment_delays</code> carried the most feature importance; <code class="code-chip">monthly_spend</code> and <code class="code-chip">support_tickets</code> contributed nothing in this particular run — importance says what the model leaned on, not what causes churn.</div>
+
+    <h2 class="section-h">Why Random <i>Forest</i>, not one Decision Tree <span class="tag">WISDOM OF THE CROWD</span></h2>
+    <div class="note">A single Decision Tree asks a sequence of yes/no questions ("payment_delays &gt; 2?") that split customers into purer and purer groups, using an impurity measure like Gini to judge how good a split is. One tree can overfit to its particular training data. Random Forest trains many trees (here, 20), each seeing a different random sample of data and features, then lets them <b>vote</b> — the same reason you'd rather ask 20 people than 1 before trusting a judgment call.</div>
+    <div class="sticky remember" style="width:auto;transform:rotate(0)"><b>Three-line summary</b>Decision Tree = one tree making decisions. Random Forest = many trees making decisions. Random = the trees are deliberately built differently so they don't all make the same mistake.</div>
+  </section>
+
+  <section class="page p-yellow" id="interview-recall">
+    <div class="page-eyebrow">Memory board</div>
+    <h1>Interview Rapid Recall</h1>
+    <div class="sub">Keyword clusters, then the exact questions the report itself flags as important.</div>
+
+    <div class="cluster-board">
+      <div class="cluster"><h4 style="color:var(--blue)">Platform</h4><div class="chips">
+        <span class="chip">Workspace</span><span class="chip">Catalog</span><span class="chip">Schema</span><span class="chip">Table</span><span class="chip">Compute</span><span class="chip">Serverless</span><span class="chip">Notebook</span>
+      </div></div>
+      <div class="cluster"><h4 style="color:var(--orange)">SQL</h4><div class="chips">
+        <span class="chip">JOIN</span><span class="chip">GROUP BY</span><span class="chip">HAVING</span><span class="chip">CTE</span><span class="chip">Subquery</span><span class="chip">View</span><span class="chip">Window</span><span class="chip">ROW_NUMBER</span><span class="chip">RANK</span><span class="chip">DENSE_RANK</span>
+      </div></div>
+      <div class="cluster"><h4 style="color:var(--blue)">Spark</h4><div class="chips">
+        <span class="chip">Driver</span><span class="chip">Executor</span><span class="chip">Worker</span><span class="chip">Cluster Manager</span><span class="chip">DAG</span><span class="chip">Job</span><span class="chip">Stage</span><span class="chip">Task</span><span class="chip">Partition</span><span class="chip">Shuffle</span><span class="chip">Lazy Evaluation</span>
+      </div></div>
+      <div class="cluster"><h4 style="color:var(--green)">Data Engineering</h4><div class="chips">
+        <span class="chip">Ingestion</span><span class="chip">Lakeflow</span><span class="chip">Bronze</span><span class="chip">Silver</span><span class="chip">Gold</span><span class="chip">Full Refresh</span><span class="chip">Incremental</span><span class="chip">Orchestration</span><span class="chip">Jobs</span>
+      </div></div>
+      <div class="cluster"><h4 style="color:var(--purple)">Security</h4><div class="chips">
+        <span class="chip">Authentication</span><span class="chip">Authorization</span><span class="chip">PAT</span><span class="chip">OAuth</span><span class="chip">Access Token</span><span class="chip">Refresh Token</span><span class="chip">Scope</span><span class="chip">Service Principal</span><span class="chip">Least Privilege</span>
+      </div></div>
+      <div class="cluster"><h4 style="color:var(--purple)">Integration</h4><div class="chips">
+        <span class="chip">REST API</span><span class="chip">Client Credentials Flow</span><span class="chip">Run As</span><span class="chip">sObject</span><span class="chip">PATCH</span><span class="chip">GET/POST/PATCH/DELETE</span>
+      </div></div>
+    </div>
+
+    <h2 class="section-h">If interviewer asks… <span class="tag">FLASHCARDS</span></h2>
+    <div class="qa-grid">
+      <div class="qa"><div class="q">What is lazy evaluation?</div><div class="a">Transformations aren't executed immediately; Spark builds an execution plan and runs it only when an action is triggered.</div></div>
+      <div class="qa"><div class="q">PAT vs OAuth?</div><div class="a">PAT authenticates to Databricks only. Salesforce OAuth (Client Credentials Flow) is a separate credential that authenticates to Salesforce. They are not interchangeable.</div></div>
+      <div class="qa"><div class="q">Bronze vs Silver vs Gold?</div><div class="a">Bronze preserves raw ingested data as-is. Silver holds cleaned/validated data. Gold is aggregated, business-ready data for reporting.</div></div>
+      <div class="qa"><div class="q">WHERE vs HAVING?</div><div class="a">WHERE filters individual rows before grouping and can't use aggregates directly. HAVING filters grouped results after GROUP BY.</div></div>
+      <div class="qa"><div class="q">CTE vs Subquery vs View?</div><div class="a">Subquery — one-off, nested. CTE — readable, multi-step, still temporary. View — saved query, reusable across reports/dashboards.</div></div>
+      <div class="qa"><div class="q">Why Service Principal over User for pipelines?</div><div class="a">A pipeline tied to a person's account breaks if that person loses access or leaves. A service principal is an independent, dedicated identity for automation.</div></div>
+      <div class="qa"><div class="q">Authentication vs Authorization?</div><div class="a">Authentication answers "who are you?" Authorization answers "what are you allowed to do?" A valid token (auth) can still get a 403 (authz) if permissions are missing.</div></div>
+      <div class="qa"><div class="q">Why can Shuffle be expensive?</div><div class="a">Operations like groupBy, join, distinct and orderBy may need matching data brought together across partitions — that movement costs network, disk, and sort time.</div></div>
+    </div>
+  </section>
+
+  <!-- PAGE 13 -->
+  <section class="page p-yellow" id="one-pager">
+    <div class="page-eyebrow">The screenshot-and-keep page</div>
+    <h1>One Page Before the Interview</h1>
+    <div class="sub">If everything else is forgotten, this sequence should still come back.</div>
+
+    <div class="flow">
+      <div class="node n-purple">SALESFORCE</div>
+      <div class="arrow">↓ OAuth login/consent</div>
+      <div class="node n-green">LAKEFLOW INGESTION</div>
+      <div class="arrow">↓ Spark</div>
+      <div class="node n-red">BRONZE</div>
+      <div class="arrow">↓ clean</div>
+      <div class="node n-orange">SILVER</div>
+      <div class="arrow">↓ aggregate</div>
+      <div class="node n-green">GOLD</div>
+      <div class="arrow">↓</div>
+      <div class="node n-blue">SQL / ANALYTICS</div>
+      <div class="arrow">↓ record needs a fix</div>
+      <div class="node n-orange">SQL UPDATE (Databricks table)</div>
+      <div class="arrow">↓ PAT (Databricks) — separate from —</div>
+      <div class="node n-purple">Salesforce OAuth Client Credentials Flow</div>
+      <div class="arrow">↓ PATCH</div>
+      <div class="node n-ink">SALESFORCE RECORD UPDATED</div>
+    </div>
+
+    <div class="cluster-board" style="grid-template-columns:repeat(4,1fr);margin-top:24px">
+      <div class="cluster"><h4>Platform</h4><div class="chips"><span class="chip">Workspace</span><span class="chip">Catalog</span><span class="chip">Compute</span></div></div>
+      <div class="cluster"><h4>SQL</h4><div class="chips"><span class="chip">CTE</span><span class="chip">Window Fn</span><span class="chip">JOIN</span></div></div>
+      <div class="cluster"><h4>Spark</h4><div class="chips"><span class="chip">DAG</span><span class="chip">Shuffle</span><span class="chip">Lazy Eval</span></div></div>
+      <div class="cluster"><h4>Security</h4><div class="chips"><span class="chip">PAT ≠ OAuth</span><span class="chip">Least Privilege</span></div></div>
+    </div>
+
+    <div class="stickies" style="justify-content:center;margin-top:20px">
+      <div class="sticky remember" style="width:280px"><b>The one line to remember</b>Databricks never auto-pushes changes to Salesforce — the modified record must be explicitly sent through the REST API using a Salesforce-authenticated OAuth token.</div>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<script>
+  const links = document.querySelectorAll('nav.tabs a');
+  const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href')));
+  window.addEventListener('scroll', () => {
+    let idx = 0;
+    sections.forEach((s,i) => { if (s && s.getBoundingClientRect().top < 140) idx = i; });
+    links.forEach((a,i) => a.classList.toggle('active', i===idx));
+  });
+</script>
+</body>
+</html>

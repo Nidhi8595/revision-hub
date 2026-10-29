@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WanderWay Agent: Revision Guide</title>
+<style>
+:root{color-scheme:light dark;--bg:#f1f5f6;--card:#fff;--ink:#14232f;--mute:#53636f;--ac:#0f7c8c;--ac2:#a8650a;--line:#d5dee2;--code:#e6eef0;--bad:#b3392b}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1a22;--card:#16262f;--ink:#e6eef2;--mute:#9fb2bd;--ac:#4fc3d1;--ac2:#f0b550;--line:#26404c;--code:#1d313c;--bad:#ff8a78}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:"Iowan Old Style",Georgia,serif;line-height:1.2;margin:0 0 .5rem}
+h1{font-size:1.9rem}h2{font-size:1.45rem;margin-top:1.6rem}h3{font-size:1.1rem;margin-top:1.1rem}
+p{margin:.4rem 0 .8rem;max-width:70ch}
+.wrap{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+nav{position:sticky;top:0;align-self:start;height:100vh;padding:1.2rem .8rem;border-right:1px solid var(--line);overflow:auto}
+nav b{display:block;font-family:Georgia,serif;font-size:1.1rem;margin:0 .4rem 1rem}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);font:inherit;padding:.5rem .7rem;border-radius:8px;cursor:pointer}
+nav button:hover{background:var(--code)}
+nav button[aria-current=page]{background:var(--ac);color:#fff;font-weight:600}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--ac2);outline-offset:2px}
+main{padding:1.6rem clamp(1rem,4vw,3rem) 4rem;max-width:960px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1.2rem;margin:.8rem 0}
+.card h3{margin-top:0}
+.tag{display:inline-block;font-size:.78rem;padding:.05rem .55rem;border-radius:99px;border:1px solid var(--ac);color:var(--ac);margin-right:.3rem}
+.warn{border-left:4px solid var(--bad)}.tip{border-left:4px solid var(--ac2)}.ok{border-left:4px solid var(--ac)}
+code{background:var(--code);padding:.05rem .35rem;border-radius:4px;font-size:.88em}
+pre{background:var(--code);padding:.8rem 1rem;border-radius:8px;overflow-x:auto;font-size:.85rem}
+table{border-collapse:collapse;width:100%;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:.45rem .7rem;text-align:left;vertical-align:top}
+th{background:var(--code)}
+ul,ol{padding-left:1.2rem;margin:.3rem 0 .8rem}li{margin:.2rem 0}
+.pass{display:flex;gap:0;overflow-x:auto;margin:1rem 0;border:2px dashed var(--ac);border-radius:12px;background:var(--card)}
+.pass div{flex:1 0 118px;padding:.7rem;border-right:2px dashed var(--line);font-size:.86rem}
+.pass div:last-child{border:0;background:var(--code)}
+.pass b{display:block;color:var(--ac);font-size:.78rem}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;padding:.2rem 1rem}
+summary{cursor:pointer;font-weight:600;padding:.6rem 0}
+.pager{display:flex;justify-content:space-between;margin-top:2rem}
+.pager button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:.6rem 1.1rem;font:inherit;cursor:pointer}
+@media(max-width:760px){.wrap{display:block}nav{position:static;height:auto;display:flex;gap:.3rem;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:.6rem}nav b{display:none}nav button{width:auto;white-space:nowrap}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav id="nav" aria-label="Pages">
+<b>WanderWay guide</b>
+<button data-p="0">1 Big picture</button>
+<button data-p="1">2 The bug</button>
+<button data-p="2">3 Agent script</button>
+<button data-p="3">4 Flows</button>
+<button data-p="4">5 Apex</button>
+<button data-p="5">6 LWC</button>
+<button data-p="6">7 Mentor Q&amp;A</button>
+</nav>
+<main>
+
+<section>
+<h1>The big picture</h1>
+<p>WanderWay is an AI travel planner built on Salesforce. The AI talks to the traveler. Salesforce holds the facts (prices, seats, bookings). The AI is never allowed to guess a fact.</p>
+<div class="card ok"><h3>Think of a hospital</h3>
+<table>
+<tr><th>Hospital</th><th>In your project</th></tr>
+<tr><td>Reception desk</td><td><code>agent_router</code>: reads each message and picks a department</td></tr>
+<tr><td>Departments</td><td>4 subagents: Trip_Planning_Booking, Booking_Management, Travel_Information_And_Assistance, escalation</td></tr>
+<tr><td>Tools in a department</td><td>Actions: Flows, Apex classes, Prompt Builder templates</td></tr>
+<tr><td>Patient file</td><td>Variables: the agent’s notebook (VerifiedCustomerId, SelectedDepartureId…)</td></tr>
+<tr><td>Records room</td><td>Objects: Destination__c, Tour_Package__c, Package_Departure__c, Trip_Booking__c, Contact</td></tr>
+</table></div>
+<h2>One booking, start to finish</h2>
+<div class="pass">
+<div><b>1 Search</b>Flow finds active packages</div>
+<div><b>2 Recommend</b>Prompt template picks best fit</div>
+<div><b>3 Check</b>Apex: seats and price, returns departureId</div>
+<div><b>4 Verify</b>Flow finds or creates the Contact</div>
+<div><b>5 Summary</b>Prompt template shows the trip</div>
+<div><b>6 Confirm</b>Traveler says “Confirm booking”</div>
+<div><b>7 Create</b>Apex books it: status In Process</div>
+</div>
+<div class="card tip"><b>Golden rule:</b> <code>Package_Departure__c</code> is the single source of truth for seats (Total seats minus Booked seats). Never the PDF, never the AI’s memory.</div>
+<div class="card"><b>Why “In Process”, not “Confirmed”?</b> New bookings hold seats while staff review. Only the approval process may confirm. The agent must never say “confirmed” on its own.</div>
+</section>
+
+<section>
+<h1>The bug: why “Prompt Injection”?</h1>
+<div class="card warn"><h3>What you saw</h3>
+<p>The traveler typed “November 11, 2026” (or “yes confirm”) and the agent replied “Sorry, I can’t assist with that request.” The trace showed Router → Prompt Injection.</p></div>
+<h2>What really happened</h2>
+<ol>
+<li>Salesforce has a built-in guard topic called <b>Prompt Injection</b>. It is not in your script, but the router can still pick it.</li>
+<li>Your router used <code>HyperClassifier</code>, a fast sorter that mostly looks at <b>the newest message alone</b>.</li>
+<li>A bare date, “2 travelers” or “yes” has no clear intent on its own. No department matched, so it fell back to the guard.</li>
+<li>The trace’s “embedded instruction” explanation was written by the guard topic afterwards. Nobody attacked the agent.</li>
+</ol>
+<p>Two smaller problems made it worse: the old router prompt was full of words like “malicious” and “injection”, and its <code>if</code> line was mis-indented so it probably never ran.</p>
+<h2>The fix</h2>
+<table>
+<tr><th>Change</th><th>Why it works</th></tr>
+<tr><td>Removed <code>model_config</code> (HyperClassifier) from the router</td><td>The default model reads the whole conversation, so “Nov 11” is understood as an answer</td></tr>
+<tr><td>Router <code>before_reasoning</code>: if <code>BookingFlowActive</code> is True, go to Trip_Planning_Booking</td><td>Plain code, no AI guessing, while a booking is in progress</td></tr>
+<tr><td>Trip subagent sets the flag on entry; <code>end_booking_flow</code> clears it</td><td>Flag is on during the booking, off when finished, abandoned, or topic changes</td></tr>
+<tr><td>Short, neutral router prompt</td><td>No injection vocabulary nudging the choice</td></tr>
+</table>
+<div class="card tip"><b>One-line answer for a mentor:</b> “The router had no memory of the conversation, so short replies matched nothing and fell into the safety topic. I gave it memory with a flag and moved it to a model that reads context.”</div>
+<p><small>Honest note: this is inferred from the traces; Salesforce’s classifier internals aren’t visible.</small></p>
+</section>
+
+<section>
+<h1>The agent script</h1>
+<p>The script is read top to bottom. Each block has one job.</p>
+<table>
+<tr><th>Block</th><th>Job</th></tr>
+<tr><td><code>system</code></td><td>Welcome and error messages</td></tr>
+<tr><td><code>config</code> / <code>access</code></td><td>Name, description, the agent user it runs as</td></tr>
+<tr><td><code>variables</code></td><td>The notebook (see below)</td></tr>
+<tr><td><code>knowledge</code></td><td>Data Library link; <code>citations_enabled: False</code> so the PDF is never shown as a source</td></tr>
+<tr><td><code>start_agent agent_router</code></td><td>Reception: routes every message</td></tr>
+<tr><td><code>subagent …</code></td><td>Each department: instructions plus its actions</td></tr>
+<tr><td><code>connection</code></td><td>Where escalated chats go (Outbound_flow_for_wanderway → Travel Support queue)</td></tr>
+</table>
+<h2>Variables: the notebook</h2>
+<ul>
+<li><b>linked</b>: filled automatically from the messaging session (EndUserId, ChannelType).</li>
+<li><b>mutable</b>: the agent writes to it during the chat (VerifiedCustomerId, TotalTripPrice).</li>
+<li><b>Internal</b>: hidden from the traveler.</li>
+<li>Key ones: <code>BookingFlowActive</code> (mid-booking), <code>AwaitingBookingConfirmation</code> (summary shown, waiting for yes), <code>SelectedDepartureId</code> (the checked departure).</li>
+</ul>
+<h2>Three tricks inside an action</h2>
+<pre>with numberOfTravelers = ...                      the AI fills this from the chat
+with departureId = @variables.SelectedDepartureId   hard-wired, the AI cannot change it
+set @variables.TotalTripPrice = @outputs.totalPrice  save the result into the notebook</pre>
+<p>Hard-wiring IDs is a security feature: the AI can’t invent a Contact or departure ID.</p>
+<h2>The departments</h2>
+<table>
+<tr><th>Subagent</th><th>Actions</th><th>Purpose</th></tr>
+<tr><td>Trip_Planning_Booking</td><td>Search_Packages (Flow), Recommend_Package (Prompt), Check_Availability_and_Price (Apex), Verify_Traveller (Flow), WanderWay_Trip_Summary (Prompt), Create_Booking (Apex)</td><td>Discover, price, book</td></tr>
+<tr><td>Booking_Management</td><td>Verify_Traveller, Find_Bookings (Flow), Modify_or_Cancel_Booking (Apex)</td><td>See, change, cancel</td></tr>
+<tr><td>Travel_Information_And_Assistance</td><td>WanderWay_Travel_Policy_Answer (Prompt + Data Library)</td><td>Policy answers</td></tr>
+<tr><td>escalation</td><td><code>@utils.escalate</code></td><td>Hand off to a human</td></tr>
+</table>
+<h2>Safety locks before a booking exists</h2>
+<ol>
+<li>Instructions: never book without an explicit yes after the summary.</li>
+<li>The <code>AwaitingBookingConfirmation</code> flag records that the summary was shown.</li>
+<li><code>require_user_confirmation: True</code> on Create_Booking and Modify_or_Cancel_Booking.</li>
+<li>IDs are hard-wired from variables.</li>
+<li>Apex re-checks everything and rolls back on error.</li>
+</ol>
+<div class="card warn"><b>Be honest about identity:</b> Verify_Traveller finds or creates a Contact by email. That is identification, not authentication. Anyone who knows an email could see its bookings. Real go-live needs OTP verification (the optional extension in your brief).</div>
+</section>
+
+<section>
+<h1>Flows</h1>
+<p>Flows are the simple readers and builders of data.</p>
+<div class="card"><h3>Search Packages <span class="tag">autolaunched</span></h3>
+<p>Finds active packages that match the traveler’s wishes.</p>
+<ol><li>If a destination was given: find the Destination by name, then its active packages. Otherwise: all active packages.</li>
+<li>Filter formula keeps those within budget, duration and type (blank inputs are ignored).</li>
+<li>A loop builds <code>outPackageSummary</code> text, which Recommend_Package reads.</li></ol>
+<p><b>Watch out:</b> the first “Get Active Packages” lookup is never used (wasted query). Destination matches by exact name, so a misspelling likely returns nothing.</p></div>
+<div class="card"><h3>Verify Traveller <span class="tag">autolaunched</span></h3>
+<ol><li>Find Contact by Email.</li>
+<li>Found: return verified = true, ContactId, FirstName.</li>
+<li>Not found: if email, first and last name are all present, create the Contact; otherwise verified = false.</li></ol>
+<p><b>Watch out:</b> no fault path. If the duplicate-email rule blocks a create, the failure is not turned into a friendly message.</p></div>
+<div class="card"><h3>Find bookings <span class="tag">autolaunched</span></h3>
+<p>Gets all <code>Trip_Booking__c</code> where <code>Traveler__c</code> equals the Contact ID. Privacy depends on that ID coming from Verify_Traveller, not being typed.</p></div>
+<div class="card"><h3>Seat release <span class="tag">record-triggered</span></h3>
+<p>Runs after a booking is updated to Cancelled while <code>Seats_Released</code> is false (only when it newly meets that condition). Subtracts the booking’s travelers from the departure’s Booked Seats, then ticks Seats_Released so seats are never released twice.</p></div>
+<div class="card"><h3>Two routing flows <span class="tag">routing</span></h3>
+<p><b>Inbound:</b> sends new chats to the agent (routing type Copilot). <b>Outbound:</b> sends escalated chats to the Travel Support queue (QueueBased).</p></div>
+</section>
+
+<section>
+<h1>Apex</h1>
+<p>Apex handles money and seats because it gives you transactions, locking and strict validation.</p>
+<div class="card"><h3>CheckAvailabilityAndPrice <span class="tag">read-only</span></h3>
+<ol><li>Validate: required fields, not in the past, at least 1 traveler, package active, within max travelers, valid price.</li>
+<li>Find the departure for that package and date.</li>
+<li>Seats left = Total minus Booked. Compare with travelers requested.</li>
+<li>If available: return price, total, <code>departureId</code>. If not: a clear message plus later departures with enough seats.</li></ol>
+<p>Your live chat said “no departure that day, try Nov 13 or Dec 13”. That’s this class working correctly.</p></div>
+<div class="card"><h3>CreateBooking <span class="tag">writes data</span></h3>
+<ol><li>Locks the departure rows (<code>FOR UPDATE</code>) so two people can’t take the last seat.</li>
+<li>Re-validates seats at write time.</li>
+<li>Inserts the booking as <b>In Process</b>, adds travelers to Booked Seats.</li>
+<li>Savepoint and rollback: on any error, nothing is saved (“Booking failed. No seats reserved.”).</li></ol></div>
+<div class="card"><h3>ModifyOrCancelBooking <span class="tag">writes data</span></h3>
+<ul><li>Checks the booking belongs to this traveler, status is In Process, seats not already released.</li>
+<li><b>Cancel:</b> subtract seats, status Cancelled, Seats_Released true.</li>
+<li><b>Modify:</b> new departure must be the same package, in the future, with room; then move seats old to new.</li>
+<li>A failed new date leaves the old booking untouched.</li></ul></div>
+<div class="card tip"><h3>Why Lists and Maps?</h3><p>Salesforce can call these with many requests at once (bulkification). Collect IDs, run one query per object into a Map, then process. No queries inside loops, so no governor-limit errors.</p></div>
+<h3>Who releases seats?</h3>
+<table>
+<tr><th>Situation</th><th>Who frees the seats</th></tr>
+<tr><td>Traveler cancels via the agent</td><td>ModifyOrCancelBooking Apex (and it sets Seats_Released, so the Flow skips it)</td></tr>
+<tr><td>Staff reject via approval / manual cancel</td><td>The Seat release Flow</td></tr>
+</table>
+</section>
+
+<section>
+<h1>LWC and the controller</h1>
+<p>These power the Experience Cloud website, separate from the chat agent.</p>
+<div class="card"><h3>CatalogController (Apex)</h3>
+<ul><li><code>getDestinations</code>: active destinations, A to Z. <code>getPackages</code>: active packages with destination name and highlights.</li>
+<li><code>@AuraEnabled(cacheable=true)</code> is required so LWCs can use <code>@wire</code>.</li>
+<li>Class is <code>without sharing</code>, but <code>getPackages</code> uses <code>WITH USER_MODE</code>. That is inconsistent: pick one policy and give the guest profile read access to the objects and fields.</li></ul></div>
+<div class="card"><h3>DestinationListing</h3>
+<p><code>@wire(getDestinations)</code> fills a list. The template shows one of three states with <code>lwc:if / elseif / else</code>: loading, empty, or cards. On error it clears the list, stops loading and shows a toast.</p></div>
+<div class="card warn"><h3>PackageExplorer: a bug to fix</h3>
+<p>Same pattern, but <code>isLoading</code> is just <code>packages === undefined</code>. On error, packages is set to undefined, so the page shows “Loading packages…” forever.</p>
+<p><b>Fix:</b> add a separate <code>isLoading</code> boolean that turns false when the wire returns data or error, and an error message template.</p></div>
+<div class="card"><b>Remember:</b> <code>for:each</code> needs a unique <code>key</code> (the record Id). The brief wants loading, empty and error states in every component.</div>
+</section>
+
+<section>
+<h1>Mentor Q&amp;A</h1>
+<p>Open each question, answer out loud first, then check.</p>
+<details><summary>Why did short replies go to Prompt Injection?</summary><p>The classifier router judged each message alone. A date or “yes” has no intent by itself, so nothing matched and the guard topic caught it. Fix: a BookingFlowActive flag plus a context-aware model.</p></details>
+<details><summary>Why Flow, Apex and Prompt Builder?</summary><p>Flow for simple lookups and assembling data. Apex for rules, math and safe multi-record writes. Prompt Builder for AI-written text (recommendation, summary, policy answer).</p></details>
+<details><summary>Why check availability twice?</summary><p>The first check is a preview. Seats can vanish before the traveler confirms, so Create Booking re-checks inside a lock.</p></details>
+<details><summary>Do you really verify the traveler?</summary><p>Only identify: lookup or create by email. It does not prove email ownership. Next step: OTP email verification.</p></details>
+<details><summary>How do you stop the AI inventing prices or policies?</summary><p>Prices and seats come only from Apex and records. Policy answers come from a grounded template over the Data Library; if nothing is found the agent says it can’t confirm and offers human help. Citations are off so the PDF isn’t shown.</p></details>
+<details><summary>How does escalation work?</summary><p>The escalation subagent calls <code>@utils.escalate</code>; the connection block routes to the Travel Support queue via an Omni-Channel routing flow. The agent never claims “you’re connected” until the platform confirms.</p></details>
+<details><summary>Why does SelectedDepartureId exist?</summary><p>Create Booking needs a record ID, not “13 November”. Check Availability returns it only when seats exist; we store it so the booked departure is exactly the one checked.</p></details>
+<details><summary>What is the unused subagent?</summary><p>ServiceCustomerVerification has no transition from the router. Verification happens inside the two booking subagents, so it is a leftover that can be deleted.</p></details>
+<details><summary>What would you improve?</summary><p>OTP verification; fault paths and a friendly duplicate-email message; remove the redundant lookup and make destination matching tolerant; fix PackageExplorer’s error state; align the sharing policy; delete the unused subagent.</p></details>
+<details><summary>What’s in the brief but not in my files?</summary><p>Approval process, scheduled flow for Trip Started and Completed, Planner Welcome LWC, Custom Lightning Type, the policy PDF and the Experience site pages. Be ready to show or explain these.</p></details>
+</section>
+
+<div class="pager"><button id="prev">Back</button><button id="next">Next</button></div>
+</main>
+</div>
+<script>
+(function(){
+var s=document.querySelectorAll("main section"),b=document.querySelectorAll("#nav button"),n=s.length,i=0;
+function go(k){
+i=Math.max(0,Math.min(n-1,k));
+s.forEach(function(e,j){e.classList.toggle("on",j===i)});
+b.forEach(function(e,j){if(j===i){e.setAttribute("aria-current","page")}else{e.removeAttribute("aria-current")}});
+document.getElementById("prev").style.visibility=i?"visible":"hidden";
+document.getElementById("next").style.visibility=i<n-1?"visible":"hidden";
+window.scrollTo(0,0);
+try{localStorage.setItem("ww_page",i)}catch(x){}
+}
+b.forEach(function(e){e.addEventListener("click",function(){go(+e.dataset.p)})});
+document.getElementById("prev").onclick=function(){go(i-1)};
+document.getElementById("next").onclick=function(){go(i+1)};
+document.addEventListener("keydown",function(e){if(e.target.tagName==="SUMMARY")return;if(e.key==="ArrowRight")go(i+1);if(e.key==="ArrowLeft")go(i-1)});
+var st=0;try{st=+localStorage.getItem("ww_page")||0}catch(x){}
+go(st);
+})();
+</script>
+</body>
+</html>

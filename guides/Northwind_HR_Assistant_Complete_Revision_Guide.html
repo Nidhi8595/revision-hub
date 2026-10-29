@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Northwind HR Assistant: Revision Guide</title>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--ink:#1c2540;--mut:#5b6580;--line:#e5e3dc;--blue:#e6f0fb;--blueD:#2a5fa8;--lav:#efeafb;--mint:#e3f4ea;--mintD:#23704a;--peach:#fdece1;--peachD:#a24d1c;--yel:#fff6d6;--teal:#14707a}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:12px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Georgia,'Iowan Old Style',serif}
+h1,h2,h3,button,nav,input,.tag,table{font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
+.wrap{display:grid;grid-template-columns:250px minmax(0,1fr);max-width:1180px;margin:0 auto}
+nav{position:sticky;top:0;height:100vh;overflow:auto;padding:18px 14px;border-right:1px solid var(--line);font-size:14px}
+nav input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;font-size:14px}
+nav a{display:block;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav a:hover,nav a.on{background:var(--blue);color:var(--blueD)}nav a.seen::after{content:" \2713";color:var(--mintD)}
+.bar{height:6px;background:var(--line);border-radius:4px;margin:8px 0 12px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--teal);transition:width .3s}
+main{padding:26px 28px 80px;min-width:0}
+.cover{background:linear-gradient(120deg,var(--blue),var(--lav));border-radius:16px;padding:28px 30px;margin-bottom:22px}
+.cover h1{margin:0 0 6px;font-size:2rem;line-height:1.15}.cover p{margin:4px 0;max-width:62ch;color:var(--mut)}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:1.35rem}h3{font-size:1.02rem;margin:18px 0 6px}
+p,li{max-width:74ch}code{background:#f0eee7;padding:1px 5px;border-radius:4px;font-size:.88em;overflow-wrap:anywhere}
+pre{position:relative;background:#f4f3ee;border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+pre button{position:absolute;top:6px;right:6px}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;margin-right:6px}
+.ok{background:var(--mint);color:var(--mintD)}.rec{background:var(--lav);color:#5a3fa8}.warn{background:var(--yel);color:#7a5b00}.ver{background:var(--blue);color:var(--blueD)}
+.note{border-left:4px solid;border-radius:6px;padding:8px 12px;margin:12px 0;font-size:.95rem}
+.n-warn{background:var(--yel);border-color:#e0b72f}.n-ok{background:var(--mint);border-color:#4fae80}.n-fix{background:var(--peach);border-color:#e59a6a}.n-ai{background:var(--lav);border-color:#9a82e0}.n-b{background:var(--blue);border-color:#6a9fe0}
+table{border-collapse:collapse;width:100%;font-size:14px;display:block;overflow-x:auto}th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}th{background:#f3f1ea}
+details{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:8px 0;background:#fcfcfa}summary{cursor:pointer;font-weight:600;font-family:system-ui,sans-serif}
+button{cursor:pointer;border:1px solid var(--teal);background:#fff;color:var(--teal);border-radius:8px;padding:6px 12px;font-size:14px}button:hover{background:var(--teal);color:#fff}
+:focus-visible{outline:3px solid #f0a020;outline-offset:2px}
+svg{width:100%;height:auto;display:block;margin:8px 0}svg text{font:12px system-ui,sans-serif;fill:var(--ink)}
+.fc{min-height:150px;width:100%;text-align:left;background:var(--blue);color:var(--ink);border:1px solid #bcd3ee;border-radius:12px;padding:18px;font-size:16px;font-family:Georgia,serif}
+.fc:hover{background:var(--blue);color:var(--ink)}.fc.back{background:var(--mint);border-color:#a8d8bf}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.opt{display:block;width:100%;text-align:left;margin:6px 0}.opt.good{background:var(--mint);color:var(--mintD);border-color:#4fae80}.opt.bad{background:var(--peach);color:var(--peachD);border-color:#e59a6a}
+#top{position:fixed;right:16px;bottom:16px}
+@media(max-width:860px){.wrap{display:block}nav{position:static;height:auto;border:0;border-bottom:1px solid var(--line)}main{padding:16px}}
+@media print{nav,#top,button,.row{display:none!important}.wrap{display:block}section{break-inside:avoid;border:0}}
+</style></head><body><div class="wrap">
+<nav aria-label="Chapters"><strong>Contents</strong><div class="bar" aria-hidden="true"><i id="pb"></i></div>
+<input id="q" type="search" placeholder="Search the guide" aria-label="Search the guide"><div id="toc"></div></nav>
+<main>
+<header class="cover"><h1>Northwind HR Assistant: revision guide</h1>
+<p>A retrieval-augmented chatbot over a sample employee handbook, built on Databricks: Unity Catalog, Delta, AI Search, a deployed agent and a Streamlit app.</p>
+<p><span class="tag ok">Implemented and verified</span><span class="tag ver">Needs verification</span><span class="tag rec">Recommended improvement</span><span class="tag warn">Discrepancy note</span></p>
+<p>The handbook is sample data. Its rules are not real company policy, and a working app does not make this production-ready.</p></header>
+
+<section id="s1" data-t="1. Meet the project"><h2>1. Meet the project</h2>
+<p>An employee asks, &ldquo;How many leave days can I carry over?&rdquo; An ordinary LLM does not know Northwind&rsquo;s handbook. RAG fixes that: search the handbook first, then give the best passages to the LLM so its answer is grounded in real text. Retrieval finds text; generation writes the answer. They are separate steps.</p>
+<div class="note n-ok"><b>Traced example (verified in the PDF).</b> Question &rarr; agent queries the index (&ldquo;leave carry over policy&rdquo;) &rarr; Annual Leave chunk returned &rarr; Llama 4 Maverick answers: up to 8 unused days, expiring March 31 (Section 1).</div>
+<table><tr><th>Term</th><th>Meaning here</th><th>Not</th></tr>
+<tr><td>Chunk</td><td>A ~300&ndash;500 character piece of a page, with id and page</td><td>A whole document</td></tr>
+<tr><td>Embedding</td><td>Numbers capturing meaning, made by <code>databricks-gte-large-en</code></td><td>A guarantee of correctness</td></tr>
+<tr><td>Delta table</td><td>Stored, queryable chunk rows</td><td>The search index</td></tr>
+<tr><td>Serving endpoint</td><td>Live URL for the deployed agent</td><td>The registered model</td></tr>
+<tr><td>Resource permission</td><td>What the app may use (Can query, Can select)</td><td>Making a resource public</td></tr></table></section>
+
+<section id="s2" data-t="2. Architecture at a glance"><h2>2. Architecture at a glance</h2>
+<p>Three paths share one index. Read them separately.</p>
+<div id="d1"></div>
+<p>The dashed row matters: the app runs its own <code>query_index</code> call to show sources. Those passages are not guaranteed to be the exact ones the agent used internally.</p>
+<div id="d2"></div><div id="d3"></div></section>
+
+<section id="s3" data-t="3. Unity Catalog and PDF extraction"><h2>3. Unity Catalog and PDF extraction</h2>
+<p>Names are three-part: <code>catalog.schema.object</code>. Files live in Volumes, tables in schemas, models in schemas too, but they are different asset types.</p>
+<table><tr><th>Asset</th><th>Name from the PDF</th></tr><tr><td>Catalog / schema</td><td><code>hr_policy</code> / <code>hr_policy_data</code></td></tr><tr><td>Managed Volume</td><td><code>hr_handbook_data</code></td></tr><tr><td>Notebook</td><td><code>HR_Policy_RAG_Pipeline</code> (serverless)</td></tr></table>
+<pre>%pip install pypdf langchain-text-splitters
+%restart_python
+
+PDF_PATH = "/Volumes/hr_policy/hr_policy_data/hr_handbook_data/northwind_employee_handbook.pdf"
+reader = PdfReader(PDF_PATH)
+pages = []
+for page_number, page in enumerate(reader.pages, start=1):
+    text = page.extract_text() or ""
+    pages.append({"page": page_number, "content": text})</pre>
+<p><code>enumerate(..., start=1)</code> gives human page numbers. <code>or ""</code> turns <code>None</code> (an empty or scanned page) into an empty string so later code does not crash. Result: 2 pages. Always print a preview; scanned PDFs may need OCR.</p></section>
+
+<section id="s4" data-t="4. Chunking"><h2>4. Chunking and overlap</h2>
+<pre>splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
+for page in pages:
+    for n, content in enumerate(splitter.split_text(page["content"]), start=1):
+        chunks.append({"id": f"page_{page['page']}_chunk_{n}", "content": content, "page": page["page"]})</pre>
+<table><tr><th>chunk_size</th><th>Chunks</th><th>Observation (PDF)</th></tr><tr><td>100</td><td>33</td><td>Sentences cut mid-rule (&ldquo;expire on March&rdquo;)</td></tr><tr><td>5000</td><td>2</td><td>Whole sections together, less focused</td></tr><tr><td>500 / overlap 100</td><td>6</td><td>Chosen first as a balance</td></tr><tr><td>300 / overlap 40</td><td>22 rows indexed after the second PDF</td><td>Tried later to improve retrieval</td></tr></table>
+<p>Sizes are in characters, not tokens. The test used <code>chunk_overlap=min(100, size // 5)</code> so tiny chunks keep a small overlap. Overlap repeats the tail of one chunk at the start of the next, so a rule that straddles a boundary still appears whole once.</p>
+<div class="note n-warn"><b>Discrepancy.</b> The PDF says the 300/40 change was needed for &ldquo;more accurate results&rdquo; but does not show a before/after comparison of answer quality. Treat the improvement as <span class="tag ver">needs verification</span>.</div></section>
+
+<section id="s5" data-t="5. Delta storage"><h2>5. Store chunks in Delta</h2>
+<p>A Python list is gone when the notebook stops. A Spark DataFrame written as Delta becomes a governed, queryable table: <code>hr_policy.hr_policy_data.handbook_chunks</code>. Columns: <code>id</code>, <code>content</code>, <code>page</code> (and <code>document</code> after stretch goal 1).</p>
+<pre># First run (verified): overwrite
+chunks_df.write.format("delta").mode("overwrite").saveAsTable(TABLE_NAME)
+
+# Later (verified): MERGE keyed on id
+if spark.catalog.tableExists(TABLE_NAME):
+    (DeltaTable.forName(spark, TABLE_NAME).alias("target")
+       .merge(chunks_df.alias("source"), "target.id = source.id")
+       .whenMatchedUpdateAll().whenNotMatchedInsertAll().execute())
+else:
+    chunks_df.write.format("delta").saveAsTable(TABLE_NAME)</pre>
+<p>Overwrite replaces everything. MERGE updates rows with matching ids and inserts new ones, so reruns do not duplicate rows. That only works if ids are unique and stable, which is why ids include the document name.</p>
+<div class="note n-warn"><b>Heads up.</b> If you change chunk size, old ids like <code>page_1_chunk_6</code> may remain when the new run produces fewer chunks per page, because MERGE as shown never deletes. Check row counts. <span class="tag ver">Needs verification</span> against your table.</div></section>
+
+<section id="s6" data-t="6. AI Search endpoint vs index"><h2>6. AI Search: endpoint vs index</h2>
+<table><tr><th></th><th>Delta table</th><th>Index</th><th>Endpoint</th></tr>
+<tr><td>Is</td><td>Source rows</td><td>Searchable embeddings</td><td>Compute that serves queries</td></tr>
+<tr><td>Name</td><td><code>handbook_chunks</code></td><td><code>handbook_chunks_index</code></td><td><code>genai-rag-endpoint</code></td></tr></table>
+<p>Analogy: table = the book, index = the book&rsquo;s searchable catalogue, endpoint = the librarian&rsquo;s desk that answers. Creating <code>hr-policy-search</code> failed with a quota error (&ldquo;exceeded quota of 3&rdquo;), so the existing online Standard endpoint was reused.</p>
+<p>Verified index settings: Hybrid, primary key <code>id</code>, compute embeddings from <code>content</code>, model <code>databricks-gte-large-en</code>, Triggered sync, status Online, 6 rows at first.</p>
+<div class="note n-b"><b>Triggered sync</b> means the index updates only when you press <em>Sync now</em> (or run a sync). Saving rows to Delta does not by itself update the index. In the PDF, the second PDF reached 16 rows only after a sync; &ldquo;Online&rdquo; says the index is serving, not that results are relevant.</div></section>
+
+<section id="s7" data-t="7. Test retrieval"><h2>7. Test retrieval before generating</h2>
+<pre>SELECT * FROM vector_search(index => 'hr_policy.hr_policy_data.handbook_chunks_index',
+  query_text => 'Can I expense a glass of wine at a work dinner?', num_results => 3)</pre>
+<table><tr><th>Question</th><th>Top result (score)</th><th>Reading</th></tr>
+<tr><td>Wine at dinner</td><td>Section 5 expenses (0.586)</td><td>Meaning match: &ldquo;wine&rdquo; is not in the text, alcohol is</td></tr>
+<tr><td>Leave carry-over</td><td>Annual leave (0.629)</td><td>Good</td></tr>
+<tr><td>$30 receipt</td><td>Expenses (0.559)</td><td>Good: under $50, submit within 30 days</td></tr>
+<tr><td>Parental, secondary caregiver</td><td>Sick leave (0.687); parental second (0.603)</td><td>Top result is wrong; why you read results</td></tr>
+<tr><td>Capital of France</td><td>Unrelated chunks (0.43, 0.43, 0.43)</td><td>Search always returns something</td></tr></table>
+<p>Retrieval cannot say &ldquo;no&rdquo;. The refusal comes from the LLM&rsquo;s instructions. Scores are relative rankings, not probabilities.</p></section>
+
+<section id="s8" data-t="8. Playground to deployed agent"><h2>8. Playground, agent and deployment</h2>
+<p>In Playground, Llama 4 Maverick had the index as a tool and this system prompt (paraphrase): answer only from retrieved handbook text, say you cannot find it otherwise, mention the section. The agent issued tool queries like <code>{"query": "leave carry over policy"}</code>.</p>
+<p><b>Get code &rarr; Create agent notebook</b> generates the agent code (<code>agent.py</code>) and a deploy notebook. Then:</p>
+<pre>mlflow.set_registry_uri("databricks-uc")
+UC_MODEL_NAME = f"{catalog}.{schema}.{model_name}"   # hr_policy.hr_policy_data.hr_policy_qa_agent
+uc_registered_model_info = mlflow.register_model(model_uri=logged_agent_info.model_uri, name=UC_MODEL_NAME)
+agents.deploy(UC_MODEL_NAME, uc_registered_model_info.version, tags={"endpointSource": "playground"}, scale_to_zero=True)</pre>
+<p>Verified: model Version 1 registered; endpoint <code>agents_hr_policy-hr_policy_data-hr_policy_qa_agent</code> Ready, small CPU, 0&ndash;4 concurrency, inference tables not configured. Scale to zero saves cost but a cold endpoint answers slowly.</p>
+<div class="note n-warn"><b>Not in the PDF.</b> The contents of <code>agent.py</code> are not shown. In our chat, an early deployment failed with <code>'system.ai.llama-4-maverick' does not exist</code>; the suggested fix was <code>databricks-llama-4-maverick</code> as the endpoint name. The PDF does not record the final working value. <span class="tag ver">Needs verification</span></div></section>
+
+<section id="s9" data-t="9. Streamlit app and CLI deploy"><h2>9. Streamlit app and CLI deploy</h2>
+<table><tr><th>File</th><th>Role</th></tr><tr><td><code>app.py</code></td><td>Chat UI, session history, calls the endpoint</td></tr><tr><td><code>requirements.txt</code></td><td>streamlit, databricks-openai, databricks-sdk</td></tr><tr><td><code>app.yaml</code></td><td><code>streamlit run app.py --server.port 8000 --server.address 0.0.0.0</code>, plus env</td></tr><tr><td><code>README.md</code></td><td>Docs only, not needed to launch</td></tr></table>
+<pre>client = DatabricksOpenAI()
+response = client.responses.create(model=ENDPOINT_NAME, input=input_messages)
+answer = response.output_text</pre>
+<p>The app has no RAG logic. It sends the conversation to the agent endpoint, which retrieves and generates.</p>
+<pre>databricks --version                # v1.11.0
+databricks auth describe            # failed: refresh token invalid
+databricks auth login --profile dbc-7b64eae3-cf86
+databricks workspace mkdirs "/Users/neelakshi@astreait.com/hr-policy-assistant"
+databricks sync . "/Users/neelakshi@astreait.com/hr-policy-assistant"
+databricks apps deploy hr-policy-assistant --source-code-path "/Workspace/Users/neelakshi@astreait.com/hr-policy-assistant"</pre>
+<p>Deploy returned <code>SUCCEEDED</code> (mode SNAPSHOT). Every file change needs a sync, then a redeploy.</p></section>
+
+<section id="s10" data-t="10. Authentication and permissions"><h2>10. Authentication, authorization and resources</h2>
+<table><tr><th>Question</th><th>Evidence in the PDF</th></tr>
+<tr><td>CLI identity</td><td>Browser login (OAuth, <code>databricks-cli</code>) as the workspace user</td></tr>
+<tr><td>Browser user</td><td>First visit showed a consent screen: app asks to act on your behalf</td></tr>
+<tr><td>App to agent</td><td>Resource: serving endpoint <code>agents_...</code>, <strong>Can query</strong>, key <code>model</code></td></tr>
+<tr><td>App to index</td><td>Resource: <code>handbook_chunks_index</code>, <strong>Can select</strong>, key <code>vector-search-index</code></td></tr></table>
+<p>Authentication proves who is calling; authorization decides what they may do. Without the endpoint resource the app fails to query (the usual 403 symptom). Env vars carry resource references, not secrets: <code>VECTOR_SEARCH_INDEX</code> uses <code>valueFrom: vector-search-index</code>.</p>
+<div class="note n-warn"><b>Discrepancies.</b> (1) The resource dialog first showed &ldquo;Can execute&rdquo; and ended as &ldquo;Can query&rdquo;. (2) <code>SERVING_ENDPOINT</code> is read from the environment with the endpoint name as a hardcoded default; the PDF shows no matching <code>app.yaml</code> entry. (3) Which identity the agent uses to read the index is not shown. <span class="tag ver">Needs verification</span></div></section>
+
+<section id="s11" data-t="11. Stretch goals"><h2>11. Stretch goals</h2>
+<h3>Add a second PDF</h3>
+<p>Uploaded <code>northwind_remote_work_policy.pdf</code> to the same Volume, looped over <code>PDF_PATHS</code>, and added <code>document</code> and ids like <code>{document_id}_page_{n}_chunk_{m}</code> where <code>document_id</code> is the file stem. Then MERGE, then <em>Sync now</em>. Verified: &ldquo;Does the company reimburse home internet bills?&rdquo; answered from Section 3 of the Remote Work &amp; Workplace Support Policy (sample content, not real policy). The screenshot cuts off the last lines of the chunk dictionary, so the <code>document</code> key there is not visible.</p>
+<h3>Show source passages</h3>
+<pre>w = WorkspaceClient()
+results = w.vector_search_indexes.query_index(index_name=VECTOR_SEARCH_INDEX, query_text=question, num_results=3)
+# rows zipped with results.manifest.columns; expander "View source passages"; try/except shows a warning</pre>
+<ul><li>Answer = agent output. Agent passages = what its tool retrieved. Displayed passages = a second, separate query.</li>
+<li>If source lookup fails, the answer still shows with a warning.</li>
+<li>For &ldquo;capital of France&rdquo; the app still listed 3 passages beside &ldquo;I cannot find this information&rdquo;, taking 57.8s. Retrieved text is not proof of support. The cause of the delay is not shown (<span class="tag ver">possibly cold start</span>).</li>
+<li>Our chat found <code>query_index</code> may need a <code>columns</code> argument, which the PDF code omits. <span class="tag ver">Needs verification</span></li></ul></section>
+
+<section id="s12" data-t="12. Troubleshooting"><h2>12. Troubleshooting playbook</h2>
+<p><span class="tag ok">Seen in the PDF</span> <span class="tag rec">Plausible, not recorded</span></p>
+<details open><summary>CLI says refresh token invalid <span class="tag ok">seen</span></summary><p>Symptom: <code>auth describe</code> &ldquo;Unable to authenticate&rdquo;. Cause: expired login. Fix: <code>databricks auth login --profile &lt;name&gt;</code>. Verify: <code>auth describe</code> shows your user. Lesson: check auth before sync or deploy.</p></details>
+<details><summary>Cannot create AI Search endpoint <span class="tag ok">seen</span></summary><p>Symptom: quota exceeded. Fix: reuse an Online endpoint. Verify: index shows that endpoint.</p></details>
+<details><summary>Second PDF not retrieved <span class="tag ok">seen as risk</span></summary><p>Cause: Delta updated but triggered index not synced. Fix: Sync now. Verify: rows indexed rises (6 &rarr; 16) and a SQL <code>vector_search</code> returns the new document.</p></details>
+<details><summary>Wrong top result <span class="tag ok">seen</span></summary><p>Sick leave outranked parental leave. Check all top results, tune chunking, test more questions. Do not trust rank 1 alone.</p></details>
+<details><summary>App cannot reach endpoint <span class="tag rec">plausible</span></summary><p>Check: endpoint Ready, app resource with Can query, endpoint name exact. Lesson: permissions and readiness are separate checks.</p></details>
+<details><summary>Env var missing <span class="tag rec">plausible</span></summary><p><code>os.environ["VECTOR_SEARCH_INDEX"]</code> raises <code>KeyError</code> if the resource key or <code>valueFrom</code> does not match. Fix the key, redeploy.</p></details>
+<details><summary>Source panel fails but answer works <span class="tag rec">plausible</span></summary><p>Likely missing Can select on the index, or a wrong column name. The try/except is why the answer still appears.</p></details></section>
+
+<section id="s13" data-t="13. Improvements and interview"><h2>13. Improvements and interview prep</h2>
+<p><span class="tag rec">Not implemented</span> Systematic retrieval tests with expected answers; compare 300/40 vs 500/100 with measured results; show the agent&rsquo;s actual retrieved chunks instead of a second query; handle updated or removed chunks; log latency and cost; define who may use the app and what the agent can access before any real HR use.</p>
+<details><summary>Why RAG instead of asking an LLM directly?</summary><p>The LLM has never seen the handbook. RAG supplies the relevant text at question time and lets the answer be checked against sources. Follow-up, can it still hallucinate? Yes; instructions reduce it, they do not eliminate it.</p></details>
+<details><summary>Table vs index vs endpoint?</summary><p>Table stores rows, index stores searchable embeddings built from them, endpoint is the compute that serves the index. Follow-up, why must you sync? Triggered mode only updates on request.</p></details>
+<details><summary>How does it handle out-of-scope questions?</summary><p>Retrieval still returns nearest chunks. The system prompt tells the LLM to say it cannot find the answer. Follow-up, how would you test it? A set of out-of-scope questions with expected refusals.</p></details>
+<details><summary>Agent vs serving endpoint?</summary><p>The agent is code plus a registered model version. The endpoint is the running service that hosts that version. The app calls the endpoint.</p></details>
+<details><summary>What must change for production?</summary><p>Evaluation, monitoring, access control review, update process, real policy ownership, and a tested deployment pipeline.</p></details></section>
+
+<section id="s14" data-t="14. Revision center"><h2>14. Revision center</h2>
+<div id="fcbox"></div>
+<div class="row"><button id="prev">Previous</button><button id="flip">Flip</button><button id="next">Next</button><button id="know">I know it</button><button id="rev">Needs revision</button><button id="reset">Reset progress</button></div>
+<p id="fcstat" aria-live="polite"></p>
+<h3>Knowledge check</h3><div id="quiz"></div>
+<h3>One-page summary</h3>
+<table><tr><th>Item</th><th>Value</th></tr>
+<tr><td>Flow</td><td>PDF in Volume &rarr; pypdf &rarr; chunks &rarr; Delta &rarr; AI Search index &rarr; agent endpoint &rarr; Streamlit app</td></tr>
+<tr><td>Names</td><td><code>hr_policy.hr_policy_data</code>, <code>handbook_chunks</code>, <code>handbook_chunks_index</code>, <code>genai-rag-endpoint</code>, <code>hr_policy_qa_agent</code>, <code>hr-policy-assistant</code></td></tr>
+<tr><td>Decisions</td><td>MERGE on id; Triggered sync; 500/100 then 300/40; scale-to-zero</td></tr>
+<tr><td>Lessons</td><td>Sync after data changes; read top results; permissions are separate from readiness</td></tr>
+<tr><td>Pitch</td><td>A RAG assistant that answers from a sample handbook, shows sources, and refuses out-of-scope questions; a learning prototype, not production.</td></tr></table></section>
+</main></div>
+<button id="top" aria-label="Back to top">Top</button>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+/* diagrams */
+const cols={a:'#e6f0fb',b:'#efeafb',c:'#e3f4ea',d:'#fdece1'};
+function flow(id,title,rows){let h=`<svg viewBox="0 0 760 ${rows.length*80+34}" role="img" aria-label="${title}"><text x="4" y="16" font-weight="700">${title}</text>`;
+rows.forEach((r,i)=>{const y=34+i*80;h+=`<text x="4" y="${y+6}" fill="#5b6580">${r.l}</text>`;r.n.forEach((t,j)=>{const x=4+j*150,p=t.split('|');
+h+=`<rect x="${x}" y="${y+12}" width="130" height="42" rx="8" fill="${cols[r.c]}" stroke="#aab" ${r.dash?'stroke-dasharray="4"':''}/>`+p.map((s,k)=>`<text x="${x+65}" y="${y+30+k*14}" text-anchor="middle">${s}</text>`).join('');
+if(j<r.n.length-1)h+=`<path d="M${x+130} ${y+33}h20" stroke="#2a5fa8" stroke-width="2" marker-end="url(#ar)"/>`})});
+document.getElementById(id).innerHTML=h+`<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#2a5fa8"/></marker></defs></svg>`}
+flow('d1','Diagram A: request path and source display',[{l:'Request path',c:'a',n:['Employee|browser','Streamlit|app.py','Agent endpoint|agents_hr_policy...','AI Search index|top chunks','LLM answers|grounded']},{l:'Separate source query (dashed)',c:'b',dash:1,n:['Streamlit|app.py','query_index|via SDK','AI Search index|Can select','Passages shown|in expander']}]);
+flow('d2','Diagram B: ingestion and sync',[{l:'Ingestion path',c:'c',n:['PDF in Volume|hr_handbook_data','pypdf|page text','Splitter|500/100, 300/40','Delta table|MERGE on id','Index sync|Triggered']}]);
+flow('d3','Diagram C: deployment',[{l:'Build and deploy',c:'d',n:['Playground|Llama 4 Maverick','Agent notebook|agent.py','UC model|version 1','Serving endpoint|Ready','Databricks App|resources + app.yaml']}]);
+/* toc, progress */
+const secs=$$('section');$('#toc').innerHTML=secs.map(s=>`<a href="#${s.id}" data-id="${s.id}">${s.dataset.t}</a>`).join('');
+const seen=new Set(store.get('seen',[]));function paint(){$$('#toc a').forEach(a=>a.classList.toggle('seen',seen.has(a.dataset.id)));$('#pb').style.width=seen.size/secs.length*100+'%'}paint();
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){seen.add(e.target.id);store.set('seen',[...seen]);paint();$$('#toc a').forEach(a=>a.classList.toggle('on',a.dataset.id===e.target.id))}}),{threshold:.3});secs.forEach(s=>io.observe(s));
+/* search */
+$('#q').addEventListener('input',e=>{const v=e.target.value.toLowerCase().trim();secs.forEach(s=>{const hit=!v||s.textContent.toLowerCase().includes(v);s.hidden=!hit;$(`#toc a[data-id="${s.id}"]`).style.display=hit?'':'none'})});
+/* copy buttons */
+$$('pre').forEach(p=>{const b=document.createElement('button');b.textContent='Copy';b.onclick=()=>{const t=p.innerText.replace(/Copy$/,'').trim();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>b.textContent='Copied').catch(()=>{const r=document.createRange();r.selectNodeContents(p);getSelection().removeAllRanges();getSelection().addRange(r);b.textContent='Selected'});setTimeout(()=>b.textContent='Copy',1500)};p.prepend(b)});
+$('#top').onclick=()=>scrollTo({top:0});
+addEventListener('beforeprint',()=>$$('details').forEach(d=>d.open=true));
+/* flashcards */
+const cards=[
+['Delta table vs AI Search index?','The table stores the chunk rows. The index stores searchable embeddings built from them and must be synced.'],
+['AI Search endpoint vs index?','The endpoint is compute that serves queries. The index is the searchable collection. One endpoint can host several indexes.'],
+['Retrieval vs generation?','Retrieval finds relevant chunks. Generation is the LLM writing an answer from them. Only the LLM prompt enforces "say you cannot find it".'],
+['Chunk size vs overlap?','Size is how long each chunk is (characters here). Overlap is the text repeated between neighbours so boundary-crossing rules survive.'],
+['Agent vs serving endpoint?','The agent is code plus a registered model version. The endpoint is the running service hosting a version.'],
+['app.py vs agent.py?','app.py is the Streamlit UI. agent.py (generated) holds the agent logic: LLM plus retrieval tool. The app only calls the endpoint.'],
+['Authentication vs authorization?','Authentication proves who is calling. Authorization decides what they may access, such as Can query on the endpoint.'],
+['Source panel vs agent retrieval?','The panel runs a second query_index call. Its passages may differ from what the agent used.'],
+['saveAsTable overwrite vs MERGE?','Overwrite replaces the table. MERGE updates matching ids and inserts new rows, without deleting others.'],
+['Model registration vs deployment?','Registration stores a model version in Unity Catalog. Deployment creates the serving endpoint that runs it.'],
+['Why sync after adding a PDF?','Index update mode is Triggered, so the index does not see new Delta rows until a sync runs.'],
+['Why did France still return 3 chunks?','Vector search always returns nearest neighbours. The prompt, not the search, makes the bot refuse.'],
+['Can query vs Can select?','Can query: call the serving endpoint. Can select: read from the AI Search index. Both were set on the app.'],
+['What does Online prove?','That the index is serving. It does not prove results are relevant or complete.'],
+['Why put document and page in the id?','Ids must be unique across files for MERGE and primary keys, and they trace an answer to its source.']];
+let fi=0,flipped=false,marks=store.get('marks',{});
+function fc(){const c=cards[fi];$('#fcbox').innerHTML=`<button class="fc ${flipped?'back':''}" id="card" aria-label="Flashcard, press to flip">${flipped?c[1]:'<b>'+c[0]+'</b>'}</button>`;$('#card').onclick=()=>{flipped=!flipped;fc()};
+const k=Object.values(marks).filter(v=>v==='k').length,r=Object.values(marks).filter(v=>v==='r').length;$('#fcstat').textContent=`Card ${fi+1} of ${cards.length}. Known ${k}, needs revision ${r}. This card: ${marks[fi]==='k'?'known':marks[fi]==='r'?'needs revision':'unmarked'}.`}
+const go=d=>{fi=(fi+d+cards.length)%cards.length;flipped=false;fc()};
+$('#prev').onclick=()=>go(-1);$('#next').onclick=()=>go(1);$('#flip').onclick=()=>{flipped=!flipped;fc()};
+$('#know').onclick=()=>{marks[fi]='k';store.set('marks',marks);fc()};$('#rev').onclick=()=>{marks[fi]='r';store.set('marks',marks);fc()};
+$('#reset').onclick=()=>{marks={};store.set('marks',marks);store.set('seen',[]);seen.clear();paint();fc()};fc();
+/* quiz */
+const qs=[
+['The index shows Online. What does that prove?',['Results are relevant','The index is serving','The Delta table is current'],1],
+['You add a PDF and MERGE it, but the app ignores it. First check?',['Run Sync now on the index','Rewrite app.py','Change the LLM'],0],
+['Which component refuses out-of-scope questions?',['Vector search','The LLM following its system prompt','Delta Lake'],1],
+['The app lists passages beside the answer. They are:',['Always exactly what the agent used','From a separate app query','Written by the LLM'],1]];
+$('#quiz').innerHTML=qs.map((q,i)=>`<div data-i="${i}"><p><b>${q[0]}</b></p>${q[1].map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}<p class="fb" aria-live="polite"></p></div>`).join('');
+$$('#quiz .opt').forEach(b=>b.onclick=()=>{const d=b.closest('div'),q=qs[d.dataset.i],ok=+b.dataset.j===q[2];b.classList.toggle('good',ok);b.classList.toggle('bad',!ok);d.querySelector('.fb').textContent=ok?'Correct.':'Not quite. Try another option.'});
+</script></body></html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Databricks in Detail — Flashcard Revision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF7EF; --paper2:#F3EFE3; --rule:#D8D0BC;
+    --ink:#211F1B; --ink-soft:#5B5648;
+    --blue:#26518C; --blue-bg:#E7EEF7;
+    --green:#2C7A55; --green-bg:#E6F3EB;
+    --orange:#B15A1F; --orange-bg:#FBEADD;
+    --purple:#6A4A93; --purple-bg:#EFE7F5;
+    --red:#B23B2E; --red-bg:#FBE6E1;
+    --yellow:#8A6A12; --yellow-bg:#FBF0CD;
+    --teal:#1E7A72; --teal-bg:#E2F2EF;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper2);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.5;}
+  code,.mono{font-family:'JetBrains Mono',monospace;}
+  .shell{display:flex;min-height:100vh;}
+
+  nav.tabs{width:242px;flex:0 0 242px;background:#FFFDF7;border-right:1px solid var(--rule);position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 0 40px;}
+  nav.tabs .tabs-title{font-family:'Kalam',cursive;font-weight:700;font-size:15px;padding:0 18px 12px;color:var(--ink-soft);border-bottom:1px solid var(--rule);margin-bottom:6px;}
+  nav.tabs .tabs-title .tabs-sub{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);opacity:.7;margin-top:3px;}
+  nav.tabs .tabs-group{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);opacity:.75;padding:14px 18px 4px;}
+  nav.tabs a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 18px 7px 22px;font-size:12.5px;color:var(--ink);text-decoration:none;border-left:3px solid transparent;}
+  nav.tabs a .dot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;}
+  nav.tabs a .count{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-soft);opacity:.7;}
+  nav.tabs a:hover{background:var(--paper2);}
+  nav.tabs a.active{border-left:3px solid var(--ink);background:var(--paper2);font-weight:600;}
+  nav.tabs .nav-left{display:flex;align-items:center;gap:8px;}
+  nav.tabs .nav-project{background:#0F172A;margin:0 10px 4px;border-radius:6px;padding:4px 0;}
+  nav.tabs .nav-project a{color:#CBD5E1;padding:7px 14px;}
+  nav.tabs .nav-project a:hover{background:rgba(255,255,255,0.06);}
+  nav.tabs .nav-project a.active{background:rgba(255,255,255,0.08);border-left-color:#F8FAFC;}
+
+  main{flex:1;min-width:0;padding:36px 0 120px;}
+  .page{max-width:1040px;margin:0 auto 60px;background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:36px 42px 42px;position:relative;
+    background-image:linear-gradient(var(--paper) 0, var(--paper) 100%),repeating-linear-gradient(transparent 0 34px, rgba(216,208,188,0.35) 34px 35px);}
+  .page::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;border-radius:4px 0 0 4px;}
+  .page.p-blue::before{background:var(--blue);} .page.p-green::before{background:var(--green);}
+  .page.p-orange::before{background:var(--orange);} .page.p-purple::before{background:var(--purple);}
+  .page.p-red::before{background:var(--red);} .page.p-yellow::before{background:var(--yellow);}
+  .page.p-teal::before{background:var(--teal);} .page.p-mixed::before{background:linear-gradient(var(--blue),var(--green),var(--purple),var(--red));}
+
+  .page-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .page h1{font-family:'Kalam',cursive;font-size:28px;margin:0 0 4px;color:var(--ink);}
+  .page .sub{color:var(--ink-soft);font-size:13.5px;margin-bottom:20px;max-width:780px;}
+
+  h2.section-h{font-family:'Kalam',cursive;font-size:17px;margin:26px 0 12px;display:flex;align-items:center;gap:8px;}
+  h2.section-h .tag{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--ink);color:var(--paper);padding:2px 6px;border-radius:3px;letter-spacing:.04em;}
+
+  .flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:16px 0;}
+  .hflow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin:16px 0;}
+  .hflow .node{margin:6px 4px;}
+  .node{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:6px;text-align:center;line-height:1.35;border:1.5px solid transparent;min-width:120px;}
+  .node small{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:10.5px;margin-top:2px;opacity:.85;}
+  .n-blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .n-green{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+  .n-orange{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);}
+  .n-purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple);}
+  .n-red{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .n-yellow{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow);}
+  .n-teal{background:var(--teal-bg);color:var(--teal);border-color:var(--teal);}
+  .n-ink{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .arrow{font-size:16px;color:var(--ink-soft);line-height:1;margin:2px 0;}
+  .arrow-r{font-size:16px;color:var(--ink-soft);margin:0 6px;}
+  .arrow-label{font-family:'Kalam',cursive;font-size:11.5px;color:var(--ink-soft);margin:0 0 2px;text-align:center;max-width:320px;}
+
+  .note{font-size:12.5px;color:var(--ink-soft);background:var(--paper2);border:1px solid var(--rule);border-radius:6px;padding:10px 14px;margin:14px 0;}
+  .note b{color:var(--ink);}
+  .code-chip{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:var(--ink);color:var(--paper);padding:2px 7px;border-radius:4px;}
+  table.cmp{width:100%;border-collapse:collapse;margin:14px 0;font-size:12.5px;}
+  table.cmp th{font-family:'JetBrains Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;background:var(--ink);color:var(--paper);padding:8px 10px;text-align:left;}
+  table.cmp td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  table.cmp tr:nth-child(even) td{background:rgba(216,208,188,0.18);}
+
+  .intro-banner{max-width:1040px;margin:0 auto 22px;padding:16px 26px;border:1.5px dashed var(--rule);border-radius:8px;background:#FFFDF7;}
+  .intro-banner-head{font-family:'Kalam',cursive;font-size:16px;color:var(--ink);}
+  .intro-banner-sub{font-size:12px;color:var(--ink-soft);margin-top:4px;max-width:840px;}
+
+  .deck-toolbar{display:flex;align-items:center;gap:10px;margin:6px 0 18px;flex-wrap:wrap;}
+  .deck-btn{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:6px 12px;border-radius:20px;border:1px solid var(--rule);background:#fff;color:var(--ink-soft);cursor:pointer;letter-spacing:.02em;}
+  .deck-btn:hover{background:var(--paper2);}
+  .deck-progress{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-soft);margin-left:auto;}
+
+  .flashcard-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(230px,1fr));gap:16px;margin:10px 0 8px;}
+  .flashcard{perspective:1200px;height:180px;cursor:pointer;}
+  .flashcard-inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
+  .flashcard-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:2px 3px 8px rgba(0,0,0,0.06);border:1.5px solid;}
+  .flashcard-front{font-family:'Kalam',cursive;font-size:14.5px;line-height:1.3;}
+  .flashcard-back{transform:rotateY(180deg);background:#fff;border-color:var(--rule);font-size:11.8px;color:var(--ink-soft);line-height:1.42;overflow-y:auto;}
+  .flashcard-back b{color:var(--ink);}
+  .card-tag{position:absolute;top:8px;left:10px;font-family:'JetBrains Mono',monospace;font-size:8.5px;opacity:.55;letter-spacing:.04em;}
+  .flip-hint{position:absolute;bottom:6px;right:10px;font-family:'JetBrains Mono',monospace;font-size:8.5px;opacity:.45;}
+  .deck-blue .flashcard-front{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .deck-green .flashcard-front{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+  .deck-orange .flashcard-front{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);}
+  .deck-purple .flashcard-front{background:var(--purple-bg);color:var(--purple);border-color:var(--purple);}
+  .deck-red .flashcard-front{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .deck-yellow .flashcard-front{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow);}
+  .deck-teal .flashcard-front{background:var(--teal-bg);color:var(--teal);border-color:var(--teal);}
+
+  .stickies{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0;}
+  .sticky{font-family:'Kalam',cursive;font-size:12.5px;padding:12px 14px;border-radius:2px;width:240px;box-shadow:2px 3px 6px rgba(0,0,0,0.08);}
+  .sticky b{display:block;font-size:11px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:5px;letter-spacing:.05em;}
+  .sticky.why{background:#FDE9C8;color:#6B4E10;transform:rotate(-1.2deg);}
+  .sticky.remember{background:#D9ECEB;color:#1F5652;transform:rotate(1deg);}
+  .sticky.interview{background:#F6D9D2;color:#7A2E22;transform:rotate(-0.5deg);}
+
+  /* -------- Project zone (dark, deliberately separate) -------- */
+  .project-intro{max-width:1040px;margin:36px auto 18px;padding:18px 26px;background:#0F172A;border-radius:8px;border:1px solid #1E293B;display:flex;align-items:center;gap:16px;}
+  .project-intro .cap{font-size:26px;}
+  .project-intro-text h2{margin:0 0 4px;color:#F8FAFC;font-family:'Kalam',cursive;font-size:18px;}
+  .project-intro-text p{margin:0;color:#94A3B8;font-size:12.5px;max-width:760px;}
+  .page.project{background:#111827;border:1px solid #1E293B;background-image:none;color:#CBD5E1;}
+  .page.project::before{background:linear-gradient(#EF4444,#F59E0B,#22C55E);}
+  .page.project .page-eyebrow{color:#94A3B8;}
+  .page.project h1{color:#F8FAFC;font-family:'Kalam',cursive;}
+  .page.project .sub{color:#94A3B8;}
+  .page.project h2.section-h{color:#F8FAFC;}
+  .page.project h2.section-h .tag{background:#334155;color:#F8FAFC;}
+  .page.project .node{background:rgba(255,255,255,0.04);border-width:1.5px;}
+  .page.project .n-blue{color:#7DB6F5;border-color:#7DB6F5;}
+  .page.project .n-green{color:#6FDDA8;border-color:#6FDDA8;}
+  .page.project .n-orange{color:#F5B27D;border-color:#F5B27D;}
+  .page.project .n-purple{color:#C9A6F0;border-color:#C9A6F0;}
+  .page.project .n-red{color:#F5877D;border-color:#F5877D;}
+  .page.project .n-yellow{color:#F0D882;border-color:#F0D882;}
+  .page.project .n-teal{color:#5FCBBE;border-color:#5FCBBE;}
+  .page.project .n-ink{background:#1E293B;color:#F8FAFC;border-color:#334155;}
+  .page.project .arrow, .page.project .arrow-r, .page.project .arrow-label{color:#64748B;}
+  .page.project table.cmp th{background:#1E293B;color:#F8FAFC;}
+  .page.project table.cmp td{border-color:#1E293B;color:#CBD5E1;}
+  .page.project table.cmp tr:nth-child(even) td{background:rgba(255,255,255,0.025);}
+  .page.project .note{background:#0F172A;border-color:#1E293B;color:#94A3B8;}
+  .page.project .note b{color:#F8FAFC;}
+  .page.project .code-chip{background:#334155;color:#F8FAFC;}
+  .page.project .deck-btn{background:#1E293B;border-color:#334155;color:#CBD5E1;}
+  .page.project .deck-btn:hover{background:#263449;}
+  .page.project .deck-progress{color:#64748B;}
+  .page.project .flashcard-back{background:#1E293B;color:#CBD5E1;border-color:#334155;}
+  .page.project .flashcard-back b{color:#F8FAFC;}
+  .project-badge{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 9px;border-radius:20px;letter-spacing:.03em;font-weight:600;background:#1E293B;color:#F0D882;border:1px solid #F0D882;}
+
+  footer.end{max-width:1040px;margin:0 auto;padding:0 42px 60px;color:var(--ink-soft);font-size:12px;font-family:'JetBrains Mono',monospace;text-align:center;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="tabs">
+    <div class="tabs-title">Databricks in Detail<span class="tabs-sub">click any card to flip</span></div>
+
+    <div class="tabs-group">Overview</div>
+    <a href="#big-picture"><span class="nav-left"><span class="dot" style="background:var(--ink)"></span>The Whole Picture</span></a>
+
+    <div class="tabs-group">Courses &amp; Modules</div>
+    <a href="#deck-foundations"><span class="nav-left"><span class="dot" style="background:var(--blue)"></span>① AI/ML Foundations</span><span class="count">8</span></a>
+    <a href="#deck-genai12"><span class="nav-left"><span class="dot" style="background:var(--purple)"></span>② GenAI: Overview + Prompting</span><span class="count">10</span></a>
+    <a href="#deck-genai3"><span class="nav-left"><span class="dot" style="background:var(--green)"></span>③ GenAI: RAG Build + MLflow</span><span class="count">12</span></a>
+    <a href="#deck-genai4"><span class="nav-left"><span class="dot" style="background:var(--yellow)"></span>④ GenAI: Evaluation &amp; Deploy</span><span class="count">8</span></a>
+    <a href="#deck-genai5"><span class="nav-left"><span class="dot" style="background:var(--red)"></span>⑤ GenAI: Agent Bricks</span><span class="count">8</span></a>
+    <a href="#deck-mllife"><span class="nav-left"><span class="dot" style="background:var(--blue)"></span>⑥ ML Lifecycle Course</span><span class="count">10</span></a>
+    <a href="#deck-lakebase"><span class="nav-left"><span class="dot" style="background:var(--teal)"></span>⑦ Lakebase</span><span class="count">14</span></a>
+
+    <div class="tabs-group">Project 🏥</div>
+    <div class="nav-project">
+      <a href="#project-medcare"><span class="nav-left"><span class="dot" style="background:#F0D882"></span>MedCare Platform</span><span class="count">16</span></a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="intro-banner">
+      <div class="intro-banner-head">📗 Databricks in Detail — Flashcard Revision</div>
+      <div class="intro-banner-sub">Built from the full "Databricks in Detail" notes. Every course/module is its own deck — click a card to flip it, click again to flip back. The MedCare project lives in its own dark zone at the bottom, kept deliberately separate from the course decks since it's a standalone build, not a lesson.</div>
+    </div>
+
+    <!-- BIG PICTURE -->
+    <section class="page p-mixed" id="big-picture">
+      <div class="page-eyebrow">Master map</div>
+      <h1>The Whole Picture</h1>
+      <div class="sub">Seven courses/modules, one connected story — from "what is ML" all the way to "here's a production-shaped OLTP layer for my app."</div>
+      <div class="flow">
+        <div class="node n-blue">① AI/ML FOUNDATIONS<small>AI ⊃ ML ⊃ Deep Learning, Random Forest</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-purple">② GENAI MODULE 1–2<small>RAG/Vector Search overview + Prompt Engineering</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-green">③ GENAI MODULE 3<small>Build a RAG index + MLflow Tracking/Tracing/Registry</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-yellow">④ GENAI MODULE 4<small>Evaluation, judges, deployment, Review App</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-red">⑤ GENAI MODULE 5<small>Agent Bricks — Agents vs AI Functions</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-blue">⑥ ML LIFECYCLE COURSE<small>Roles, EDA, features, MLflow, Model Serving</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-teal">⑦ LAKEBASE<small>OLTP serving layer next to the OLAP Lakehouse</small></div>
+      </div>
+      <div class="note" style="text-align:center">🏥 <b>Separately:</b> the MedCare Healthcare Insights Platform project applies almost every deck above — ingestion, medallion, security, Vector Search, MLflow, dashboards — in one real build. Find it in its own dark zone at the bottom of this page.</div>
+    </section>
+
+    <!-- DECK 1 -->
+    <section class="page p-blue" id="deck-foundations">
+      <div class="page-eyebrow">Course · Foundations <span class="tag">8 CARDS</span></div>
+      <h1>AI/ML Foundations</h1>
+      <div class="sub">AI vs ML vs Deep Learning, and the Random Forest churn build that made it concrete.</div>
+      <div class="hflow">
+        <div class="node n-blue">AI</div><div class="arrow-r">⊃</div>
+        <div class="node n-green">ML</div><div class="arrow-r">⊃</div>
+        <div class="node n-orange">Deep Learning</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-foundations',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-foundations',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-foundations"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-foundations"></div>
+    </section>
+
+    <!-- DECK 2 -->
+    <section class="page p-purple" id="deck-genai12">
+      <div class="page-eyebrow">Course · GenAI Module 1–2 <span class="tag">10 CARDS</span></div>
+      <h1>GenAI Overview + Prompt Engineering</h1>
+      <div class="sub">Mosaic AI, RAG/Vector Search framing, then how to actually talk to the model so it does what you need.</div>
+      <div class="hflow">
+        <div class="node n-blue">System<small>role</small></div><div class="arrow-r">+</div>
+        <div class="node n-orange">User<small>request</small></div><div class="arrow-r">→</div>
+        <div class="node n-purple">Model</div><div class="arrow-r">→</div>
+        <div class="node n-ink">Response</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-genai12',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-genai12',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-genai12"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-genai12"></div>
+    </section>
+
+    <!-- DECK 3 -->
+    <section class="page p-green" id="deck-genai3">
+      <div class="page-eyebrow">Course · GenAI Module 3 <span class="tag">12 CARDS</span></div>
+      <h1>Build a RAG Index + MLflow Deep-Dive</h1>
+      <div class="sub">Registering an actual retrieval pipeline, then the part most people skim: Tracking vs Tracing vs Registry vs Unity Catalog governance.</div>
+      <div class="hflow">
+        <div class="node n-green">Tracking<small>what happened?</small></div>
+        <div class="node n-orange">Tracing<small>how, step-by-step?</small></div>
+        <div class="node n-purple">Registry<small>which version?</small></div>
+        <div class="node n-blue">Unity Catalog<small>who's allowed?</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-genai3',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-genai3',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-genai3"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-genai3"></div>
+    </section>
+
+    <!-- DECK 4 -->
+    <section class="page p-yellow" id="deck-genai4">
+      <div class="page-eyebrow">Course · GenAI Module 4 <span class="tag">8 CARDS</span></div>
+      <h1>Evaluation &amp; Deployment</h1>
+      <div class="sub">"It looks good" isn't a metric. Quality vs performance, judges, and the Evaluate → Deploy → Feedback loop.</div>
+      <div class="hflow">
+        <div class="node n-yellow">Evaluate</div><div class="arrow-r">→</div>
+        <div class="node n-orange">Improve</div><div class="arrow-r">→</div>
+        <div class="node n-green">Deploy</div><div class="arrow-r">→</div>
+        <div class="node n-purple">Feedback</div><div class="arrow-r">↻</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-genai4',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-genai4',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-genai4"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-genai4"></div>
+    </section>
+
+    <!-- DECK 5 -->
+    <section class="page p-red" id="deck-genai5">
+      <div class="page-eyebrow">Course · GenAI Module 5 <span class="tag">8 CARDS</span></div>
+      <h1>Agent Bricks</h1>
+      <div class="sub">One batch operation → AI Function. Tools, retrieval, or multi-step reasoning → Agent. That's the whole rule.</div>
+      <div class="hflow">
+        <div class="node n-blue">AGENTS<small>Knowledge · Supervisor · Genie · Custom</small></div>
+        <div class="arrow-r">vs</div>
+        <div class="node n-green">AI FUNCTIONS<small>Extract · Parse · Classify</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-genai5',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-genai5',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-genai5"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-genai5"></div>
+    </section>
+
+    <!-- DECK 6 -->
+    <section class="page p-blue" id="deck-mllife">
+      <div class="page-eyebrow">Course · Get Started with Databricks for ML <span class="tag">10 CARDS</span></div>
+      <h1>ML Lifecycle Course</h1>
+      <div class="sub">The 5 roles, EDA, feature engineering, and the full Train → Deploy → Monitor → Retrain loop.</div>
+      <div class="flow">
+        <div class="node n-blue">Data Prep → EDA → Features</div><div class="arrow">↓</div>
+        <div class="node n-green">Train → Validate</div><div class="arrow">↓</div>
+        <div class="node n-orange">MLflow → Unity Catalog Registry</div><div class="arrow">↓</div>
+        <div class="node n-purple">Model Serving → Inference</div><div class="arrow">↓</div>
+        <div class="node n-red">Monitoring → Drift → Retrain ↻</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-mllife',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-mllife',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-mllife"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-mllife"></div>
+    </section>
+
+    <!-- DECK 7 -->
+    <section class="page p-teal" id="deck-lakebase">
+      <div class="page-eyebrow">Course · Introduction to Lakebase <span class="tag">14 CARDS · NEW</span></div>
+      <h1>Lakebase</h1>
+      <div class="sub">The OLTP serving layer that closes the gap next to the OLAP Lakehouse — Postgres-based, branchable, built for milliseconds.</div>
+      <div class="hflow">
+        <div class="node n-blue">LAKEHOUSE<small>Delta · OLAP · analyze everything</small></div>
+        <div class="arrow-r">⇄ Synced Tables / CDF ⇄</div>
+        <div class="node n-teal">LAKEBASE<small>Postgres · OLTP · give me THIS now</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-lakebase',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-lakebase',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-lakebase"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-lakebase"></div>
+    </section>
+
+    <!-- PROJECT ZONE -->
+    <div class="project-intro">
+      <div class="cap">🏥</div>
+      <div class="project-intro-text">
+        <h2>The Project — Kept Separate on Purpose</h2>
+        <p>MedCare is a real, substantially bigger build than the earlier Lead Anomaly Detection project — dark cards, on purpose, so it never blends into "concepts I learned" vs "a system I actually built."</p>
+      </div>
+    </div>
+
+    <section class="page project" id="project-medcare">
+      <div class="page-eyebrow"><span class="project-badge">🏥 PROJECT</span> Healthcare Insights Platform <span class="tag">16 CARDS</span></div>
+      <h1>MedCare — Healthcare Insights Platform</h1>
+      <div class="sub">MedCare Regional Health Network stores clinical data in S3 and patient/billing data in Salesforce. The job: unify both in Databricks, produce trusted metrics, let patients query their own records in plain language, and give admins a dashboard — with real, enforced, role-based security throughout.</div>
+
+      <h2 class="section-h">The end-to-end shape</h2>
+      <div class="flow">
+        <div class="hflow">
+          <div class="node n-blue">S3<small>4 clinical CSVs</small></div>
+          <div class="node n-purple">SALESFORCE<small>4 objects</small></div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="node n-red">BRONZE<small>raw + source_system + load_timestamp</small></div>
+        <div class="arrow">↓ standardize · dedupe · quarantine · mask</div>
+        <div class="node n-orange">SILVER<small>trusted, joined, department-filtered</small></div>
+        <div class="arrow">↓</div>
+        <div class="node n-green">GOLD<small>patient_360 · readmission · LOS · claims · visits</small></div>
+        <div class="arrow">↓</div>
+        <div class="hflow">
+          <div class="node n-teal">DASHBOARD</div>
+          <div class="node n-blue">ADMIN Q&amp;A</div>
+          <div class="node n-purple">PATIENT Q&amp;A<small>own record only</small></div>
+        </div>
+      </div>
+
+      <h2 class="section-h">Why this is "substantially broader" than Lead Anomaly Detection</h2>
+      <div class="note">Same medallion skeleton, much more weight on top: two live source systems (not one), fine-grained security enforced at query time (not just table grants), a governed Vector Search + LLM Q&amp;A layer for two very different audiences (patients vs admins), and a full dashboard — all under real PHI-grade governance requirements.</div>
+
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('project-medcare',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('project-medcare',false)">Reset</button>
+        <span class="deck-progress" id="prog-project-medcare"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-project-medcare"></div>
+    </section>
+
+    <footer class="end">— built from the Databricks in Detail notes · click any card to flip it —</footer>
+  </main>
+</div>
+
+<script>
+const DECKS = {
+  "deck-foundations": {color:"blue", cards:[
+    {q:"AI vs ML vs Deep Learning — one line each?", a:"<b>AI</b> = the broad field of making machines do intelligent tasks. <b>ML</b> = achieving AI by learning patterns from data instead of hardcoding rules. <b>Deep Learning</b> = a subset of ML using multi-layer neural networks. AI ⊃ ML ⊃ Deep Learning."},
+    {q:"Supervised vs Unsupervised learning?", a:"Supervised = input → known answer already exists (churn project: features → churned). Unsupervised = no known answer, the model finds the pattern itself (e.g. clustering by behavior)."},
+    {q:"Classification vs Regression?", a:"Classification predicts a category (Spam/Not Spam, Churn/Stay). Regression predicts a number (e.g. next month's sales)."},
+    {q:"Why Random Forest over one Decision Tree?", a:"One tree can overfit to its specific training sample. Random Forest trains many trees (e.g. 20), each on a different random slice of data/features, and lets them vote — 'many people vote' beats trusting one opinion."},
+    {q:"epoch ≠ record — why does this distinction matter?", a:"An epoch is one full pass through the ENTIRE training dataset, not one record. Training runs multiple epochs, re-seeing all the data each time — confusing the two miscounts how much learning actually happened."},
+    {q:"What does 'best split' mean in a Decision Tree?", a:"The question (e.g. 'payment_delay > 2?') that most cleanly separates churned customers from non-churned ones — the split that best purifies the resulting groups."},
+    {q:"The churn model's features and target?", a:"Features (X): tenure_months, monthly_spend, support_tickets, days_since_last_login, payment_delays — combined via VectorAssembler. Target (y): churned (0/1)."},
+    {q:"What does 'feature importance' actually tell you?", a:"Which inputs the model leaned on most — NOT what causes the outcome. tenure_months and payment_delays carried the most weight in this run; correlation in the training run, not proven causation."},
+  ]},
+  "deck-genai12": {color:"purple", cards:[
+    {q:"Mosaic AI — what is it, in one line?", a:"Databricks' umbrella platform for building, evaluating, and deploying GenAI — covering model serving, Vector Search, Agent Framework, MLflow for GenAI, evaluation, and AI Gateway, all governed through Unity Catalog."},
+    {q:"A prompt is more than a question — what 5 things can it contain?", a:"Role/Instructions, Context/Data, Task, Constraints, Output format. 'Analyze this customer' vs 'You are a Salesforce analyst — analyze this, identify 3 anomalies, give a risk level' — same question, very different usefulness."},
+    {q:"System message vs User message?", a:"System message sets the model's role/behavior ('You are a helpful analyst'). User message is the actual request ('Analyze this lead'). Both combine before the model sees them."},
+    {q:"Zero-shot vs Few-shot prompting?", a:"Zero-shot = task, no examples ('figure it out'). Few-shot = task + examples showing input→output pattern, letting the model infer the pattern. Memory: zero examples vs a few examples."},
+    {q:"Why does output formatting matter for a real application?", a:"An app often needs machine-readable output (e.g. strict JSON). A correct but conversational paragraph can break the downstream code — you must explicitly instruct the exact format needed."},
+    {q:"What is Temperature?", a:"Controls how deterministic vs varied the output is. Lower temperature → more predictable, consistent answer style — useful for classification-style tasks where consistency matters more than creativity."},
+    {q:"What's the AI Playground for?", a:"An experimentation area to test prompts against models and see how responses change — before writing code or wiring the prompt into a real application. Laboratory, not production."},
+    {q:"What is a hallucination, and does good prompting eliminate it?", a:"A confident-sounding answer not actually supported by the available information. Good prompting (context-only instructions + retrieval + evaluation + guardrails) reduces the risk — it does NOT eliminate it alone."},
+    {q:"The professional prompting mindset shift?", a:"Stop asking 'what is the best prompt?' Ask instead: 'what behavior do I need from the model, and how can I reliably produce and evaluate that behavior?' — engineering, not a one-shot search for magic words."},
+    {q:"Where do Prompt Engineering and RAG actually meet?", a:"The retrieved context becomes part of the prompt: SYSTEM (role) + CONTEXT (retrieved info) + QUESTION → the prompt isn't just an instruction, it's also the information the model should use."},
+  ]},
+  "deck-genai3": {color:"green", cards:[
+    {q:"The 3 core stages of RAG?", a:"Retrieval (find relevant info) → Augmentation (combine with the question) → Generation (LLM answers). Memory: Find → Add → Answer."},
+    {q:"Why does Vector Search matter over plain keyword search?", a:"Semantic search captures meaning even when exact words differ ('recover my account' ≈ 'restoring access to your profile') — something keyword matching alone would miss."},
+    {q:"What is MLflow, in one line?", a:"The platform for managing the ML and GenAI lifecycle — three pillars: Tracking (what happened?), Tracing (how did it happen, step by step?), Registry (which model version?)."},
+    {q:"The PMAC mnemonic for what MLflow Tracking records?", a:"<b>P</b>arameters (what settings did I use — temperature, chunk_size, top_k) → <b>M</b>etrics (how well did it perform — accuracy, latency) → <b>A</b>rtifacts (what files did it produce — plots, reports, models) → <b>C</b>ode (which code produced this result)."},
+    {q:"What is the MLflow Tracking Server?", a:"The place MLflow keeps a proper record of your experiments/runs — parameters, metrics, artifacts — instead of you trying to remember 'I think run #7 used temperature 0.3...'"},
+    {q:"What does MLflow Tracing show that Tracking doesn't?", a:"Tracing shows step-by-step execution: User Query → Retriever → Vector Search → Document scores → Prompt Construction → LLM → Answer. Tracking tells you the run's summary; Tracing tells you exactly what happened inside it."},
+    {q:"Why does tracing matter for debugging a bad RAG answer?", a:"You can't just say 'the LLM is bad' — the trace can reveal the real failure point: bad retrieval → wrong documents → bad context → bad answer. Tracing lets you find which stage actually broke."},
+    {q:"Unity Catalog's role in the MLflow picture?", a:"UC isn't just a table catalog — it's the governance layer for BOTH data and AI assets: registered models, versions, aliases, lineage, and permissions, alongside tables/views."},
+    {q:"What does Model Lineage answer?", a:"'Where did this model come from?' — e.g. Model v8 → trained using Gold customer data → derived from Silver customer data. Traceability from a deployed model all the way back to its source data."},
+    {q:"Tracking vs Tracing vs Registry vs Unity Catalog — the super-short version?", a:"Tracking → Experiment ('what happened'). Tracing → Execution ('how did it happen'). Registry → Model lifecycle ('which version'). Unity Catalog → Governance ('who can access it, where did it come from')."},
+    {q:"After building index.similarity_search() successfully, what questions does MLflow let you ask?", a:"What happened? How well did it perform? Where did it fail? How long did it take? How many tokens were used? Which configuration was better? Which model version am I using? Who can access it? What produced it? — that's why MLflow comes right after building the RAG mechanism."},
+    {q:"Why register a RAG application in Unity Catalog before deploying?", a:"Registration gives you versions, lineage, permissions, metadata, and lifecycle tracking — deployment then references a specific tracked version instead of an untracked notebook variable."},
+  ]},
+  "deck-genai4": {color:"yellow", cards:[
+    {q:"Why is GenAI evaluation harder than traditional ML evaluation?", a:"Traditional ML checks one right answer (prediction=1, actual=1 → correct). A GenAI app can produce many differently-worded but equally acceptable answers — so evaluation judges quality, not exact string matching."},
+    {q:"The 4 quality metrics for GenAI?", a:"Correctness (factually right?), Relevance (does it address the actual question?), Groundedness (is it supported by retrieved context — detects hallucination), Safety (free of harmful/policy-violating content)."},
+    {q:"The 4 performance metrics for GenAI?", a:"Latency (how long), Token usage (how much consumed), Cost (per request), Error rate (how often it fails)."},
+    {q:"What is an LLM Judge?", a:"Another LLM that evaluates your app's answers against criteria like correctness/relevance/groundedness — 'AI evaluates AI' instead of a human manually checking every response. MLflow supports built-in and custom judges."},
+    {q:"Offline evaluation vs Online monitoring?", a:"Offline = testing against a controlled dataset before production ('is this ready?'). Online = watching real production traffic after deployment ('is it still working?'). Databricks reuses the same evaluation logic across both."},
+    {q:"What is a Review App, and why still involve humans if you have LLM judges?", a:"A chat interface where domain experts test the deployed app and give 👍/👎 + comments. LLM judges catch 'technically correct'; only a human expert catches 'this explanation isn't actionable.'"},
+    {q:"The full GenAI feedback loop?", a:"Build → Evaluate → Analyze → Improve → Deploy → Review App → Human Feedback → Production → Traces → Evaluate → Improve → (repeat). It never really stops."},
+    {q:"Why deploy through the Agent Framework instead of just 'putting an LLM online'?", a:"Because a real GenAI app is retrieval + prompt + model + evaluation working together — the Agent Framework operationalizes the whole application, not just a bare model endpoint."},
+  ]},
+  "deck-genai5": {color:"red", cards:[
+    {q:"Why does Agent Bricks exist?", a:"Building a production GenAI app manually means tuning many components at once (model, prompt, retrieval, tools, context, evaluation) — 'prompt stuffing' isn't enough. Agent Bricks automates/optimizes much of that tuning for your data."},
+    {q:"The 3 Big Problems in GenAI development?", a:"① Can I make AI understand MY data? ② How do I know it's actually good (beyond a vibe check)? ③ Is it worth the money (quality alone isn't enough — weigh cost + adoption + performance too)?"},
+    {q:"The single most important rule: AI Function vs Agent?", a:"AI Function = one batch operation over a column of text/documents (e.g. classify 100,000 complaints). Agent = needs tools, retrieval, or multi-step reasoning to dynamically decide what to do next."},
+    {q:"Knowledge Assistant vs Genie Agent vs Supervisor Agent?", a:"Knowledge Assistant → document-based Q&A (RAG, packaged). Genie Agent → natural language → SQL over tables. Supervisor Agent → coordinates multiple agents/tools for complex, multi-step workflows."},
+    {q:"The three AI Functions and what each does?", a:"ai_extract — pulls specific fields from unstructured text. ai_parse_document — extracts structured content (text/tables/metadata) from documents. ai_classify — categorizes text into labels."},
+    {q:"Data → Tables → Complex workflow: which Agent Bricks tool fits each?", a:"Documents/text → Knowledge Assistant/RAG. Tables → Genie Agent. Complex multi-agent workflow → Supervisor Agent."},
+    {q:"What is a Custom Agent, and when would you build one?", a:"Your own agent built with OSS libraries + Agent Bricks Custom Agents, used when pre-built approaches (Knowledge Assistant, Genie, Supervisor) aren't enough — full control over tools, logic, retrieval, orchestration."},
+    {q:"Battle 3 — 'is it worth the money?' What's the trap?", a:"A model costing 10× more for only 2% better quality (80%→82%) usually isn't worth it. Quality alone doesn't decide — weigh Quality + Cost + User adoption + Performance together."},
+  ]},
+  "deck-mllife": {color:"blue", cards:[
+    {q:"The full ML Lifecycle, start to finish?", a:"Raw Data → Data Prep → EDA → Feature Engineering → Model Training → Validation → Model Registry → Deployment → Inference → Monitoring → Retraining (loop back)."},
+    {q:"The 5 roles in a real ML project, one line each?", a:"Data Engineer (makes data ready), Data Scientist (makes the model intelligent), ML Engineer (makes it production-ready), Governance Officer (can we safely use this data/model?), Business Stakeholder (does this actually solve the business problem?)."},
+    {q:"What is EDA, and why do it before training?", a:"Exploratory Data Analysis — understanding distributions, missing values, outliers, correlations, class imbalance BEFORE building a model. Understand first, train second."},
+    {q:"What is a 'feature,' defined simply?", a:"An input variable the model learns from. Raw signals like emails_opened, calls, website_visits can be engineered into a more meaningful feature like engagement_score."},
+    {q:"Why add '+1' in a ratio feature like spend/tenure?", a:"To guard against division by zero when tenure_years = 0 — annual_spend / (tenure_years + 1) is a deliberate small safeguard."},
+    {q:"Why use a fixed seed (e.g. seed=42) for train/test splits?", a:"Reproducibility — same data + same seed = same random split every run. Without it, you'd get a different split each time, making results hard to compare."},
+    {q:"Training vs Validation — the one-line distinction?", a:"Training asks 'can the model learn from this data?' Validation asks 'does it generalize to unseen data?' Good training performance alone doesn't guarantee a non-overfit model."},
+    {q:"Batch inference vs Real-time inference?", a:"Batch = predictions for many records at once, when results don't need to be instant (score 10M customers overnight). Real-time = a user/app sends a request and expects a quick response (instant loan-risk check)."},
+    {q:"What is Model Drift?", a:"When real-world behavior changes after training so the model's old patterns no longer hold — e.g. website-visits-predict-conversion weakens after a marketing strategy shift. This is why monitoring matters."},
+    {q:"Tracking vs Registry vs Serving — three different jobs?", a:"Tracking = experiment memory. Registry = manages model versions for reuse/deployment. Serving = exposes a specific registered model through an endpoint so real applications can send it requests."},
+  ]},
+  "deck-lakebase": {color:"teal", cards:[
+    {q:"Why does Lakebase exist — what's the core problem?", a:"My application wants milliseconds; my analytics wants massive scans. One database traditionally struggles to be excellent at both. Lakebase closes the OLTP–OLAP gap by adding a serving layer next to the Lakehouse."},
+    {q:"OLTP vs OLAP — the simplest mental shortcut?", a:"OLTP = running the business (fast reads/writes, transactions, many concurrent users — 'give me customer 42 NOW'). OLAP = analyzing the business (huge scans, aggregations, historical analysis — 'total sales last year?')."},
+    {q:"Lakehouse vs Lakebase, technology-wise?", a:"Lakehouse = Delta Lake based, Spark/SQL workloads, mainly OLAP. Lakebase = PostgreSQL-based, application workloads, mainly OLTP. They serve different workloads, not competing ones."},
+    {q:"Lakehouse = warehouse, Lakebase = ?, Synced Tables = ?", a:"Lakehouse = warehouse (process, transform, analyze). Lakebase = front desk (application/agent needs the answer immediately). Synced Tables = the conveyor belt moving prepared data from one to the other."},
+    {q:"Why does Lakebase separate compute from storage?", a:"So compute can scale (or shrink to zero) independently while the underlying data stays durable — like a book that doesn't need to be recreated every time a different person reads it."},
+    {q:"The 4 canonical Lakebase use cases?", a:"① Serve Lakehouse data to an app (point read). ② App backend (small filtered lookup). ③ Capture changes for AI agents (change stream, via Lakebase CDF). ④ AI/ML application state (small entity-based aggregate, e.g. feature lookups during inference)."},
+    {q:"What direction does Synced Tables move data, and what direction does Lakebase CDF move data?", a:"Synced Tables: Lakehouse → Lakebase (serve prepared Delta data to the app). Lakebase CDF: Lakebase → Lakehouse (capture app-side Postgres changes back into a Delta history table for analytics/agents)."},
+    {q:"What is the anti-pattern to avoid with Lakebase?", a:"Turning Lakebase into your data warehouse — asking it to aggregate hundreds of millions of rows just because it can run SQL. Large aggregations belong in the Lakehouse; its advantage only grows with data size."},
+    {q:"The quick decision rule for Lakebase vs Lakehouse?", a:"Point read / small range / app transaction / agent state → Lakebase. Huge aggregation / BI dashboard / ETL / ML training → Lakehouse."},
+    {q:"What is Lakebase branching, and how is it like Git?", a:"You can create isolated dev/test/staging branches without a full physical copy of the database — copy-on-write, only modified data uses extra storage. Just like Git branches code, Lakebase branches database state."},
+    {q:"The 3 Synced Table synchronization modes?", a:"Snapshot (periodic full replace), Triggered (sync on-demand), Continuous (near-real-time propagation) — Triggered and Continuous both rely on Change Data Feed. Trade-off: freshness vs cost."},
+    {q:"What does a Synced Table actually give you underneath?", a:"A Unity Catalog table (governance/pipeline side) PLUS a Lakebase Postgres table (what the application actually queries) — two views of the same synchronized data."},
+    {q:"What's in the Lakebase CDF history table, and what's it called?", a:"Named lb_<source>_history (e.g. lb_orders_history) — contains insert / update_preimage / update_postimage / delete events plus metadata like LSN, transaction info, and timestamp."},
+    {q:"What autoscaling range does Lakebase target, and what happens when idle?", a:"Autoscales between 0.5 and 64 Compute Units, with automatic suspension (scale-to-zero) when the database is idle — you're not paying for compute nobody's using."},
+  ]},
+  "project-medcare": {color:"yellow", cards:[
+    {q:"MedCare's core problem, in one line?", a:"Unify clinical data (S3) and patient/billing data (Salesforce) into a governed Databricks platform that produces trusted metrics, answers patient/admin questions in plain language, and drives a dashboard."},
+    {q:"The 8 source datasets/objects?", a:"S3: lab_results, patient_vitals, hospital_admissions, patient_queries (all CSV). Salesforce: Account (Patient), Case, Appointment__c, Claim__c."},
+    {q:"What goes into Bronze, and what doesn't?", a:"All 4 CSVs + all 4 Salesforce objects loaded as-is, with source_system, file_name/object_name, and load_timestamp added to every row. No cleaning, no joins — Bronze preserves the raw evidence."},
+    {q:"Name 3 real Silver-layer transformations from this project.", a:"① lab_results: standardize patient_mrn format, validate reference ranges, quarantine rows with missing collected_datetime. ② hospital_admissions: compute length_of_stay, standardize diagnosis via lookup, compute 30-day readmission_flag. ③ Account/Contact: mask/tokenize name, phone, email, address."},
+    {q:"What is patient_360, and why does it matter?", a:"A Gold table with one row per patient — demographics, latest vitals, latest labs, current admission status, open cases. The core table both the dashboard and the patient/admin Q&A are built on."},
+    {q:"Name 3 other Gold metric tables and what each measures.", a:"readmission_metrics (30-day rate by dept/facility/diagnosis), appointment_metrics (no-show + cancellation rate, avg lead time), claims_metrics (avg turnaround time + approval rate by payer)."},
+    {q:"How is the Vector Search index built for this project?", a:"Directly on Gold tables (patient_360, appointment_metrics, claims_metrics) and Case descriptions — no intermediate storage layer needed. Selected from the Vector Search tool dropdown in AI Playground and attached to an LLM."},
+    {q:"Give one patient-style and one admin-style test question for the Q&A.", a:"Patient: 'What was my last HbA1c result?' Admin: 'Which department had the highest readmission rate last month?' — same underlying system, two very different audiences and access levels."},
+    {q:"The 5 role/group tiers and what row-level control secures each?", a:"Department Clinician (own dept + own patients' full 360, row filter), Department Admin (own dept Gold metrics only, no raw PHI), Billing Staff (claims only, no clinical data, column masking), Hospital Executive (all Gold, no PHI columns, account-wide column mask), Data Engineer (full Bronze/Silver/Gold, but logged and time-boxed)."},
+    {q:"How is patient-level security different from department-level security?", a:"Department access uses a Unity Catalog row filter on department. Patient access is enforced by filtering on patient_mrn = logged-in user AT QUERY TIME in the serving layer — not just a table grant — so one patient can never retrieve another's record even if the underlying grant is broader."},
+    {q:"Why does USE SCHEMA alone not grant access to data?", a:"USE SCHEMA is only a prerequisite for interacting with objects inside that schema — it doesn't itself grant SELECT or any data-level privilege. You still need the actual object-level grant."},
+    {q:"Real debugging story: Silver Appointment table showed 0 rows despite Bronze having 300 — what was actually wrong?", a:"The transformation itself was fine — the problem was the security/row-filter context under which it was queried. Important lesson: pipeline execution succeeding and Unity Catalog access showing data are two different things."},
+    {q:"Real debugging story: patient_360 had 1,001 rows but only 1,000 were real patients — what happened?", a:"One extra row had a null MRN. It was removed from the AI Search serving copy only — the actual Gold table itself was left intact, since the root data was fine, just one row unsuitable for the search index."},
+    {q:"Real debugging story: why was patient_360_secure created instead of exposing patient_360 directly?", a:"Applying a patient-level row filter directly to the Gold materialized view caused nested policy/security errors. A separate secure view let patient access be handled cleanly without breaking the underlying Gold table's other consumers."},
+    {q:"Real debugging story: the case_descriptions AI Search index initially failed to build — why?", a:"resolution_time_hours had an unsupported DECIMAL precision for that index type. Fix: changed the serving copy's column type to DOUBLE, re-enabled CDF, and the index built successfully."},
+    {q:"Real debugging story: why did DatabricksOpenAI + databricks-gpt-oss-20b replace the normal OpenAI client + gpt-oss-20b?", a:"The standard OpenAI client expected an OPENAI_API_KEY (wrong auth model for Databricks), and the bare gpt-oss-20b endpoint name produced ENDPOINT_NOT_FOUND. The correct Databricks-hosted endpoint naming was databricks-gpt-oss-20b via the DatabricksOpenAI client."},
+  ]},
+};
+
+function buildDecks(){
+  Object.keys(DECKS).forEach(deckId=>{
+    const deck = DECKS[deckId];
+    const grid = document.getElementById('grid-'+deckId);
+    deck.cards.forEach((c,i)=>{
+      const card = document.createElement('div');
+      card.className = 'flashcard deck-'+deck.color;
+      card.id = deckId+'-card-'+i;
+      card.onclick = ()=>card.classList.toggle('flipped');
+      card.innerHTML = `
+        <div class="flashcard-inner">
+          <div class="flashcard-face flashcard-front">
+            <span class="card-tag">Q${i+1}</span>
+            ${c.q}
+            <span class="flip-hint">tap to flip</span>
+          </div>
+          <div class="flashcard-face flashcard-back">
+            <span class="card-tag">A${i+1}</span>
+            ${c.a}
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+    document.getElementById('prog-'+deckId).textContent = deck.cards.length + ' cards';
+  });
+}
+function flipAll(deckId, state){
+  document.querySelectorAll('#grid-'+deckId+' .flashcard').forEach(c=>{
+    c.classList.toggle('flipped', state);
+  });
+}
+buildDecks();
+
+const links = document.querySelectorAll('nav.tabs a');
+const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href')));
+window.addEventListener('scroll', () => {
+  let idx = 0;
+  sections.forEach((s,i) => { if (s && s.getBoundingClientRect().top < 140) idx = i; });
+  links.forEach((a,i) => a.classList.toggle('active', i===idx));
+});
+</script>
+</body>
+</html>

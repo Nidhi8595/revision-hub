@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Counting every event exactly once: revision guide</title>
+<style>
+:root{--bg:#e9f0ec;--card:#fffdf8;--ink:#10302b;--mut:#4f6b64;--line:#d3ddd7;--br:#f6e1c8;--brD:#9a5a1c;--sv:#e4e9ee;--svD:#3f5568;--gd:#fbefb9;--gdD:#7a5b00;--q:#fde0da;--qD:#a3321f;--ok:#d9f1e8;--okD:#1b6e55;--acc:#1f8a7a}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 'Segoe UI',system-ui,sans-serif}
+h1,h2,h3{font-family:'Palatino Linotype',Georgia,serif;line-height:1.2}
+header.top{position:sticky;top:0;z-index:5;background:rgba(233,240,236,.96);border-bottom:1px solid var(--line);padding:8px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0}.chips a{white-space:nowrap;font-size:13px;padding:4px 11px;border-radius:99px;background:#fff;border:1px solid var(--line);color:var(--ink);text-decoration:none}
+.chips a.on{background:var(--ink);color:#fff}.chips a.seen::after{content:" \2713";color:var(--acc)}.chips a.on.seen::after{color:#9fe}
+#q{padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;width:190px}
+.bar{height:4px;background:var(--line);position:sticky;top:48px;z-index:5}.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+main{max-width:920px;margin:0 auto;padding:22px 16px 90px}
+.hero{background:var(--ink);color:#f4efe2;border-radius:18px;padding:30px 32px;margin-bottom:22px}
+.hero h1{font-size:2.3rem;margin:0 0 10px}.hero p{max-width:60ch;margin:6px 0;color:#cfe0da}
+.legend span,.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:99px;margin:3px 6px 3px 0}
+.b{background:var(--br);color:var(--brD)}.s{background:var(--sv);color:var(--svD)}.g{background:var(--gd);color:var(--gdD)}.qq{background:var(--q);color:var(--qD)}.k{background:var(--ok);color:var(--okD)}
+section{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--acc);border-radius:14px;padding:20px 24px;margin-bottom:18px}
+section.bz{border-left-color:#d79a5b}section.sz{border-left-color:#8fa3b5}section.gz{border-left-color:#e8b923}section.qz{border-left-color:#ef6f5a}
+h2{margin:0 0 8px;font-size:1.45rem}h3{margin:16px 0 4px;font-size:1.05rem}p,li{max-width:72ch}
+code{background:#eef2ee;padding:1px 5px;border-radius:4px;font-size:.88em;overflow-wrap:anywhere}
+pre{position:relative;background:#0f2a26;color:#e4f2ec;border-radius:10px;padding:14px;overflow-x:auto;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+pre button{position:absolute;top:6px;right:6px;font-size:12px;padding:3px 9px}
+.note{border-radius:10px;padding:9px 14px;margin:12px 0;font-size:.95rem}.n1{background:var(--gd)}.n2{background:var(--q)}.n3{background:var(--ok)}.n4{background:var(--sv)}
+table{border-collapse:collapse;width:100%;font-size:14px;display:block;overflow-x:auto}th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}th{background:#f0f4ef}
+details{border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:8px 0;background:#fff}summary{cursor:pointer;font-weight:600}
+button,select,input[type=text],input[type=number]{font:inherit;font-size:14px}
+button{cursor:pointer;border:1px solid var(--acc);background:#fff;color:var(--acc);border-radius:8px;padding:6px 12px}button:hover{background:var(--acc);color:#fff}
+:focus-visible{outline:3px solid #f2b134;outline-offset:2px}
+svg{width:100%;height:auto;display:block;margin:8px 0}svg text{font:12px 'Segoe UI',sans-serif;fill:var(--ink)}
+.lab{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}.lab label{font-size:13px;color:var(--mut);display:block}.lab input,.lab select{width:100%;padding:6px;border:1px solid var(--line);border-radius:8px}
+.lane{display:grid;grid-template-columns:90px 1fr;gap:8px;margin:6px 0;align-items:start}.lane b{padding:4px 8px;border-radius:8px;font-size:13px;text-align:center}
+.fc{width:100%;min-height:140px;text-align:left;background:var(--sv);color:var(--ink);border:1px solid #c5d0da;border-radius:12px;padding:18px;font-size:16px}.fc:hover{background:var(--sv);color:var(--ink)}.fc.back{background:var(--ok);border-color:#a8d8c4}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.opt{display:block;width:100%;text-align:left;margin:6px 0}.opt.good{background:var(--ok);color:var(--okD)}.opt.bad{background:var(--q);color:var(--qD)}
+input[type=range]{width:100%}
+#top{position:fixed;right:16px;bottom:16px}
+@media print{header.top,.bar,#top,button,.row,.lab{display:none!important}section{break-inside:avoid;border:0}.hero{background:#fff;color:#000}}
+</style></head><body>
+<header class="top"><div class="chips" id="chips" aria-label="Chapters"></div><input id="q" type="search" placeholder="Search the guide" aria-label="Search the guide"></header><div class="bar" aria-hidden="true"><i id="pb"></i></div>
+<main>
+<div class="hero"><h1>Counting every event exactly once</h1>
+<p>A payment arrives twice. A shipment shows up before its order. An event has no ID. This guide follows 192 fake shopping events through a Databricks medallion pipeline and shows what the system did with each one, including where it fell short.</p>
+<div class="legend"><span class="b">Bronze: raw</span><span class="s">Silver: checked</span><span class="g">Gold: business view</span><span class="qq">Quarantine</span><span class="k">Verified in PDF</span></div>
+<p>All data is fake. Verified means shown in your PDF&rsquo;s screenshots; &ldquo;gap&rdquo; means the PDF plans it but does not show it working.</p></div>
+
+<section id="s1" data-t="Story and map"><h2>The story and the map</h2>
+<p>Imagine the shop&rsquo;s app sends events: an order is created, a payment lands, stock moves, a parcel ships, a customer cancels. Networks retry, so some events arrive twice. Some arrive in the wrong order. Some are broken. Reports must still be right. The pipeline keeps the raw truth, checks it, then derives the current state.</p>
+<div id="d1"></div>
+<div class="note n4"><b>Core idea.</b> An event is not an order. One order produces many events. Keep the history, derive the latest state from it.</div></section>
+
+<section id="s2" class="bz" data-t="Data factory"><h2>The data factory</h2>
+<p>A Python script builds the events with a helper <code>add(id, type, order, minute, amount, **extra)</code>. Every event gets <code>event_time</code> = start + minutes. Rules inside the loop for orders 1 to 40:</p>
+<table><tr><th>Rule</th><th>Effect</th></tr>
+<tr><td>amount cycles 250, 500, 750, 1000, 1500</td><td>Order and payment amounts</td></tr>
+<tr><td><code>i % 10 == 0</code></td><td>Payment fails (4 orders)</td></tr>
+<tr><td><code>i % 7 == 0</code></td><td>Payment is half the order amount (partial payment)</td></tr>
+<tr><td><code>i % 4 == 0</code></td><td>Shipment created and delivered</td></tr>
+<tr><td><code>i % 9 == 0</code></td><td>Order cancelled (4 orders: 9, 18, 27, 36)</td></tr></table>
+<h3>Planted test events</h3>
+<table><tr><th>Event id</th><th>Tests</th></tr>
+<tr><td><code>TEST-UNMATCHED</code></td><td>Payment 400 for <code>ORD999</code>, which has no order</td></tr>
+<tr><td><code>TEST-LATE</code></td><td>Shipment for ORD002 at minute 5, before its order at minute 6</td></tr>
+<tr><td><code>TEST-MISSING</code></td><td><code>order_id</code> is None</td></tr>
+<tr><td><code>TEST-ZERO</code></td><td>Payment of 0</td></tr>
+<tr><td><code>TEST-UNKNOWN</code></td><td>Type <code>UNKNOWN_EVENT</code></td></tr>
+<tr><td><code>TEST-NEW-FIELD</code></td><td>Order ORD041 with extra <code>sales_channel</code></td></tr>
+<tr><td><code>PAY-EVT-001</code> x3</td><td>Original (500), exact copy (500), conflicting copy (9999)</td></tr></table>
+<p>192 events total, split into 5 batches of 39 (<code>(192+4)//5</code>), written as JSON with a fixed 13-column schema. The schema is explicit because Spark cannot infer a type for a column that is only <code>None</code>. This was a bug you hit and fixed.</p>
+<div class="note n1"><b>Observations from the code.</b> Every event has the same <code>received_at</code> (start + 300 minutes), so &ldquo;late arrival&rdquo; cannot be told apart from event time. The <code>sales_channel</code> column is in the schema from the start, so the &ldquo;new field&rdquo; test is not a true schema change.</div>
+<div class="note n2"><b>Discrepancy.</b> The Volume page screenshot reads <code>events_landing</code>, but the code path and plan say <code>event_landing</code>. Verify the real name.</div></section>
+
+<section id="s3" class="bz" data-t="Bronze"><h2>Bronze: keep everything</h2>
+<pre>CREATE OR REFRESH STREAMING TABLE events AS
+SELECT *, _metadata.file_path AS source_file
+FROM STREAM read_files('/Volumes/ecommerce/bronze/event_landing/input', format =&gt; 'json');</pre>
+<p>Pipeline <code>ecommerce_event_pipeline</code> (ETL, Triggered mode, default catalog <code>ecommerce</code>, schema <code>bronze</code>). Output: 192 rows, no cleaning. Bronze counts: ORDER_CREATED 42, INVENTORY_RECEIVED 40, INVENTORY_SOLD 40, PAYMENT_COMPLETED 40, SHIPMENT_CREATED 11, SHIPMENT_DELIVERED 10, ORDER_CANCELLED 4, PAYMENT_FAILED 4, UNKNOWN_EVENT 1 (sums to 192). <code>read_files</code> uses Auto Loader, which remembers which files it has seen.</p></section>
+
+<section id="s4" class="sz" data-t="Silver and the duplicate bug"><h2>Silver: from checked to correct</h2>
+<h3>Version 1 (streaming tables): the bug</h3>
+<p>A CASE expression named the first failing rule as <code>quarantine_reason</code>. Result: 189 valid, 3 quarantined. But <code>GROUP BY event_id HAVING COUNT(*) &gt; 1</code> found <code>PAY-EVT-001</code> three times in valid events. The checks never compared rows with each other.</p>
+<h3>Version 2 (materialized views): the fix</h3>
+<pre>SHA2(TO_JSON(NAMED_STRUCT('event_type',event_type,'order_id',order_id,
+  'customer_id',customer_id,'amount',amount,'event_time',event_time)),256) AS payload_hash
+
+event_stats AS (SELECT event_id, COUNT(DISTINCT payload_hash) AS versions
+  FROM classified WHERE event_id IS NOT NULL AND TRIM(event_id) &lt;&gt; '' GROUP BY event_id)
+
+-- quarantine_reason: MISSING_EVENT_ID, then versions &gt; 1 =&gt; CONFLICTING_EVENT_ID, then validation_reason
+
+valid_events: WHERE quarantine_reason IS NULL
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY event_time) = 1</pre>
+<p>Exact retries share a hash (one version), so <code>QUALIFY</code> keeps one. Same ID with different content has two hashes, so every copy is quarantined. Final: 193 classified, 187 valid, 6 quarantined (CONFLICTING 3, MISSING_ORDER_ID 1, INVALID_PAYMENT_AMOUNT 1, UNKNOWN_EVENT_TYPE 1).</p>
+<div class="note n2"><b>Consequence worth noticing.</b> The policy quarantines all three <code>PAY-EVT-001</code> rows, including the legitimate original. The ORD001 history screenshot shows no payment event. Your PDF states the policy but does not discuss this cost.</div>
+<h3>Try it: where does an event land?</h3>
+<p>Rules run in order: missing ID, missing type, missing order, unknown type, bad payment amount.</p>
+<div class="lab"><div><label for="e_id">event_id</label><input id="e_id" type="text" value="PAY-EVT-100"></div>
+<div><label for="e_ty">event_type</label><select id="e_ty"></select></div>
+<div><label for="e_or">order_id</label><input id="e_or" type="text" value="ORD010"></div>
+<div><label for="e_am">amount</label><input id="e_am" type="number" value="500"></div>
+<div><label for="e_du">also arrives again</label><select id="e_du"><option value="0">Not repeated</option><option value="1">Exact copy</option><option value="2">Same id, amount 9999</option></select></div></div>
+<div class="row"><button id="run">Run through the pipeline</button><button id="pre">Load PAY-EVT-001 conflict</button></div>
+<div id="sim" aria-live="polite"></div></section>
+
+<section id="s5" data-t="Incremental processing"><h2>Incremental processing</h2>
+<p>You added <code>batch_6</code> with one event (<code>SHIP-EVT-ORD001-TEST</code>, SHIPMENT_CREATED) and refreshed the pipeline. It travelled Bronze, classification and valid events.</p>
+<table><tr><th>Table</th><th>Type</th><th>Refresh seen</th><th>Why</th></tr>
+<tr><td>events</td><td>Streaming</td><td>1 new row</td><td>Auto Loader skips old files</td></tr>
+<tr><td>silver_event_classification</td><td>Materialized view</td><td>Full recompute</td><td>Duplicate check looks at all rows</td></tr>
+<tr><td>valid_events, quarantined_events</td><td>Materialized view</td><td>Incremental</td><td>Simple filters</td></tr>
+<tr><td>current_order_status</td><td>Materialized view</td><td>Full recompute</td><td>Ranking per order</td></tr></table>
+<p>A second <code>Refresh all</code> showed &ldquo;No change&rdquo; everywhere and the test event appeared once in <code>valid_events</code>. That is an idempotency check for a repeat run, not a failure test.</p>
+<div class="note n1"><b>Gaps.</b> The planned Structured Streaming with <code>Trigger.AvailableNow()</code> and a checkpoint restart were not run; Step 7 used the pipeline&rsquo;s <code>read_files</code> streaming table. No interrupted run was simulated. Your own learnings say so.</div></section>
+
+<section id="s6" class="gz" data-t="Gold: latest event wins"><h2>Gold: latest event wins</h2>
+<pre>ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY event_time DESC, event_id DESC) AS event_rank
+-- keep event_rank = 1, then CASE maps latest event_type to current_status
+-- CANCELLED, DELIVERED, SHIPPED, PAYMENT_FAILED, PAID, CREATED, else IN_PROGRESS</pre>
+<p>Move the slider to replay order ORD036, which the generator rules make go through every event type.</p>
+<input id="sl" type="range" min="1" max="7" value="1" aria-label="Events received so far"><div id="tl" aria-live="polite"></div>
+<p>Results: 42 rows, 0 duplicate and 0 null order IDs, matching 42 unique orders in Silver. Status counts: IN_PROGRESS 26, DELIVERED 9, CANCELLED 4, CREATED 1, SHIPPED 1, PAID 1. Delivered is 9, not 10, because order 36 was also cancelled.</p>
+<div class="note n2"><b>What the 26 tells you.</b> Most orders end on INVENTORY_SOLD, so Gold calls them IN_PROGRESS. Your learnings note this mapping is questionable. Also, <code>ORD999</code> (a payment with no order) appears as PAID, and ORD041 as CREATED: 40 + ORD041 + ORD999 = 42. The unmatched payment is not flagged.</div></section>
+
+<section id="s7" data-t="Validation and dashboard"><h2>Validation and dashboard</h2>
+<p>Checks run: Gold row uniqueness, null IDs, Silver-to-Gold reconciliation (42 = 42), quarantine reasons. The dashboard has tabs <em>Events Summary</em> and <em>Quarantine Summary</em>: KPIs (Total Orders 42, Delivered 9, Quarantined 6), orders by status, incoming events by type, events over time, order amount by sales channel (98.79% null, rest mobile), and quarantine by reason and type.</p>
+<table><tr><th>Question from the plan</th><th>Status in PDF</th></tr>
+<tr><td>Same payment twice not double-counted</td><td>Verified for event rows. Revenue totals were never computed.</td></tr>
+<tr><td>Old event must not overwrite newer</td><td>Ordering by event_time shown. A time-order test beyond TEST-LATE is not shown.</td></tr>
+<tr><td>Payment before order</td><td>Gap: shows as PAID instead of unmatched</td></tr>
+<tr><td>Cancelled after payment</td><td>Shown as CANCELLED. Payment status is not kept separately.</td></tr>
+<tr><td>Missing ID or amount invalid</td><td>Verified in quarantine</td></tr>
+<tr><td>Failed run then rerun</td><td>Gap</td></tr>
+<tr><td>Wrong revenue detected</td><td>Gap: no revenue checks</td></tr></table></section>
+
+<section id="s8" class="qz" data-t="Troubleshooting"><h2>Troubleshooting playbook</h2>
+<p><span class="tag k">Seen in PDF</span><span class="tag s">Plausible</span></p>
+<details open><summary>Duplicate event in valid_events <span class="tag k">seen</span></summary><p>Symptom: <code>PAY-EVT-001</code> counted 3 times. Cause: classification only validated each row alone. Fix: payload hash, version count, <code>QUALIFY</code>. Verify: re-run the HAVING query returns no rows.</p></details>
+<details><summary>Spark cannot infer a column type <span class="tag k">seen</span></summary><p>A field holding only None has no type. Define the schema explicitly (<code>StructType</code>) before writing JSON.</p></details>
+<details><summary>Full recompute where you expected incremental <span class="tag k">seen</span></summary><p>Not an error. Window functions and cross-row checks often recompute. Read the Incrementalization column instead of assuming.</p></details>
+<details><summary>Payment missing from an order&rsquo;s history <span class="tag s">derived</span></summary><p>Check <code>quarantined_events</code> for CONFLICTING_EVENT_ID on that payment&rsquo;s id.</p></details>
+<details><summary>Run succeeds but numbers look wrong <span class="tag s">plausible</span></summary><p>Success only means the code ran. Reconcile counts (193 = 187 + 6) and check business meaning (what IN_PROGRESS means).</p></details></section>
+
+<section id="s9" data-t="Interview prep"><h2>Interview prep</h2>
+<details><summary>Why keep duplicates in Bronze?</summary><p>Bronze is the audit trail. You cannot investigate what you deleted. Follow-up, how do you then avoid double counting? Deduplicate in Silver.</p></details>
+<details><summary>Duplicate vs conflict?</summary><p>A duplicate repeats the same content; a conflict reuses an ID with different content. The payload hash tells them apart. Follow-up, what is the downside of quarantining all versions? A legitimate original is also held back.</p></details>
+<details><summary>Why can a table show full recompute?</summary><p>Logic that compares across rows, such as ranking or duplicate detection, is harder to refresh incrementally.</p></details>
+<details><summary>What would you add next?</summary><p>Unmatched-payment flag, revenue and payment-status tables, stock checks, real received_at times, timestamp casting, a true failure and restart test.</p></details></section>
+
+<section id="s10" data-t="Revision center"><h2>Revision center</h2>
+<div id="fcbox"></div>
+<div class="row"><button id="prev">Previous</button><button id="flip">Flip</button><button id="next">Next</button><button id="know">I know it</button><button id="rev">Needs revision</button><button id="reset">Reset progress</button></div><p id="fcstat" aria-live="polite"></p>
+<h3>Knowledge check</h3><div id="quiz"></div>
+<h3>One-page summary</h3>
+<table><tr><th>Item</th><th>Value</th></tr>
+<tr><td>Flow</td><td>JSON batches in Volume &rarr; Bronze <code>events</code> &rarr; <code>silver_event_classification</code> &rarr; <code>valid_events</code> / <code>quarantined_events</code> &rarr; Gold <code>current_order_status</code> &rarr; dashboard</td></tr>
+<tr><td>Numbers</td><td>192 raw, 193 after batch_6, 187 valid, 6 quarantined, 42 orders</td></tr>
+<tr><td>Lessons</td><td>Event is not order; duplicate is not conflict; success is not correctness</td></tr>
+<tr><td>Gaps</td><td>Unmatched payments, revenue, payment status, failure restart, AvailableNow</td></tr></table></section>
+</main><button id="top" aria-label="Back to top">Top</button>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+/* diagram */
+const C={b:'#f6e1c8',s:'#e4e9ee',g:'#fbefb9',q:'#fde0da',k:'#d9f1e8'};
+const rows=[['Build and land',[['k','Python generator|192 events'],['k','JSON batches|batch_1 to 6'],['b','Bronze|events (raw)'],['s','Silver|classification']]],['Split and serve',[['k','valid_events|one row per id'],['q','quarantined_events|with reason'],['g','Gold|current_order_status'],['k','Dashboard|2 tabs']]]];
+let h='<svg viewBox="0 0 760 190" role="img" aria-label="Pipeline diagram"><defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#10302b"/></marker></defs>';
+rows.forEach((r,i)=>{const y=10+i*90;r[1].forEach((n,j)=>{const x=4+j*190,p=n[1].split('|');h+=`<rect x="${x}" y="${y}" width="150" height="50" rx="10" fill="${C[n[0]]}" stroke="#7a8f88"/><text x="${x+75}" y="${y+22}" text-anchor="middle" font-weight="700">${p[0]}</text><text x="${x+75}" y="${y+39}" text-anchor="middle">${p[1]}</text>`;if(j<3)h+=`<path d="M${x+150} ${y+25}h36" stroke="#10302b" stroke-width="2" marker-end="url(#ar)"/>`});h+=`<text x="4" y="${y+72}" fill="#4f6b64">${r[0]}</text>`});
+$('#d1').innerHTML=h+'</svg>';
+/* nav */
+const secs=$$('section');$('#chips').innerHTML=secs.map(s=>`<a href="#${s.id}" data-id="${s.id}">${s.dataset.t}</a>`).join('');
+const seen=new Set(store.get('seen2',[]));const paint=()=>{$$('#chips a').forEach(a=>a.classList.toggle('seen',seen.has(a.dataset.id)));$('#pb').style.width=seen.size/secs.length*100+'%'};paint();
+new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){seen.add(e.target.id);store.set('seen2',[...seen]);paint();$$('#chips a').forEach(a=>a.classList.toggle('on',a.dataset.id===e.target.id))}}),{threshold:.3}).observe&&secs.forEach(s=>new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){seen.add(s.id);store.set('seen2',[...seen]);paint();$$('#chips a').forEach(a=>a.classList.toggle('on',a.dataset.id===s.id))}}),{threshold:.3}).observe(s));
+$('#q').addEventListener('input',e=>{const v=e.target.value.toLowerCase().trim();secs.forEach(s=>{const hit=!v||s.textContent.toLowerCase().includes(v);s.hidden=!hit;$(`#chips a[data-id="${s.id}"]`).style.display=hit?'':'none'})});
+$$('pre').forEach(p=>{const b=document.createElement('button');b.textContent='Copy';b.onclick=()=>{const t=p.innerText.replace(/Copy$/,'').trim();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>b.textContent='Copied').catch(()=>b.textContent='Select text');setTimeout(()=>b.textContent='Copy',1500)};p.prepend(b)});
+$('#top').onclick=()=>scrollTo({top:0});addEventListener('beforeprint',()=>$$('details').forEach(d=>d.open=true));
+/* simulator */
+const T=['ORDER_CREATED','PAYMENT_COMPLETED','PAYMENT_FAILED','INVENTORY_RECEIVED','INVENTORY_SOLD','SHIPMENT_CREATED','SHIPMENT_DELIVERED','ORDER_CANCELLED','UNKNOWN_EVENT','(blank)'];
+$('#e_ty').innerHTML=T.map(t=>`<option>${t}</option>`).join('');$('#e_ty').value='PAYMENT_COMPLETED';
+const ST={ORDER_CANCELLED:'CANCELLED',SHIPMENT_DELIVERED:'DELIVERED',SHIPMENT_CREATED:'SHIPPED',PAYMENT_FAILED:'PAYMENT_FAILED',PAYMENT_COMPLETED:'PAID',ORDER_CREATED:'CREATED'};
+function lane(c,l,t){return `<div class="lane"><b class="${c}">${l}</b><div>${t}</div></div>`}
+$('#run').onclick=()=>{const id=$('#e_id').value.trim(),ty=$('#e_ty').value==='(blank)'?'':$('#e_ty').value,or=$('#e_or').value.trim(),am=$('#e_am').value===''?null:+$('#e_am').value,du=+$('#e_du').value;
+let r=null;if(!id)r='MISSING_EVENT_ID';else if(!ty)r='MISSING_EVENT_TYPE';else if(!or)r='MISSING_ORDER_ID';else if(!T.slice(0,8).includes(ty))r='UNKNOWN_EVENT_TYPE';else if(ty==='PAYMENT_COMPLETED'&&(am===null||am<=0))r='INVALID_PAYMENT_AMOUNT';
+const n=du?2:1;if(id&&du===2)r='CONFLICTING_EVENT_ID';
+let o=lane('b','Bronze',`${n} row${n>1?'s':''} kept as received. Nothing is removed here.`);
+if(r){o+=lane('qq','Silver',`<b>Quarantined:</b> ${r}${du===2?' (all '+n+' copies, because two different payload hashes share one id)':''}. Nothing reaches valid_events.`)+lane('g','Gold','No effect.')}
+else{o+=lane('s','Silver',du===1?'Both copies have one hash, so <code>QUALIFY ROW_NUMBER() = 1</code> keeps a single valid row.':'Passes every rule and appears once in valid_events.')+lane('g','Gold',ST[ty]?`If this is order ${or}&rsquo;s latest event, status becomes <b>${ST[ty]}</b>. Without an ORDER_CREATED, a row is still created (like ORD999).`:`If latest, status becomes <b>IN_PROGRESS</b> (the default branch).`)}
+$('#sim').innerHTML=o};
+$('#pre').onclick=()=>{$('#e_id').value='PAY-EVT-001';$('#e_ty').value='PAYMENT_COMPLETED';$('#e_or').value='ORD001';$('#e_am').value=500;$('#e_du').value='2';$('#run').click()};$('#run').click();
+/* slider */
+const seq=['ORDER_CREATED','PAYMENT_COMPLETED','INVENTORY_RECEIVED','INVENTORY_SOLD','SHIPMENT_CREATED','SHIPMENT_DELIVERED','ORDER_CANCELLED'];
+function tl(){const n=+$('#sl').value,e=seq[n-1];$('#tl').innerHTML='<p>'+seq.map((x,i)=>i<n?`<span class="tag ${i===n-1?'g':'s'}">${x}</span>`:'').join(' ')+`</p><p><b>Latest event:</b> ${e} &rarr; <b>current_status = ${ST[e]||'IN_PROGRESS'}</b></p>`}
+$('#sl').oninput=tl;tl();
+/* flashcards */
+const cards=[['Bronze vs Silver?','Bronze keeps every event as received, with source_file. Silver validates, deduplicates and quarantines.'],['Duplicate vs conflicting event?','Duplicate: same id, same content. Conflict: same id, different content. The payload hash detects it.'],['What does SHA2 do here?','Makes a fingerprint of event_type, order_id, customer_id, amount and event_time so equal content gives equal hashes.'],['Why COUNT(DISTINCT payload_hash)?','Counts versions per event id. One means a harmless retry; more than one means a conflict.'],['What does QUALIFY ROW_NUMBER() = 1 do?','Keeps one row per event_id after window ranking, so exact retries appear once.'],['Why quarantine instead of delete?','You can investigate bad events later, and Bronze stays untouched.'],['Why did silver_event_classification fully recompute?','Duplicate and conflict checks compare each row with all others.'],['What is idempotency here?','Repeating a pipeline update does not change results: the test event stayed at one row.'],['How is current status chosen?','ROW_NUMBER over order_id by event_time DESC; the rank-1 event is mapped by CASE.'],['Why are 26 orders IN_PROGRESS?','Their latest event is INVENTORY_SOLD, which falls to the ELSE branch of the CASE.'],['Why is ORD999 in Gold?','Its valid payment event has an order_id, so Gold creates a row with status PAID even without an order.'],['Why define the schema explicitly?','Spark cannot infer a type for a column containing only None.']];
+let fi=0,fl=false,mk=store.get('marks2',{});
+function fc(){const c=cards[fi];$('#fcbox').innerHTML=`<button class="fc ${fl?'back':''}" id="card" aria-label="Flashcard, press to flip">${fl?c[1]:'<b>'+c[0]+'</b>'}</button>`;$('#card').onclick=()=>{fl=!fl;fc()};
+const k=Object.values(mk).filter(v=>v==='k').length,r=Object.values(mk).filter(v=>v==='r').length;$('#fcstat').textContent=`Card ${fi+1} of ${cards.length}. Known ${k}, needs revision ${r}.`}
+const go=d=>{fi=(fi+d+cards.length)%cards.length;fl=false;fc()};
+$('#prev').onclick=()=>go(-1);$('#next').onclick=()=>go(1);$('#flip').onclick=()=>{fl=!fl;fc()};
+$('#know').onclick=()=>{mk[fi]='k';store.set('marks2',mk);fc()};$('#rev').onclick=()=>{mk[fi]='r';store.set('marks2',mk);fc()};
+$('#reset').onclick=()=>{mk={};store.set('marks2',mk);store.set('seen2',[]);seen.clear();paint();fc()};fc();
+/* quiz */
+const qs=[['PAY-EVT-001 arrives as 500, 500 and 9999. How many valid rows result?',['One','Two','None'],2],['A payment for ORD999 passes all checks. Where does the order show in Gold?',['Nowhere','As PAID','As UNMATCHED'],1],['Why is Gold current_order_status fully recomputed?',['It uses ranking across each order&rsquo;s events','It is a streaming table','It has no data'],0],['Does a green pipeline run prove revenue is correct?',['Yes','No, only that the code ran'],1]];
+$('#quiz').innerHTML=qs.map((q,i)=>`<div data-i="${i}"><p><b>${q[0]}</b></p>${q[1].map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}<p class="fb" aria-live="polite"></p></div>`).join('');
+$$('#quiz .opt').forEach(b=>b.onclick=()=>{const d=b.closest('div'),ok=+b.dataset.j===qs[d.dataset.i][2];b.classList.toggle('good',ok);b.classList.toggle('bad',!ok);d.querySelector('.fb').textContent=ok?'Correct.':'Not quite. Try again.'});
+</script></body></html>

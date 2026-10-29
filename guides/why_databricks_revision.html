@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Why Databricks — Revision Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF7EF; --paper2:#F3EFE3; --rule:#D8D0BC;
+    --ink:#211F1B; --ink-soft:#5B5648;
+    --blue:#26518C; --blue-bg:#E7EEF7;
+    --green:#2C7A55; --green-bg:#E6F3EB;
+    --orange:#B15A1F; --orange-bg:#FBEADD;
+    --purple:#6A4A93; --purple-bg:#EFE7F5;
+    --red:#B23B2E; --red-bg:#FBE6E1;
+    --yellow:#8A6A12; --yellow-bg:#FBF0CD;
+    --teal:#1E7A72; --teal-bg:#E2F2EF;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper2);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.55;}
+  code,.mono{font-family:'JetBrains Mono',monospace;}
+  .shell{display:flex;min-height:100vh;}
+
+  nav.tabs{width:236px;flex:0 0 236px;background:#FFFDF7;border-right:1px solid var(--rule);position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 0 40px;}
+  nav.tabs .tabs-title{font-family:'Kalam',cursive;font-weight:700;font-size:15px;padding:0 18px 12px;color:var(--ink-soft);border-bottom:1px solid var(--rule);margin-bottom:6px;}
+  nav.tabs .tabs-title .tabs-sub{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);opacity:.7;margin-top:3px;}
+  nav.tabs a{display:flex;align-items:center;gap:8px;padding:7px 18px 7px 22px;font-size:12.3px;color:var(--ink);text-decoration:none;border-left:3px solid transparent;}
+  nav.tabs a .dot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;}
+  nav.tabs a:hover{background:var(--paper2);}
+  nav.tabs a.active{border-left:3px solid var(--ink);background:var(--paper2);font-weight:600;}
+
+  main{flex:1;min-width:0;padding:36px 0 120px;}
+  .page{max-width:1060px;margin:0 auto 54px;background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:34px 42px 40px;position:relative;
+    background-image:linear-gradient(var(--paper) 0, var(--paper) 100%),repeating-linear-gradient(transparent 0 34px, rgba(216,208,188,0.35) 34px 35px);}
+  .page::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;border-radius:4px 0 0 4px;}
+  .page.p-blue::before{background:var(--blue);} .page.p-green::before{background:var(--green);}
+  .page.p-orange::before{background:var(--orange);} .page.p-purple::before{background:var(--purple);}
+  .page.p-red::before{background:var(--red);} .page.p-yellow::before{background:var(--yellow);}
+  .page.p-teal::before{background:var(--teal);} .page.p-mixed::before{background:linear-gradient(var(--blue),var(--orange),var(--teal),var(--purple),var(--red));}
+
+  .page-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;}
+  .page h1{font-family:'Kalam',cursive;font-size:27px;margin:0 0 4px;color:var(--ink);}
+  .page .sub{color:var(--ink-soft);font-size:13.5px;margin-bottom:18px;max-width:800px;}
+
+  h2.section-h{font-family:'Kalam',cursive;font-size:17px;margin:24px 0 10px;display:flex;align-items:center;gap:8px;}
+  h2.section-h .tag{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--ink);color:var(--paper);padding:2px 6px;border-radius:3px;letter-spacing:.04em;}
+
+  .flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:14px 0;}
+  .hflow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin:14px 0;}
+  .hflow .node{margin:6px 4px;}
+  .node{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:9px 14px;border-radius:6px;text-align:center;line-height:1.3;border:1.5px solid transparent;min-width:110px;}
+  .node small{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:10.5px;margin-top:2px;opacity:.85;}
+  .n-blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .n-green{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+  .n-orange{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);}
+  .n-purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple);}
+  .n-red{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .n-yellow{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow);}
+  .n-teal{background:var(--teal-bg);color:var(--teal);border-color:var(--teal);}
+  .n-ink{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .arrow{font-size:16px;color:var(--ink-soft);line-height:1;margin:2px 0;}
+  .arrow-r{font-size:16px;color:var(--ink-soft);margin:0 6px;}
+  .arrow-label{font-family:'Kalam',cursive;font-size:11.5px;color:var(--ink-soft);margin:0 0 2px;text-align:center;max-width:340px;}
+
+  .note{font-size:12.5px;color:var(--ink-soft);background:var(--paper2);border:1px solid var(--rule);border-radius:6px;padding:10px 14px;margin:12px 0;}
+  .note b{color:var(--ink);}
+  .code-chip{font-family:'JetBrains Mono',monospace;font-size:11.3px;background:var(--ink);color:var(--paper);padding:2px 7px;border-radius:4px;}
+
+  table.cmp{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:12.3px;}
+  table.cmp th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.03em;background:var(--ink);color:var(--paper);padding:8px 10px;text-align:left;}
+  table.cmp td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  table.cmp tr:nth-child(even) td{background:rgba(216,208,188,0.18);}
+  table.cmp tbody tr:hover td{background:rgba(38,81,140,0.07);}
+
+  .stickies{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0;}
+  .sticky{font-family:'Kalam',cursive;font-size:12.3px;padding:12px 14px;border-radius:2px;width:236px;box-shadow:2px 3px 6px rgba(0,0,0,0.08);}
+  .sticky b{display:block;font-size:11px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:5px;letter-spacing:.05em;}
+  .sticky.why{background:#FDE9C8;color:#6B4E10;transform:rotate(-1.2deg);}
+  .sticky.remember{background:#D9ECEB;color:#1F5652;transform:rotate(1deg);}
+  .sticky.interview{background:#F6D9D2;color:#7A2E22;transform:rotate(-0.5deg);}
+
+  /* -------- strength/catch flip toggle (new interactive component) -------- */
+  .flip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin:14px 0;}
+  .flip-card{perspective:1300px;height:210px;cursor:pointer;}
+  .flip-inner{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .flip-card.on .flip-inner{transform:rotateY(180deg);}
+  .flip-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;padding:16px;display:flex;flex-direction:column;box-shadow:2px 3px 8px rgba(0,0,0,0.07);border:1.5px solid;}
+  .flip-face .flabel{font-family:'JetBrains Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+  .flip-face .ftext{font-size:12.3px;flex:1;overflow-y:auto;}
+  .flip-front{background:var(--green-bg);border-color:var(--green);color:#1d4a37;}
+  .flip-front .flabel{color:var(--green);}
+  .flip-back{transform:rotateY(180deg);background:var(--red-bg);border-color:var(--red);color:#6b241a;}
+  .flip-back .flabel{color:var(--red);}
+  .flip-hint2{font-family:'JetBrains Mono',monospace;font-size:8.5px;opacity:.55;text-align:right;margin-top:6px;}
+
+  /* -------- interactive checklist -------- */
+  .checklist{display:flex;flex-direction:column;gap:8px;margin:14px 0;}
+  .check-item{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border:1.5px solid var(--rule);border-radius:8px;cursor:pointer;background:#fff;transition:background .15s, border-color .15s;}
+  .check-item:hover{background:var(--paper2);}
+  .check-item.checked{background:var(--green-bg);border-color:var(--green);}
+  .check-box{width:20px;height:20px;border-radius:5px;border:2px solid var(--rule);flex:0 0 20px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;margin-top:1px;}
+  .check-item.checked .check-box{background:var(--green);border-color:var(--green);}
+  .check-text b{display:block;font-size:13px;}
+  .check-text span{font-size:11.8px;color:var(--ink-soft);}
+  #checklist-result{font-family:'Kalam',cursive;font-size:14px;margin-top:14px;padding:12px 16px;border-radius:6px;background:var(--paper2);border:1px dashed var(--rule);}
+
+  /* -------- flashcards -------- */
+  .deck-toolbar{display:flex;align-items:center;gap:10px;margin:6px 0 16px;flex-wrap:wrap;}
+  .deck-btn{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:6px 12px;border-radius:20px;border:1px solid var(--rule);background:#fff;color:var(--ink-soft);cursor:pointer;letter-spacing:.02em;}
+  .deck-btn:hover{background:var(--paper2);}
+  .deck-progress{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-soft);margin-left:auto;}
+  .flashcard-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(225px,1fr));gap:16px;margin:10px 0 8px;}
+  .flashcard{perspective:1200px;height:175px;cursor:pointer;}
+  .flashcard-inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
+  .flashcard-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;padding:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:2px 3px 8px rgba(0,0,0,0.06);border:1.5px solid;}
+  .flashcard-front{font-family:'Kalam',cursive;font-size:13.5px;line-height:1.3;background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .flashcard-back{transform:rotateY(180deg);background:#fff;border-color:var(--rule);font-size:11.4px;color:var(--ink-soft);line-height:1.4;overflow-y:auto;}
+  .flashcard-back b{color:var(--ink);}
+  .card-tag{position:absolute;top:8px;left:10px;font-family:'JetBrains Mono',monospace;font-size:8.5px;opacity:.55;letter-spacing:.04em;}
+  .flip-hint{position:absolute;bottom:6px;right:10px;font-family:'JetBrains Mono',monospace;font-size:8.5px;opacity:.45;}
+
+  .intro-banner{max-width:1060px;margin:0 auto 20px;padding:16px 26px;border:1.5px dashed var(--rule);border-radius:8px;background:#FFFDF7;}
+  .intro-banner-head{font-family:'Kalam',cursive;font-size:16px;color:var(--ink);}
+  .intro-banner-sub{font-size:12px;color:var(--ink-soft);margin-top:4px;max-width:850px;}
+  footer.end{max-width:1060px;margin:0 auto;padding:0 42px 60px;color:var(--ink-soft);font-size:12px;font-family:'JetBrains Mono',monospace;text-align:center;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="tabs">
+    <div class="tabs-title">Why Databricks<span class="tabs-sub">tables + flip cards</span></div>
+    <a href="#big-picture"><span class="dot" style="background:var(--ink)"></span>The Big Picture</a>
+    <a href="#data-foundation"><span class="dot" style="background:var(--blue)"></span>Data Foundation</a>
+    <a href="#compute"><span class="dot" style="background:var(--orange)"></span>Spark + Photon</a>
+    <a href="#engineering"><span class="dot" style="background:var(--green)"></span>Lakeflow</a>
+    <a href="#governance"><span class="dot" style="background:var(--purple)"></span>Unity Catalog</a>
+    <a href="#workloads"><span class="dot" style="background:var(--teal)"></span>One Foundation, Many Workloads</a>
+    <a href="#federation"><span class="dot" style="background:var(--blue)"></span>Lakehouse Federation</a>
+    <a href="#comparison"><span class="dot" style="background:var(--orange)"></span>vs Snowflake/BigQuery/Fabric/AWS</a>
+    <a href="#strengths-catches"><span class="dot" style="background:var(--red)"></span>Strengths ⇄ The Catch</a>
+    <a href="#checklist"><span class="dot" style="background:var(--green)"></span>Does It Fit? (checklist)</a>
+    <a href="#flashcards"><span class="dot" style="background:var(--yellow)"></span>Rapid Recall Cards</a>
+  </nav>
+
+  <main>
+    <div class="intro-banner">
+      <div class="intro-banner-head">🧱 Why Databricks — the architecture argument, not the feature list</div>
+      <div class="intro-banner-sub">Databricks isn't interesting because of any one feature — it's interesting because of how storage, compute, engineering, governance, and workloads all sit around ONE shared data foundation. This sheet follows that same thread: tables wherever something is genuinely comparable, flip cards wherever a strength has a real catch attached to it, and a proper flashcard deck at the end for the facts you just need to know cold.</div>
+    </div>
+
+    <!-- BIG PICTURE -->
+    <section class="page p-mixed" id="big-picture">
+      <div class="page-eyebrow">Start here</div>
+      <h1>The Big Picture</h1>
+      <div class="sub">Five layers, stacked, but not a strict pipeline — they interact. Lakeflow feeds Spark, Unity Catalog watches everything, and workloads just... plug in wherever they need to.</div>
+
+      <div class="flow">
+        <div class="node n-blue">DATA<small>object storage + tables + Delta Lake</small></div>
+        <div class="arrow">↕</div>
+        <div class="node n-orange">COMPUTE<small>Spark + Photon</small></div>
+        <div class="arrow">↕</div>
+        <div class="node n-green">ENGINEERING<small>Lakeflow — ingestion, pipelines, orchestration</small></div>
+        <div class="arrow">↕</div>
+        <div class="node n-purple">GOVERNANCE<small>Unity Catalog — access, discovery, lineage, audit</small></div>
+        <div class="arrow">↕</div>
+        <div class="node n-teal">WORKLOADS<small>SQL + streaming + ML + AI</small></div>
+      </div>
+
+      <h2 class="section-h">The four questions worth asking about <i>any</i> capability <span class="tag">THE REAL FRAMEWORK</span></h2>
+      <table class="cmp">
+        <tr><th>Question</th><th>What it's actually asking</th></tr>
+        <tr><td>Where does the data live?</td><td>Is it tied to one engine, or sitting independently in storage?</td></tr>
+        <tr><td>Where does computation happen?</td><td>Which engine does the actual work, and can it be swapped out?</td></tr>
+        <tr><td>Where is access controlled?</td><td>Is there one governance layer, or does every tool enforce its own rules?</td></tr>
+        <tr><td>How does the result reach the next workload?</td><td>Does it need a copy/export, or can the next workload just... read it?</td></tr>
+      </table>
+      <div class="note"><b>The trade-off that runs through this entire document:</b> wiring more of these layers together through one platform cuts down the number of integration points you have to design and babysit — but it also quietly increases how much your architecture leans on Databricks-specific services and patterns. Neither side is free. That tension shows up again and again below.</div>
+    </section>
+
+    <!-- DATA FOUNDATION -->
+    <section class="page p-blue" id="data-foundation">
+      <div class="page-eyebrow">Layer 1</div>
+      <h1>The Data Foundation</h1>
+      <div class="sub">Same question as always: where does the data actually sit, and what does Delta Lake add on top of it?</div>
+
+      <table class="cmp">
+        <tr><th></th><th>Traditional Warehouse</th><th>Databricks Lakehouse</th></tr>
+        <tr><td>Flow</td><td>Data → Warehouse storage → Warehouse workloads</td><td>Data → Cloud storage + table layer → Multiple workloads</td></tr>
+        <tr><td>Storage tied to compute?</td><td>Usually, yes</td><td>No — storage and compute scale independently</td></tr>
+        <tr><td>Who can read it?</td><td>Mostly the warehouse engine</td><td>Any engine that understands the table format</td></tr>
+      </table>
+
+      <h2 class="section-h">Delta Lake, quickly <span class="tag">IT'S NOT THE STORAGE</span></h2>
+      <table class="cmp">
+        <tr><td>What it is</td><td>A transaction log sitting on top of Parquet files</td></tr>
+        <tr><td>What it adds</td><td>ACID transactions, scalable metadata handling, a reliable "table" behavior</td></tr>
+        <tr><td>What it is <i>not</i></td><td>The physical storage itself — that's still just cloud object storage underneath</td></tr>
+        <tr><td>Nice side effect</td><td>Same table layer supports both batch AND streaming, so you're not maintaining two versions of "the same" data</td></tr>
+      </table>
+
+      <h2 class="section-h">Open data ≠ open platform <span class="tag">THE QUESTION EVERYONE FORGETS TO ASK</span></h2>
+      <div class="note">An open table format makes the <i>data</i> easier to reach from other engines. It says nothing about whether your governance rules, pipeline definitions, or platform-specific tuning come along for the ride. <b>Portability has to be checked layer by layer</b> — not just by glancing at the file format and calling it a day.</div>
+      <div class="stickies">
+        <div class="sticky why"><b>Worth remembering</b>"We use an open format" and "we're not locked in" are two different sentences. Only one of them is usually true.</div>
+      </div>
+    </section>
+
+    <!-- COMPUTE -->
+    <section class="page p-orange" id="compute">
+      <div class="page-eyebrow">Layer 2</div>
+      <h1>Why Spark + Photon, Together</h1>
+      <div class="sub">Two engines, two different jobs — one distributes the work, the other makes supported parts of it faster.</div>
+
+      <table class="cmp">
+        <tr><th></th><th>Apache Spark</th><th>Photon</th></tr>
+        <tr><td>Answers</td><td>How is the work distributed?</td><td>How is supported work executed efficiently?</td></tr>
+        <tr><td>What it is</td><td>Distributed processing framework, spreads work across worker nodes</td><td>Databricks' native vectorized query engine, native C++ runtime</td></tr>
+        <tr><td>Execution model</td><td>Lazy — nothing runs until an action triggers it</td><td>Columnar batch processing, where supported</td></tr>
+        <tr><td>Does it replace the other?</td><td>No — Photon sits on top for supported ops</td><td>No — falls back to Spark when it can't handle an operation</td></tr>
+        <tr><td>Best suited for</td><td>Everything, as the general framework</td><td>Longer-running workloads over larger datasets — short queries barely notice it</td></tr>
+      </table>
+
+      <div class="flow">
+        <div class="node n-blue">Data in Delta tables</div><div class="arrow">↓</div>
+        <div class="node n-orange">Spark plans + distributes the work</div><div class="arrow">↓</div>
+        <div class="node n-green">Photon accelerates supported execution</div><div class="arrow">↓</div>
+        <div class="node n-ink">Result → written back, or handed to the next workload</div>
+      </div>
+
+      <div class="note">The benchmark claim worth knowing: Photon is cited at <b>up to 5x better price/performance</b> vs other cloud data warehouses on TPC-DS benchmarks. Treat that as a vendor number, not gospel — but it tells you where Databricks thinks the engine earns its keep.</div>
+      <div class="note"><b>The actual point being made here:</b> this isn't "Spark vs SQL." Databricks runs SQL workloads just fine while still keeping the broader distributed-processing model underneath for engineering, streaming, and everything else that isn't a tidy SQL query.</div>
+    </section>
+
+    <!-- ENGINEERING -->
+    <section class="page p-green" id="engineering">
+      <div class="page-eyebrow">Layer 3</div>
+      <h1>Lakeflow — Ingestion, Transformation, Orchestration</h1>
+      <div class="sub">Three jobs that usually live in three different tools, bundled into one instead.</div>
+
+      <table class="cmp">
+        <tr><th>Piece</th><th>Job</th></tr>
+        <tr><td><b>Lakeflow Connect</b></td><td>Gets data into the platform (ingestion)</td></tr>
+        <tr><td><b>Lakeflow Pipelines</b></td><td>Transforms it — declaratively, meaning you describe the end state, not every execution step</td></tr>
+        <tr><td><b>Lakeflow Jobs</b></td><td>Keeps the whole thing scheduled and running (orchestration)</td></tr>
+      </table>
+
+      <div class="note">Important boundary: <b>Lakeflow sits above storage and compute, it doesn't replace them.</b> The actual processing still runs on Databricks' execution infrastructure (Spark/Photon) underneath. It's also not trying to replace every external orchestration tool on earth — it's the Databricks-native way of building and running these workflows, nothing more dramatic than that.</div>
+
+      <h2 class="section-h">Why bundle these three together at all? <span class="tag">THE REAL ANSWER</span></h2>
+      <div class="note">Not because ingestion and orchestration are hard problems nobody's solved — they're not, there are dozens of tools for each. The actual benefit is <b>fewer boundaries</b> between ingestion, transformation, orchestration, compute, and governance. Every boundary is a place where something can silently break, need its own monitoring, or just add latency while data waits to cross it.</div>
+    </section>
+
+    <!-- GOVERNANCE -->
+    <section class="page p-purple" id="governance">
+      <div class="page-eyebrow">Layer 4</div>
+      <h1>Unity Catalog — Governance That Follows the Data</h1>
+      <div class="sub">Not a processing layer. Not a product bolted on the side. It's the thing watching everything else.</div>
+
+      <table class="cmp">
+        <tr><th>What it tracks</th><th>In plain terms</th></tr>
+        <tr><td>Who can access it</td><td>Privileges on catalogs, schemas, tables, and other securable objects</td></tr>
+        <tr><td>What they can do with it</td><td>Row filters, column masks, attribute-based policies for finer-grained control</td></tr>
+        <tr><td>Where the data came from</td><td>Lineage — automatically captured, including column-level for supported workloads</td></tr>
+        <tr><td>What depends on it</td><td>Downstream lineage through tables, queries, jobs, notebooks, pipelines</td></tr>
+        <tr><td>What activity occurred</td><td>Auditing</td></tr>
+      </table>
+
+      <div class="note"><b>The boundary worth remembering — this one gets glossed over a lot:</b> Unity Catalog governs registered assets and supported Databricks governance paths. It does <b>not</b> automatically mean every external system in your org, or every scrap of infrastructure outside Databricks, suddenly answers to it. External systems keep their own permissions. Governance doesn't magically reach outside the platform just because it's thorough inside it.</div>
+      <div class="stickies">
+        <div class="sticky remember"><b>One-liner</b>Governance connected to the actual data flow beats governance as a separate checklist nobody checks.</div>
+      </div>
+    </section>
+
+    <!-- WORKLOADS -->
+    <section class="page p-teal" id="workloads">
+      <div class="page-eyebrow">Layer 5</div>
+      <h1>One Foundation, Many Workloads</h1>
+      <div class="sub">The processing pattern changes. The underlying governed data usually doesn't have to move.</div>
+
+      <table class="cmp">
+        <tr><th>Workload</th><th>What runs it</th><th>What's notable</th></tr>
+        <tr><td>Analytics / SQL</td><td>Databricks SQL (SQL warehouses)</td><td>Compute is separate from storage — analysts don't need their own copy of the data</td></tr>
+        <tr><td>Streaming</td><td>Spark Structured Streaming</td><td>Delta Lake acts as both streaming source AND sink — same table layer, batch or streaming</td></tr>
+        <tr><td>ML / AI</td><td>MLflow + Unity Catalog</td><td>Experiment tracking, model management, deployment — and the model gets governed right alongside the data</td></tr>
+      </table>
+
+      <div class="flow">
+        <div class="node n-blue">Governed data</div>
+        <div class="arrow">↓</div>
+      </div>
+      <div class="hflow">
+        <div class="node n-green">Batch processing</div>
+        <div class="node n-orange">Streaming processing</div>
+        <div class="node n-purple">SQL analytics</div>
+        <div class="node n-red">ML / AI (via MLflow)</div>
+      </div>
+      <div class="note">The point isn't that SQL, streaming, ML, and AI secretly become the same workload — they don't, and never will. The point is they can all operate <b>around the same governed data and metadata</b>, instead of each one needing a private copy nobody else trusts.</div>
+    </section>
+
+    <!-- FEDERATION -->
+    <section class="page p-blue" id="federation">
+      <div class="page-eyebrow">The "not everything has to move" option</div>
+      <h1>Lakehouse Federation</h1>
+      <div class="sub">Sometimes the right answer is leaving the data exactly where it already is.</div>
+
+      <table class="cmp">
+        <tr><th></th><th>Move the data in</th><th>Federate instead</th></tr>
+        <tr><td>Data copied into Databricks?</td><td>Yes</td><td>No — queried where it already lives</td></tr>
+        <tr><td>Who does the work?</td><td>Databricks compute</td><td>Can push computation to the external source itself</td></tr>
+        <tr><td>Zero data movement?</td><td>N/A</td><td><b>No</b> — results still have to travel back. Don't oversell this one.</td></tr>
+        <tr><td>What still matters</td><td>Storage design, ingestion pipelines</td><td>Network latency, source-system capacity, query complexity, connector quality</td></tr>
+      </table>
+      <div class="note">Right choice depends on the workload, who owns the data, performance requirements, and plain operational boundaries. There's no universally correct answer here — anyone who tells you otherwise is selling something.</div>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="page p-orange" id="comparison">
+      <div class="page-eyebrow">The part everyone actually wants to know</div>
+      <h1>How Other Platforms Approach the Same Problems</h1>
+      <div class="sub">Same jobs to do — storage, compute, governance, workloads — five genuinely different answers.</div>
+
+      <table class="cmp">
+        <tr><th>Platform</th><th>Core idea</th><th>Foundation</th></tr>
+        <tr><td><b>Databricks</b></td><td>Shared lakehouse foundation</td><td>Cloud storage + lakehouse tables + distributed engineering + multiple workload models + centralized governance</td></tr>
+        <tr><td><b>Snowflake</b></td><td>Managed analytical foundation</td><td>Managed storage + independent virtual warehouses + shared platform services</td></tr>
+        <tr><td><b>BigQuery</b></td><td>Serverless analytical foundation</td><td>Managed storage + serverless compute + capacity management, very strong infra abstraction</td></tr>
+        <tr><td><b>Microsoft Fabric</b></td><td>Unified SaaS analytics foundation</td><td>OneLake + multiple analytical experiences + shared services, tightly tied to Power BI</td></tr>
+        <tr><td><b>AWS</b></td><td>Composable cloud foundation</td><td>S3 + specialized services per job — not one platform, a toolbox</td></tr>
+      </table>
+
+      <table class="cmp">
+        <tr><th>Question</th><th>Databricks</th><th>Snowflake</th><th>BigQuery</th><th>Fabric</th></tr>
+        <tr><td>Primary architectural idea</td><td>Lakehouse</td><td>Managed cloud data platform</td><td>Serverless analytical platform</td><td>Unified SaaS analytics</td></tr>
+        <tr><td>Engineering model</td><td>Distributed + programmatic</td><td>Managed SQL + programmatic workloads</td><td>Serverless + SQL/Python</td><td>Microsoft-integrated</td></tr>
+        <tr><td>Data foundation</td><td>Cloud storage + Delta/Iceberg</td><td>Managed/open table options</td><td>Managed + open data integrations</td><td>OneLake</td></tr>
+        <tr><td>Relevant strength</td><td>Engineering + multi-workload convergence</td><td>Managed data platform</td><td>Infrastructure abstraction</td><td>Microsoft ecosystem integration</td></tr>
+      </table>
+      <div class="note">AWS isn't in that second table because it isn't really answering the same question — it's not one architectural idea, it's a shelf of services you assemble yourself. That's the whole point of calling it "composable."</div>
+    </section>
+
+    <!-- STRENGTHS/CATCHES -->
+    <section class="page p-red" id="strengths-catches">
+      <div class="page-eyebrow">The most honest page in this whole sheet</div>
+      <h1>Strengths ⇄ The Catch</h1>
+      <div class="sub">Every "where Databricks stands out" point in the source has a matching real boundary. Click a card to flip it and see the trade-off hiding behind the strength.</div>
+
+      <div class="flip-grid" id="flip-grid"></div>
+    </section>
+
+    <!-- CHECKLIST -->
+    <section class="page p-green" id="checklist">
+      <div class="page-eyebrow">Does it actually fit?</div>
+      <h1>When Does Databricks Make Sense?</h1>
+      <div class="sub">Click whatever's actually true for your situation. More than one checked is the signal the source material is pointing at.</div>
+
+      <div class="checklist" id="checklist"></div>
+      <div id="checklist-result">Tick a few boxes above — this isn't a quiz with a wrong answer, just a way to see where you actually land.</div>
+      <div class="note" style="margin-top:14px"><b>Still true no matter how many boxes you checked:</b> a platform that's excellent for one operating model can add pure, unnecessary complexity for a different one. "Does it fit this workload" beats "is it the best platform" every time.</div>
+    </section>
+
+    <!-- FLASHCARDS -->
+    <section class="page p-yellow" id="flashcards">
+      <div class="page-eyebrow">For when you just need the facts cold</div>
+      <h1>Rapid Recall</h1>
+      <div class="sub">20 cards, the whole document distilled. Click to flip, click again to flip back.</div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAllCards(true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAllCards(false)">Reset</button>
+        <span class="deck-progress" id="prog-cards"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-cards"></div>
+    </section>
+
+    <footer class="end">— built from "Why Databricks" · click anything that looks clickable —</footer>
+  </main>
+</div>
+
+<script>
+/* ---------------- Strength / Catch flip cards ---------------- */
+const STRENGTH_CATCH = [
+  {s:"One data foundation for different workloads — SQL, streaming, ML, and AI can all work around the same governed data instead of each spinning up its own private copy.",
+   c:"That only holds as long as everyone actually uses the shared foundation properly. The more workflows lean on Databricks-specific services to make this work, the more the whole architecture quietly depends on those services' APIs and patterns."},
+  {s:"Engineering is a first-class citizen — ingestion, transformation, and orchestration live in the same platform as the data they produce, not bolted on from outside.",
+   c:"Lakeflow has its own supported features and operating boundaries, same as everything else. A workload can behave differently depending on which Databricks service happens to be handling it — it's not one seamless black box underneath."},
+  {s:"Governance follows the data and AI assets automatically — lineage, access, and discovery are connected to the real data flow, not a separate security spreadsheet nobody updates.",
+   c:"Unity Catalog governs registered assets and supported Databricks paths. It does NOT automatically govern every external system or every corner of your org's infrastructure — those still answer to their own permissions."},
+  {s:"Open storage with an integrated execution platform — cloud object storage and open formats underneath, managed compute/engineering/governance on top.",
+   c:"Open data ≠ open platform. Governance rules, pipeline definitions, and platform-specific tuning can all still tie you to Databricks even while the raw files are technically portable."},
+  {s:"Data engineering extends naturally into ML and AI — the same governed foundation continues straight into model development, serving, and AI applications.",
+   c:"Different workloads (streaming, big transforms, SQL, ML) can still need very different compute configurations and cost profiles. 'Shared foundation' doesn't mean 'identical resource behavior' — don't assume uniform cost just because the data is unified."},
+  {s:"Fewer disconnected systems to stitch together — moving from ingestion to governed data to downstream workloads can all happen inside one broader platform.",
+   c:"This is an architectural consequence, not a performance or cost guarantee. And the flip side is real: the more of the workflow you build around Databricks-specific services, the more dependent you become on their configs and operational patterns. Integration simplifies the diagram; it doesn't make the trade-off disappear."},
+];
+
+function buildFlipCards(){
+  const grid = document.getElementById('flip-grid');
+  STRENGTH_CATCH.forEach((item,i)=>{
+    const card = document.createElement('div');
+    card.className = 'flip-card';
+    card.onclick = ()=>card.classList.toggle('on');
+    card.innerHTML = `
+      <div class="flip-inner">
+        <div class="flip-face flip-front">
+          <div class="flabel">✓ Strength ${i+1}</div>
+          <div class="ftext">${item.s}</div>
+          <div class="flip-hint2">tap for the catch →</div>
+        </div>
+        <div class="flip-face flip-back">
+          <div class="flabel">⚠ The Catch</div>
+          <div class="ftext">${item.c}</div>
+          <div class="flip-hint2">tap to flip back</div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+buildFlipCards();
+
+/* ---------------- Interactive checklist ---------------- */
+const CHECK_ITEMS = [
+  {title:"Large-scale data engineering", sub:"Not a handful of small pipelines — real volume, real complexity."},
+  {title:"Batch + streaming, both", sub:"Not just one or the other — you actually need both patterns on the same data."},
+  {title:"Multiple data workloads", sub:"SQL, ML, streaming, BI — more than one consumer of the same data."},
+  {title:"Strong governance requirements", sub:"Access control, lineage, and auditing actually matter to your org, not just in theory."},
+  {title:"Engineering-heavy teams", sub:"People who'll actually use programmatic, distributed-processing capability, not just click through a UI."},
+  {title:"Data + ML/AI on a shared foundation", sub:"You want model development sitting on the same governed data, not a separate ML silo."},
+];
+function buildChecklist(){
+  const wrap = document.getElementById('checklist');
+  CHECK_ITEMS.forEach((item,i)=>{
+    const el = document.createElement('div');
+    el.className = 'check-item';
+    el.id = 'chk-'+i;
+    el.innerHTML = `<div class="check-box">✓</div><div class="check-text"><b>${item.title}</b><span>${item.sub}</span></div>`;
+    el.onclick = ()=>{ el.classList.toggle('checked'); updateChecklistResult(); };
+    wrap.appendChild(el);
+  });
+}
+function updateChecklistResult(){
+  const n = document.querySelectorAll('.check-item.checked').length;
+  const out = document.getElementById('checklist-result');
+  if(n===0) out.textContent = "Tick a few boxes above — this isn't a quiz with a wrong answer, just a way to see where you actually land.";
+  else if(n===1) out.textContent = "One box checked. The source material is pretty explicit that Databricks becomes relevant once you have MORE THAN ONE of these — worth sitting with that before deciding.";
+  else if(n<=3) out.textContent = n + " boxes checked — getting into the zone where a shared, governed, multi-workload platform starts actually paying for itself instead of adding ceremony.";
+  else out.textContent = n + " boxes checked — this is pretty squarely the situation Databricks' architecture is built for. Doesn't mean it's automatically the right call, but it's not a stretch either.";
+}
+buildChecklist();
+
+/* ---------------- Flashcards ---------------- */
+const CARDS = [
+  {q:"What's the actual architectural idea behind Databricks — in one line?", a:"Not any single feature — it's how data, compute, engineering, governance, and workloads connect around ONE shared data foundation, instead of each workload needing its own copy and its own tooling."},
+  {q:"Traditional warehouse flow vs Databricks lakehouse flow?", a:"Warehouse: Data → Warehouse storage → Warehouse workloads (tied together). Lakehouse: Data → Cloud storage + table layer → Multiple workloads (storage and compute independent)."},
+  {q:"What exactly is Delta Lake, and what is it NOT?", a:"It's a transaction log on top of Parquet files, adding ACID transactions and scalable metadata handling. It is NOT the physical storage itself — that's still plain cloud object storage underneath."},
+  {q:"Why does 'open table format' not automatically mean 'open platform'?", a:"An open format makes the data portable to other engines, but governance rules, pipeline definitions, and platform-specific optimizations can still tie you to the platform. Portability needs checking layer by layer, not just at the file level."},
+  {q:"Spark answers which question, and Photon answers which?", a:"Spark: how is the work distributed? Photon: how are supported operations executed efficiently? Different parts of the same compute problem."},
+  {q:"Does Photon replace Spark?", a:"No. It works with Spark APIs and falls back to the regular Spark runtime whenever an operation isn't supported by Photon."},
+  {q:"When does Photon actually help the most?", a:"Longer-running workloads over larger datasets. Very short queries barely notice it — planning and scheduling dominate execution time at that scale, not raw processing speed."},
+  {q:"The compute chain, start to finish?", a:"Data in Delta tables → Spark plans and distributes the work → Photon accelerates supported execution → result is written back or passed to the next workload."},
+  {q:"What are the three pieces of Lakeflow?", a:"Lakeflow Connect (ingestion), Lakeflow Pipelines (declarative transformation), Lakeflow Jobs (orchestration/scheduling)."},
+  {q:"What does 'declarative pipeline' actually mean here?", a:"You describe the desired data transformation/end-state, rather than manually scripting every execution step yourself."},
+  {q:"Why bundle ingestion + transformation + orchestration together at all?", a:"Not because those problems lack existing solutions — they don't. The benefit is reducing the number of boundaries between ingestion, transformation, orchestration, compute, and governance. Fewer boundaries, fewer places for things to quietly break."},
+  {q:"Is Lakeflow a replacement for Spark or external orchestration tools?", a:"No to both. It sits ABOVE storage and compute, coordinating them — the actual processing still runs on Databricks' execution infrastructure underneath."},
+  {q:"What does Unity Catalog actually govern? (the 5 things)", a:"Who can access data, what they can do with it, where it came from (lineage), what depends on it, and what activity occurred (auditing)."},
+  {q:"The Unity Catalog boundary everyone forgets?", a:"It governs registered assets and supported Databricks governance paths — NOT automatically every external system or every part of an org's infrastructure. External systems keep their own permissions."},
+  {q:"How does Delta Lake support both batch and streaming on the same table?", a:"Delta Lake can act as both a streaming source AND a sink — meaning batch and streaming workloads work off the same table layer instead of needing separate storage for each pattern."},
+  {q:"What does Lakehouse Federation actually let you do?", a:"Query supported external data sources without first copying the data into Databricks — and depending on the connector/query, push computation to the external source itself."},
+  {q:"Does federation mean zero data movement?", a:"No — the external system still does work, and query results still have to travel back to Databricks. Network latency and source-system capacity remain real factors."},
+  {q:"The one-line summary of each competing platform's 'core idea'?", a:"Databricks: shared lakehouse foundation. Snowflake: managed analytical foundation. BigQuery: serverless analytical foundation. Fabric: unified SaaS analytics via OneLake. AWS: composable cloud foundation (a toolbox, not one platform)."},
+  {q:"What's the central trade-off this whole document keeps coming back to?", a:"More integration through one platform → fewer integration points to design and operate, BUT also → greater dependence on platform-specific services, APIs, and patterns. You don't get one without some of the other."},
+  {q:"When does the source say Databricks 'makes particular sense'?", a:"When an organization has MORE THAN ONE of: large-scale data engineering, batch+streaming, multiple data workloads, strong governance needs, engineering-heavy teams, or data+ML/AI on a shared foundation. One alone isn't the bar — the combination is."},
+];
+
+function buildFlashcards(){
+  const grid = document.getElementById('grid-cards');
+  CARDS.forEach((c,i)=>{
+    const card = document.createElement('div');
+    card.className = 'flashcard';
+    card.id = 'card-'+i;
+    card.onclick = ()=>card.classList.toggle('flipped');
+    card.innerHTML = `
+      <div class="flashcard-inner">
+        <div class="flashcard-face flashcard-front">
+          <span class="card-tag">Q${i+1}</span>
+          ${c.q}
+          <span class="flip-hint">tap to flip</span>
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <span class="card-tag">A${i+1}</span>
+          ${c.a}
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  document.getElementById('prog-cards').textContent = CARDS.length + ' cards';
+}
+function flipAllCards(state){
+  document.querySelectorAll('#grid-cards .flashcard').forEach(c=>c.classList.toggle('flipped', state));
+}
+buildFlashcards();
+
+const links = document.querySelectorAll('nav.tabs a');
+const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href')));
+window.addEventListener('scroll', () => {
+  let idx = 0;
+  sections.forEach((s,i) => { if (s && s.getBoundingClientRect().top < 140) idx = i; });
+  links.forEach((a,i) => a.classList.toggle('active', i===idx));
+});
+</script>
+</body>
+</html>

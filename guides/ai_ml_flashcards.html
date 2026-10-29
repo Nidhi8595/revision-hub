@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI/ML in Databricks — Flashcard Revision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF7EF; --paper2:#F3EFE3; --rule:#D8D0BC;
+    --ink:#211F1B; --ink-soft:#5B5648;
+    --blue:#26518C; --blue-bg:#E7EEF7;
+    --green:#2C7A55; --green-bg:#E6F3EB;
+    --orange:#B15A1F; --orange-bg:#FBEADD;
+    --purple:#6A4A93; --purple-bg:#EFE7F5;
+    --red:#B23B2E; --red-bg:#FBE6E1;
+    --yellow:#8A6A12; --yellow-bg:#FBF0CD;
+    --teal:#1E7A72; --teal-bg:#E2F2EF;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper2);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.5;}
+  code,.mono{font-family:'JetBrains Mono',monospace;}
+  .shell{display:flex;min-height:100vh;}
+
+  nav.tabs{
+    width:238px;flex:0 0 238px;background:#FFFDF7;border-right:1px solid var(--rule);
+    position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 0 40px;
+  }
+  nav.tabs .tabs-title{font-family:'Kalam',cursive;font-weight:700;font-size:15px;padding:0 18px 12px;color:var(--ink-soft);border-bottom:1px solid var(--rule);margin-bottom:6px;}
+  nav.tabs .tabs-title .tabs-sub{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);opacity:.7;margin-top:3px;}
+  nav.tabs .tabs-group{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);opacity:.75;padding:14px 18px 4px;}
+  nav.tabs a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 18px 7px 22px;font-size:12.5px;color:var(--ink);text-decoration:none;border-left:3px solid transparent;}
+  nav.tabs a .dot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;}
+  nav.tabs a .count{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-soft);opacity:.7;}
+  nav.tabs a:hover{background:var(--paper2);}
+  nav.tabs a.active{border-left:3px solid var(--ink);background:var(--paper2);font-weight:600;}
+  nav.tabs .nav-left{display:flex;align-items:center;gap:8px;}
+
+  main{flex:1;min-width:0;padding:36px 0 120px;}
+  .page{max-width:1040px;margin:0 auto 60px;background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:36px 42px 42px;position:relative;
+    background-image:linear-gradient(var(--paper) 0, var(--paper) 100%),repeating-linear-gradient(transparent 0 34px, rgba(216,208,188,0.35) 34px 35px);}
+  .page::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;border-radius:4px 0 0 4px;}
+  .page.p-blue::before{background:var(--blue);} .page.p-green::before{background:var(--green);}
+  .page.p-orange::before{background:var(--orange);} .page.p-purple::before{background:var(--purple);}
+  .page.p-red::before{background:var(--red);} .page.p-yellow::before{background:var(--yellow);}
+  .page.p-teal::before{background:var(--teal);} .page.p-mixed::before{background:linear-gradient(var(--blue),var(--green),var(--purple),var(--red));}
+
+  .page-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;display:flex;align-items:center;gap:10px;}
+  .page h1{font-family:'Kalam',cursive;font-size:28px;margin:0 0 4px;color:var(--ink);}
+  .page .sub{color:var(--ink-soft);font-size:13.5px;margin-bottom:20px;max-width:760px;}
+
+  h2.section-h{font-family:'Kalam',cursive;font-size:17px;margin:26px 0 12px;display:flex;align-items:center;gap:8px;}
+  h2.section-h .tag{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--ink);color:var(--paper);padding:2px 6px;border-radius:3px;letter-spacing:.04em;}
+
+  .flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:16px 0;}
+  .hflow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin:16px 0;}
+  .hflow .node{margin:6px 4px;}
+  .node{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:6px;text-align:center;line-height:1.35;border:1.5px solid transparent;min-width:120px;}
+  .node small{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:10.5px;margin-top:2px;opacity:.85;}
+  .n-blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .n-green{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+  .n-orange{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);}
+  .n-purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple);}
+  .n-red{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .n-yellow{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow);}
+  .n-teal{background:var(--teal-bg);color:var(--teal);border-color:var(--teal);}
+  .n-ink{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .arrow{font-size:16px;color:var(--ink-soft);line-height:1;margin:2px 0;}
+  .arrow-r{font-size:16px;color:var(--ink-soft);margin:0 6px;}
+  .arrow-label{font-family:'Kalam',cursive;font-size:11.5px;color:var(--ink-soft);margin:0 0 2px;text-align:center;max-width:320px;}
+
+  .note{font-size:12.5px;color:var(--ink-soft);background:var(--paper2);border:1px solid var(--rule);border-radius:6px;padding:10px 14px;margin:14px 0;}
+  .note b{color:var(--ink);}
+  .code-chip{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:var(--ink);color:var(--paper);padding:2px 7px;border-radius:4px;}
+
+  table.cmp{width:100%;border-collapse:collapse;margin:14px 0;font-size:12.5px;}
+  table.cmp th{font-family:'JetBrains Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;background:var(--ink);color:var(--paper);padding:8px 10px;text-align:left;}
+  table.cmp td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  table.cmp tr:nth-child(even) td{background:rgba(216,208,188,0.18);}
+
+  .intro-banner{max-width:1040px;margin:0 auto 22px;padding:16px 26px;border:1.5px dashed var(--rule);border-radius:8px;background:#FFFDF7;}
+  .intro-banner-head{font-family:'Kalam',cursive;font-size:16px;color:var(--ink);}
+  .intro-banner-sub{font-size:12px;color:var(--ink-soft);margin-top:4px;max-width:820px;}
+
+  /* ---------------- Flashcards ---------------- */
+  .deck-toolbar{display:flex;align-items:center;gap:10px;margin:6px 0 18px;flex-wrap:wrap;}
+  .deck-btn{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:6px 12px;border-radius:20px;border:1px solid var(--rule);background:#fff;color:var(--ink-soft);cursor:pointer;letter-spacing:.02em;}
+  .deck-btn:hover{background:var(--paper2);}
+  .deck-progress{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-soft);margin-left:auto;}
+
+  .flashcard-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(230px,1fr));gap:16px;margin:10px 0 8px;}
+  .flashcard{perspective:1200px;height:180px;cursor:pointer;}
+  .flashcard-inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
+  .flashcard-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:2px 3px 8px rgba(0,0,0,0.06);border:1.5px solid;}
+  .flashcard-front{font-family:'Kalam',cursive;font-size:14.5px;line-height:1.3;}
+  .flashcard-back{transform:rotateY(180deg);background:#fff;border-color:var(--rule);font-size:11.8px;color:var(--ink-soft);line-height:1.42;overflow-y:auto;}
+  .flashcard-back b{color:var(--ink);}
+  .card-tag{position:absolute;top:8px;left:10px;font-family:'JetBrains Mono',monospace;font-size:8.5px;opacity:.55;letter-spacing:.04em;}
+  .flip-hint{position:absolute;bottom:6px;right:10px;font-family:'JetBrains Mono',monospace;font-size:8.5px;opacity:.45;}
+
+  .deck-blue .flashcard-front{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .deck-green .flashcard-front{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+  .deck-orange .flashcard-front{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);}
+  .deck-purple .flashcard-front{background:var(--purple-bg);color:var(--purple);border-color:var(--purple);}
+  .deck-red .flashcard-front{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .deck-yellow .flashcard-front{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow);}
+  .deck-teal .flashcard-front{background:var(--teal-bg);color:var(--teal);border-color:var(--teal);}
+
+  .stickies{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0;}
+  .sticky{font-family:'Kalam',cursive;font-size:12.5px;padding:12px 14px;border-radius:2px;width:240px;box-shadow:2px 3px 6px rgba(0,0,0,0.08);}
+  .sticky b{display:block;font-size:11px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:5px;letter-spacing:.05em;}
+  .sticky.why{background:#FDE9C8;color:#6B4E10;transform:rotate(-1.2deg);}
+  .sticky.remember{background:#D9ECEB;color:#1F5652;transform:rotate(1deg);}
+  .sticky.interview{background:#F6D9D2;color:#7A2E22;transform:rotate(-0.5deg);}
+
+  footer.end{max-width:1040px;margin:0 auto;padding:0 42px 60px;color:var(--ink-soft);font-size:12px;font-family:'JetBrains Mono',monospace;text-align:center;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="tabs">
+    <div class="tabs-title">AI/ML Flashcards<span class="tabs-sub">click any card to flip</span></div>
+
+    <div class="tabs-group">Overview</div>
+    <a href="#big-picture"><span class="nav-left"><span class="dot" style="background:var(--ink)"></span>The Whole Picture</span></a>
+
+    <div class="tabs-group">Decks</div>
+    <a href="#deck-foundations"><span class="nav-left"><span class="dot" style="background:var(--blue)"></span>① AI/ML Foundations</span><span class="count">10</span></a>
+    <a href="#deck-rag"><span class="nav-left"><span class="dot" style="background:var(--green)"></span>② RAG Fundamentals</span><span class="count">10</span></a>
+    <a href="#deck-search"><span class="nav-left"><span class="dot" style="background:var(--orange)"></span>③ AI Search &amp; Vectors</span><span class="count">12</span></a>
+    <a href="#deck-chunking"><span class="nav-left"><span class="dot" style="background:var(--teal)"></span>④ Chunking Pipelines</span><span class="count">8</span></a>
+    <a href="#deck-prompt"><span class="nav-left"><span class="dot" style="background:var(--purple)"></span>⑤ Prompt Engineering</span><span class="count">10</span></a>
+    <a href="#deck-eval"><span class="nav-left"><span class="dot" style="background:var(--yellow)"></span>⑥ Evaluation &amp; MLflow</span><span class="count">10</span></a>
+    <a href="#deck-agents"><span class="nav-left"><span class="dot" style="background:var(--red)"></span>⑦ Agent Bricks</span><span class="count">10</span></a>
+    <a href="#deck-mllife"><span class="nav-left"><span class="dot" style="background:var(--blue)"></span>⑧ ML Lifecycle &amp; Roles</span><span class="count">12</span></a>
+  </nav>
+
+  <main>
+    <div class="intro-banner">
+      <div class="intro-banner-head">🧠 AI/ML in Databricks — Flashcard Revision</div>
+      <div class="intro-banner-sub">Built from the full AI/ML notes — RAG, AI Search, Prompt Engineering, Evaluation, Agent Bricks, and the ML Lifecycle. Every deck opens with a one-glance map, then flashcards for actual memorization. Click a card to flip it; click again to flip back.</div>
+    </div>
+
+    <!-- BIG PICTURE -->
+    <section class="page p-mixed" id="big-picture">
+      <div class="page-eyebrow">Master map</div>
+      <h1>The Whole Picture — How Everything Connects</h1>
+      <div class="sub">Before the flashcards: one map that shows why RAG, AI Search, Prompt Engineering, Evaluation, Agent Bricks, and the ML Lifecycle aren't separate topics — they're one pipeline viewed from different angles.</div>
+
+      <div class="flow">
+        <div class="node n-blue">AI ⊃ ML ⊃ DEEP LEARNING<small>the broad-to-narrow foundation</small></div>
+        <div class="arrow">↓</div>
+        <div class="arrow-label">a normal LLM doesn't know MY company's data —</div>
+        <div class="node n-green">RAG<small>Retrieval → Augmentation → Generation</small></div>
+        <div class="arrow">↓</div>
+        <div class="arrow-label">retrieval needs somewhere to search —</div>
+        <div class="node n-orange">AI SEARCH<small>embeddings + HNSW + hybrid + BM25</small></div>
+        <div class="arrow">↓</div>
+        <div class="arrow-label">documents have to be prepared before they're searchable —</div>
+        <div class="node n-teal">CHUNKING PIPELINE<small>parse → clean → chunk → embed → index</small></div>
+        <div class="arrow">↓</div>
+        <div class="arrow-label">retrieval alone isn't the answer — the model still needs instructions —</div>
+        <div class="node n-purple">PROMPT ENGINEERING<small>context + role + task + format</small></div>
+        <div class="arrow">↓</div>
+        <div class="arrow-label">"it looks good" isn't good enough for production —</div>
+        <div class="node n-yellow">EVALUATION &amp; MLFLOW<small>correctness · relevance · groundedness · traces</small></div>
+        <div class="arrow">↓</div>
+        <div class="arrow-label">manually tuning every component doesn't scale —</div>
+        <div class="node n-red">AGENT BRICKS<small>Knowledge Assistant · Supervisor · Genie · AI Functions</small></div>
+        <div class="arrow">↓</div>
+        <div class="arrow-label">and underneath all of it — the same discipline as classic ML —</div>
+        <div class="node n-blue">ML LIFECYCLE<small>data → features → train → validate → serve → monitor</small></div>
+      </div>
+
+      <div class="stickies">
+        <div class="sticky why"><b>Why one picture matters</b>RAG isn't "LLM + Vector Search." It's Data Pipeline → RAG Chain → Evaluation → Governance — four layers, and each deck below is one of those layers zoomed in.</div>
+        <div class="sticky remember"><b>The one-line versions</b>AI Function = one batch operation. Agent = tools + retrieval + reasoning. Tracking = what happened. Registry = which version to deploy. Serving = how apps reach it.</div>
+      </div>
+    </section>
+
+    <!-- DECK 1 -->
+    <section class="page p-blue" id="deck-foundations">
+      <div class="page-eyebrow">Deck ① · 10 cards <span class="tag">FOUNDATIONS</span></div>
+      <h1>AI/ML Foundations</h1>
+      <div class="sub">AI vs ML vs Deep Learning, supervised vs unsupervised, and the Random Forest churn build — the vocabulary everything else assumes you already have.</div>
+      <div class="hflow">
+        <div class="node n-blue">AI<small>broad field</small></div><div class="arrow-r">⊃</div>
+        <div class="node n-green">ML<small>learns from data</small></div><div class="arrow-r">⊃</div>
+        <div class="node n-orange">Deep Learning<small>multi-layer nets</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-foundations',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-foundations',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-foundations"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-foundations"></div>
+    </section>
+
+    <!-- DECK 2 -->
+    <section class="page p-green" id="deck-rag">
+      <div class="page-eyebrow">Deck ② · 10 cards <span class="tag">CORE ARCHITECTURE</span></div>
+      <h1>RAG Fundamentals</h1>
+      <div class="sub">The three-stage flow that everything else in this document builds on top of.</div>
+      <div class="flow">
+        <div class="node n-blue">User Question</div><div class="arrow">↓</div>
+        <div class="node n-green">RETRIEVAL<small>find relevant info</small></div><div class="arrow">↓</div>
+        <div class="node n-orange">AUGMENTATION<small>question + context</small></div><div class="arrow">↓</div>
+        <div class="node n-ink">GENERATION<small>LLM answers</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-rag',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-rag',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-rag"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-rag"></div>
+    </section>
+
+    <!-- DECK 3 -->
+    <section class="page p-orange" id="deck-search">
+      <div class="page-eyebrow">Deck ③ · 12 cards <span class="tag">RETRIEVAL INTERNALS</span></div>
+      <h1>AI Search &amp; Vector Search</h1>
+      <div class="sub">Formerly "Databricks Vector Search." Embeddings, HNSW, hybrid search, BM25, and the three ways to get embeddings into an index.</div>
+      <div class="hflow">
+        <div class="node n-blue">Delta Table</div><div class="arrow-r">→</div>
+        <div class="node n-orange">AI Search Index<small>embeddings + metadata</small></div><div class="arrow-r">→</div>
+        <div class="node n-green">Query<small>ANN / full-text / hybrid</small></div><div class="arrow-r">→</div>
+        <div class="node n-ink">Relevant records</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-search',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-search',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-search"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-search"></div>
+    </section>
+
+    <!-- DECK 4 -->
+    <section class="page p-teal" id="deck-chunking">
+      <div class="page-eyebrow">Deck ④ · 8 cards <span class="tag">DATA PREP FOR RAG</span></div>
+      <h1>Chunking &amp; Unstructured Pipelines</h1>
+      <div class="sub">Bad chunking → bad retrieval → bad RAG answer. This is the layer nobody notices until it's wrong.</div>
+      <div class="hflow">
+        <div class="node n-blue">Documents</div><div class="arrow-r">→</div>
+        <div class="node n-teal">Parse → Clean → Chunk</div><div class="arrow-r">→</div>
+        <div class="node n-orange">Embed</div><div class="arrow-r">→</div>
+        <div class="node n-green">Index</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-chunking',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-chunking',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-chunking"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-chunking"></div>
+    </section>
+
+    <!-- DECK 5 -->
+    <section class="page p-purple" id="deck-prompt">
+      <div class="page-eyebrow">Deck ⑤ · 10 cards <span class="tag">MODULE 2</span></div>
+      <h1>Prompt Engineering</h1>
+      <div class="sub">A prompt is more than a question — it's role + context + task + constraints + output format.</div>
+      <div class="hflow">
+        <div class="node n-blue">System<small>role/behavior</small></div>
+        <div class="arrow-r">+</div>
+        <div class="node n-orange">User<small>the request</small></div>
+        <div class="arrow-r">→</div>
+        <div class="node n-purple">Model</div>
+        <div class="arrow-r">→</div>
+        <div class="node n-ink">Response</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-prompt',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-prompt',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-prompt"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-prompt"></div>
+    </section>
+
+    <!-- DECK 6 -->
+    <section class="page p-yellow" id="deck-eval">
+      <div class="page-eyebrow">Deck ⑥ · 10 cards <span class="tag">MODULE 4</span></div>
+      <h1>Evaluation, Deployment &amp; MLflow</h1>
+      <div class="sub">"It looks good" isn't an evaluation strategy. Quality metrics, performance metrics, judges, traces, and the loop that never really stops.</div>
+      <div class="hflow">
+        <div class="node n-yellow">Evaluate</div><div class="arrow-r">→</div>
+        <div class="node n-orange">Improve</div><div class="arrow-r">→</div>
+        <div class="node n-green">Deploy</div><div class="arrow-r">→</div>
+        <div class="node n-purple">Feedback</div><div class="arrow-r">↻</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-eval',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-eval',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-eval"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-eval"></div>
+    </section>
+
+    <!-- DECK 7 -->
+    <section class="page p-red" id="deck-agents">
+      <div class="page-eyebrow">Deck ⑦ · 10 cards <span class="tag">MODULE 5</span></div>
+      <h1>Agent Bricks</h1>
+      <div class="sub">The rule that decides everything: one batch operation → AI Function. Tools, retrieval, or multi-step reasoning → Agent.</div>
+      <div class="hflow">
+        <div class="node n-red">AGENT BRICKS</div>
+      </div>
+      <div class="hflow">
+        <div class="node n-blue">AGENTS<small>Knowledge · Supervisor · Genie · Custom</small></div>
+        <div class="arrow-r">vs</div>
+        <div class="node n-green">AI FUNCTIONS<small>Extract · Parse · Classify</small></div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-agents',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-agents',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-agents"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-agents"></div>
+    </section>
+
+    <!-- DECK 8 -->
+    <section class="page p-blue" id="deck-mllife">
+      <div class="page-eyebrow">Deck ⑧ · 12 cards <span class="tag">CLASSIC ML, PRODUCTIONIZED</span></div>
+      <h1>ML Lifecycle, Roles &amp; Model Serving</h1>
+      <div class="sub">Data Engineer → Data Scientist → ML Engineer → Governance Officer → Business Stakeholder, and the full Train → Deploy → Monitor → Retrain loop.</div>
+      <div class="flow">
+        <div class="node n-blue">Data Prep → EDA → Feature Engineering</div>
+        <div class="arrow">↓</div>
+        <div class="node n-green">Train → Validate → Best Model</div>
+        <div class="arrow">↓</div>
+        <div class="node n-orange">MLflow Tracking → Unity Catalog Registry</div>
+        <div class="arrow">↓</div>
+        <div class="node n-purple">Model Serving → Inference</div>
+        <div class="arrow">↓</div>
+        <div class="node n-red">Monitoring → Drift → Retrain ↻</div>
+      </div>
+      <div class="deck-toolbar">
+        <button class="deck-btn" onclick="flipAll('deck-mllife',true)">Flip all</button>
+        <button class="deck-btn" onclick="flipAll('deck-mllife',false)">Reset</button>
+        <span class="deck-progress" id="prog-deck-mllife"></span>
+      </div>
+      <div class="flashcard-grid" id="grid-deck-mllife"></div>
+    </section>
+
+    <footer class="end">— built from the AI/ML in Databricks notes · click any card to flip it —</footer>
+  </main>
+</div>
+
+<script>
+const DECKS = {
+  "deck-foundations": {color:"blue", cards:[
+    {q:"AI vs ML vs Deep Learning — in one line each?", a:"<b>AI</b> is the broad field of making machines do intelligent tasks. <b>ML</b> is a way of achieving AI by learning patterns from data instead of hardcoding rules. <b>Deep Learning</b> is a subset of ML using multi-layer neural networks. It's AI ⊃ ML ⊃ Deep Learning."},
+    {q:"Supervised vs Unsupervised learning?", a:"Supervised = input → known answer already exists (e.g. churn project: customer features → churned). Unsupervised = no known answer, the model finds the pattern itself (e.g. clustering customers by behavior)."},
+    {q:"The two major supervised learning problem types?", a:"<b>Classification</b> — predict a category (Spam/Not Spam, Churn/Stay, Fraud/Not Fraud). <b>Regression</b> — predict a number (e.g. next month's sales based on previous data)."},
+    {q:"Why Random Forest instead of one Decision Tree?", a:"One tree can overfit and become too dependent on its particular training data. Random Forest trains many trees (e.g. 20), each seeing a different random sample of data/features, then lets them vote — 'many people vote' beats trusting one opinion."},
+    {q:"epoch vs record — what's the difference?", a:"An epoch is one full pass through the <i>entire</i> training dataset, not one record. Training usually runs for multiple epochs, each time seeing all the training data again."},
+    {q:"What does 'best split' mean in a Decision Tree?", a:"The question (e.g. 'does payment_delay > 2?') that most cleanly separates the customers who churned from those who didn't — the split that best purifies the resulting groups."},
+    {q:"Why 20 decision trees, and why not more?", a:"More trees generally help up to a point, but beyond a certain number, additional trees stop meaningfully improving results — 'then having 20 trees doesn't give us much benefit' once the ensemble has already stabilized."},
+    {q:"Random Forest churn model: what were the features (X) and target (y)?", a:"Features: tenure_months, monthly_spend, support_tickets, days_since_last_login, payment_delays. Target: churned (0/1). VectorAssembler combined the features into a single vector for Spark ML."},
+    {q:"The churn model scored 1.0 (100%) accuracy — is that meaningful?", a:"Not really — it was tested on only 3 records. Useful for understanding the ML workflow end-to-end, but not a real performance signal on a dataset that small."},
+    {q:"What does 'feature importance' actually tell you?", a:"Which inputs the model leaned on most when making predictions — not necessarily what <i>causes</i> the outcome. In the churn model, tenure_months and payment_delays carried the most weight; monthly_spend contributed almost nothing in that run."},
+  ]},
+  "deck-rag": {color:"green", cards:[
+    {q:"What is RAG, in one line?", a:"Retrieval-Augmented Generation — instead of asking an LLM to answer only from what it already knows, we first retrieve relevant information from our own data and give it to the LLM as context."},
+    {q:"The 3 core stages of RAG?", a:"<b>Retrieval</b> (find relevant info) → <b>Augmentation</b> (combine question + retrieved info into a prompt) → <b>Generation</b> (LLM produces the grounded answer). Easy trick: Find → Add → Answer."},
+    {q:"Why can't a normal LLM just answer company-specific questions?", a:"It was trained up to a certain point and has no access to a company's internal HR documents, Salesforce records, private customer data, or newly created reports — RAG connects it to that external knowledge without retraining."},
+    {q:"The four benefits of RAG (per the source material)?", a:"① Proprietary knowledge (private/internal docs). ② Up-to-date information (no retraining needed when facts change). ③ Source citations (traceability — 'Source: Policy.pdf, Page 4'). ④ Security and access control (retrieval respects ACLs — who's allowed to see what)."},
+    {q:"RAG = LLM + Vector Search — true or false?", a:"False, and an important trap. A production RAG application has four layers: Data Pipeline → RAG Chain → Evaluation & Monitoring → Governance & LLMOps. Vector Search is only one piece of the Data Pipeline / Retrieval stage."},
+    {q:"What are the two data types RAG can work with?", a:"<b>Unstructured</b> — PDFs, docs, wikis, images, videos. <b>Structured</b> — SQL tables, Salesforce, SAP, application APIs (e.g. your own Gold tables are structured data usable in a RAG system)."},
+    {q:"Evaluation vs Monitoring — what's the difference?", a:"<b>Evaluation</b> happens during development — 'is my RAG app actually giving good answers?' <b>Monitoring</b> happens after deployment — 'is my production app still working properly?' Memory trick: Evaluation = before, Monitoring = after."},
+    {q:"If the final RAG answer is bad, is the LLM automatically at fault?", a:"No — the failure could be anywhere upstream: bad chunking → bad embeddings → poor retrieval → wrong context → bad answer. That's why RAG evaluation looks at individual components, not just the final output."},
+    {q:"How does Databricks map onto the RAG pipeline?", a:"Delta Lake + Lakeflow (data pipeline) → Databricks AI Search (retrieval) → Model Serving (inference) → AI Evaluation → AI Monitoring → Governance & Security (access, lineage, permissions) — an end-to-end ecosystem, not separate tools."},
+    {q:"Why does 'RAG isn't just the LLM' matter for governance?", a:"You don't want an AI chatbot that can search everything in the company — you want one that retrieves only what the specific user is authorized to access. This is where ACLs (Access Control Lists) become essential in the retrieval layer."},
+  ]},
+  "deck-search": {color:"orange", cards:[
+    {q:"What is an embedding?", a:"A mathematical representation of the semantic meaning of data (usually text or images) — a numerical vector where semantically similar content ends up closer together in vector space, even if the exact words differ."},
+    {q:"Why not just use keyword search instead of embeddings?", a:"Keyword search fails on meaning-based matches — 'recover my account' vs 'restoring access to your user profile' share no exact words but mean the same thing. Vector/semantic search captures that relationship because it compares meaning, not literal text."},
+    {q:"What is Databricks AI Search (formerly called)?", a:"Formerly Databricks Vector Search. It's a search system that finds the most relevant data for a query using embeddings and similarity search — built from a Delta table, governed through Unity Catalog."},
+    {q:"ANN — what does it stand for and why 'approximate'?", a:"Approximate Nearest Neighbor. With huge datasets, comparing a query against every single vector exactly is too expensive — ANN finds very good matches much faster using efficient search techniques instead of exhaustive comparison."},
+    {q:"What algorithm does AI Search use for ANN, and what distance metric?", a:"HNSW (Hierarchical Navigable Small World) for the ANN search, and L2 (Euclidean) distance to measure vector similarity. If embeddings are normalized, L2-distance ranking matches cosine-similarity ranking."},
+    {q:"Is AI Search only vector search?", a:"No — it also supports full-text keyword search, hybrid search, filtering, reranking, ACLs, selective column sync, and saving/syncing generated embeddings. Don't reduce 'AI Search' to just 'embeddings.'"},
+    {q:"What is Hybrid Search, and why does it matter for something like a SKU?", a:"Hybrid Search = keyword search + vector/semantic search combined. Pure semantic similarity struggles with exact identifiers like 'SF-001928' — keyword search nails the exact match while semantic search still understands 'refund policy' around it."},
+    {q:"BM25 and RRF — what do they each do?", a:"BM25 is the traditional keyword-relevance scoring algorithm used for the keyword-search side. RRF (Reciprocal Rank Fusion) is how Databricks combines the vector-search ranking and the keyword-search ranking into one final ranked list."},
+    {q:"The 3 vector-index options plus the 1 full-text option — who computes the embeddings?", a:"① Databricks-managed — Databricks computes and syncs them automatically (easiest). ② Self-managed — you provide pre-computed embeddings (can't later convert to managed without recomputing). ③ Direct Vector Access — you manually update the index via REST API. ④ Full-text (BM25) — no embeddings at all, pure keyword scoring."},
+    {q:"AI Search Index vs AI Search Endpoint?", a:"The <b>Index</b> is the search-optimized representation built from your Delta table (the prepared, searchable data). The <b>Endpoint</b> is the serving/access layer you actually query through APIs or SDK. Index = kitchen prep, Endpoint = the restaurant you order from."},
+    {q:"Why does Vector Search / AI Search need Change Data Feed (CDF)?", a:"Standard endpoints rely on CDF to detect what changed in the source Delta table so the index can stay synchronized automatically — without CDF, the index wouldn't know which rows were added, updated, or removed since last sync."},
+    {q:"How does Databricks secure AI Search requests?", a:"Requests are logically isolated, authenticated, and authorized; data is encrypted at rest (AES-256) and in transit (TLS 1.2+). Authentication uses service principals (preferred for production) or Personal Access Tokens (PATs)."},
+  ]},
+  "deck-chunking": {color:"teal", cards:[
+    {q:"Why does chunking matter so much for RAG?", a:"If the answer is buried in paragraph 27 of a 100-page document, retrieving the whole document is 99 pages of noise for 1 page of signal. Bad chunking → bad retrieval → bad RAG answer — it's one of the first layers of RAG optimization."},
+    {q:"Small chunks vs large chunks — the core tradeoff?", a:"Small chunks (e.g. 50 words) are specific but risk losing context. Large chunks (e.g. 1000 words) keep more context but add irrelevant noise and more computation. Too small = lost context; too large = too much noise."},
+    {q:"What is chunk overlap, and why use it?", a:"Overlapping the boundary between chunks (e.g. Chunk1=ABCDE, Chunk2=DEFGH) so a sentence or idea split across two chunks doesn't lose its context — it preserves continuity across chunk boundaries."},
+    {q:"What is semantic coherence, and why is it more important than chunk size?", a:"A good chunk should contain one complete, meaningful idea that can stand independently — not an arbitrarily-cut fragment. 'Refunds are available for enterprise' / 'customers within 30 days' split across two chunks is worse than one coherent chunk containing the full idea."},
+    {q:"Fixed-size chunking — good or bad for production?", a:"Easy to implement (e.g. every 500 tokens) but arbitrary character/token splitting generally doesn't produce semantically coherent chunks — good for learning, rarely ideal for production-grade applications."},
+    {q:"What is format-specific chunking?", a:"Using the document's own structure as chunk boundaries — Markdown headings (# ## ###) or HTML tags (h1/h2/h3) — instead of blindly splitting by character count. Respects the document's natural organization."},
+    {q:"Paragraph-based vs semantic chunking?", a:"Paragraph-based splits by paragraph boundaries, which usually group related ideas naturally. Semantic chunking is more advanced — it tries to detect actual topic changes in the text rather than relying on structural markers."},
+    {q:"What does putting irrelevant information into the corpus do to a RAG system?", a:"It hurts retrieval quality — corpus composition (what documents you include) matters as much as how you chunk them. A RAG system is only as good as the information it's allowed to retrieve from."},
+  ]},
+  "deck-prompt": {color:"purple", cards:[
+    {q:"Prompt engineering, defined in one line?", a:"Designing instructions and context so an AI model produces the kind of output your application actually needs — not just asking a question."},
+    {q:"What five things can a useful prompt contain, beyond just a question?", a:"Role/Instructions, Context/Data, Task, Constraints, and Output format. 'Analyze this customer' vs 'You are a Salesforce data analyst — analyze this customer info, identify unusual behavior, explain the top 3 anomalies, give a risk level' — same question, very different usefulness."},
+    {q:"Where do Prompt Engineering and RAG actually meet?", a:"The retrieved context becomes part of the prompt itself: SYSTEM (role) + CONTEXT (retrieved info) + QUESTION (user's ask) — the prompt isn't just telling the model what to do, it's giving it the information to use."},
+    {q:"System message vs User message?", a:"System message establishes the model's behavior/role ('You are a helpful Salesforce data analyst'). User message is the actual request ('Analyze this lead'). They combine before being sent to the model."},
+    {q:"Zero-shot vs Few-shot prompting?", a:"Zero-shot = task given with no examples ('figure it out'). Few-shot = task given with examples showing the desired input→output pattern, letting the model infer the pattern. Memory: zero examples vs few examples."},
+    {q:"Why does output formatting matter so much in a real application?", a:"An application often needs machine-readable output (e.g. valid JSON with exact fields) — a conversational paragraph answer, even if correct, can break the app downstream. You have to explicitly instruct the format you need."},
+    {q:"What is Temperature, in plain terms?", a:"A parameter controlling how deterministic vs varied the model's output is. Lower temperature → more predictable, similar answer style each time — useful for classification-style tasks where consistency matters."},
+    {q:"What is the AI Playground for?", a:"An experimentation area to test prompts against models and observe how responses change — before writing any code or building the prompt into a real application. Think: laboratory, not production."},
+    {q:"What is a hallucination, and does good prompting eliminate it?", a:"An LLM generating something confident-sounding but not actually supported by the available information. Good prompting (supplied-context-only instructions + retrieval + evaluation + guardrails) reduces the risk — it does NOT eliminate it alone."},
+    {q:"What's the 'professional mindset' shift for prompt engineering?", a:"Stop asking 'what is the best prompt?' Instead ask: 'what behavior do I need from the model, and how can I reliably produce and evaluate that behavior?' — an engineering mindset, not a one-shot search for magic words."},
+  ]},
+  "deck-eval": {color:"yellow", cards:[
+    {q:"Why is evaluating a GenAI app harder than evaluating a traditional ML model?", a:"Traditional ML has one right answer to check against (prediction=1, actual=1 → correct). A GenAI app can produce many differently-worded answers that are all acceptable — so evaluation has to judge quality, not exact string matching."},
+    {q:"The 4 quality metrics for GenAI evaluation?", a:"<b>Correctness</b> — is it factually right? <b>Relevance</b> — does it actually address the question asked? <b>Groundedness</b> — is the answer supported by the retrieved context (detects hallucination)? <b>Safety</b> — is it free of harmful/policy-violating content?"},
+    {q:"The 4 performance/system metrics for GenAI evaluation?", a:"Latency (how long did it take), Token usage (how much was consumed), Cost (per request), and Error rate (how often it fails)."},
+    {q:"What is an evaluation dataset, and where can it come from?", a:"A test suite of questions + expected answers used to systematically test the app, instead of manually asking random questions. Three sources: manually curated examples, synthetic (LLM-generated) data, and real-world production queries."},
+    {q:"What is an LLM Judge?", a:"Another LLM that evaluates your RAG app's answers against criteria like correctness, relevance, and groundedness — 'AI evaluates AI' instead of a human manually checking every answer. MLflow provides built-in judges and supports custom ones too."},
+    {q:"MLflow Tracking vs Model Registry — what's the difference?", a:"<b>Tracking</b> records experiments/runs (parameters, metrics, artifacts — 'what did I try, how well did it do'). <b>Registry</b> manages models that are candidates for reuse/deployment (versions, lineage, permissions, lifecycle)."},
+    {q:"What does an MLflow trace capture, and why does it matter?", a:"It records what happened during a request's full journey (retriever → vector search → prompt → LLM → response) — so when an answer fails, you can pinpoint exactly where: wrong document retrieved? Correct document but LLM ignored it? High latency somewhere?"},
+    {q:"Offline evaluation vs Online (production) monitoring?", a:"Offline = testing against a controlled dataset before production ('is this ready?'). Online = watching real user traffic after deployment ('is it still working well?'). Databricks aims to reuse the same evaluation logic across both."},
+    {q:"Why register a model before deploying it?", a:"Registering in the Unity Catalog Model Registry gives you versions, lineage, permissions, metadata, and lifecycle management — deployment then references a specific registered version rather than an untracked notebook variable."},
+    {q:"What is a Review App, and why is human feedback still needed alongside LLM judges?", a:"A chat interface where domain experts test the deployed app and give feedback (👍/👎 + comments). LLM judges can check 'technically correct,' but only a human/business expert can judge things like 'this explanation isn't actionable' — that nuance matters for production quality."},
+  ]},
+  "deck-agents": {color:"red", cards:[
+    {q:"Why does Agent Bricks exist — what problem is it solving?", a:"Building a production-quality GenAI app manually means tuning many components at once (model, prompt, retrieval, tools, context, evaluation) — 'prompt stuffing' isn't enough. Agent Bricks automates/optimizes much of that tuning for your specific data and use case."},
+    {q:"The 3 Big Problems in GenAI development?", a:"① 'Can I make AI understand MY data?' (adapting to enterprise data). ② 'How do I know it's actually good?' (evaluation beyond vibes). ③ 'Is it worth the money?' (quality + cost + adoption + performance, not quality alone)."},
+    {q:"The single most important rule: AI Function vs Agent?", a:"<b>AI Function</b> = one batch operation over a column of text/documents (e.g. classify 100,000 complaints). <b>Agent</b> = needs tools, retrieval, or multi-step reasoning to dynamically decide what to do next."},
+    {q:"What is a Knowledge Assistant?", a:"Turns your documents into an expert AI chatbot for document-based Q&A — essentially the RAG pattern (Documents → Retrieval → LLM → Grounded Answer) packaged as a higher-level Databricks agent type."},
+    {q:"What is a Supervisor Agent?", a:"An agent that coordinates other agents/tools (Genie Agents, RAG agents, other agents, MCP tools) to handle complex workflows and deep analysis — it decides which specialist should handle which part of a request."},
+    {q:"What is a Genie Agent?", a:"Turns tables into an expert AI chatbot using natural-language-to-SQL conversion — the user asks in plain English, Genie generates and runs the SQL against Databricks tables. Best fit: structured/tabular data."},
+    {q:"The three AI Functions, and what each does?", a:"<code>ai_extract</code> — pulls specific fields/entities from unstructured text (unstructured → structured). <code>ai_parse_document</code> — extracts structured content (text, tables, metadata) from documents, often a RAG preprocessing step. <code>ai_classify</code> — categorizes text into labels."},
+    {q:"Data → Tables → Complex multi-agent workflow — which Agent Bricks tool for each?", a:"Documents/text → Knowledge Assistant / RAG. Tables → Genie Agent. Complex multi-agent workflow → Supervisor Agent. Match the tool to the data shape and task complexity."},
+    {q:"What is a Custom Agent, and when would you build one?", a:"Building your own agent using OSS libraries + Agent Bricks Custom Agents, when pre-built approaches (Knowledge Assistant, Genie, Supervisor) aren't enough — full control over tools, logic, prompts, retrieval, and orchestration."},
+    {q:"Battle 3 in Agent Bricks — 'is it worth the money?' What's the trap?", a:"A model that costs 10× more for only 2% better quality (80% → 82%) usually isn't worth it. Quality alone isn't the deciding factor — you weigh Quality + Cost + User adoption + Performance together."},
+  ]},
+  "deck-mllife": {color:"blue", cards:[
+    {q:"The full ML Lifecycle, start to finish?", a:"Raw Data → Data Preparation → EDA → Feature Engineering → Model Training → Validation/Evaluation → Model Registry → Deployment → Inference → Monitoring → Retraining (and loop back)."},
+    {q:"The 5 roles in a real ML project, one line each?", a:"<b>Data Engineer</b> — makes the data ready (ETL, pipelines). <b>Data Scientist</b> — makes the model intelligent (EDA, features, training, validation). <b>ML Engineer</b> — makes it production-ready (deployment, automation, scaling). <b>Governance Officer</b> — can we safely/correctly use this data/model? <b>Business Stakeholder</b> — does this actually solve the business problem?"},
+    {q:"What is EDA, and why do it before training?", a:"Exploratory Data Analysis — understanding the data (distributions, missing values, outliers, correlations, class imbalance, relationships) BEFORE building a model. You investigate first, train second."},
+    {q:"What is a 'feature' in ML, defined simply?", a:"An input variable the model learns from. Raw data like emails_opened, calls, website_visits can be engineered into a more meaningful signal like engagement_score — turning raw business info into useful ML input."},
+    {q:"Why add '+1' when engineering a ratio feature like spend/tenure?", a:"To guard against division by zero — if tenure_years = 0, annual_spend / tenure_years would fail. Using annual_spend / (tenure_years + 1) is a simple, deliberate safeguard."},
+    {q:"Features vs Label/Target — what's the distinction?", a:"Features are the inputs to the model (age, tenure, spend, tickets). The Label/Target is the correct answer the model should learn to predict (e.g. churn, converted to numeric 0/1 since most algorithms need a numeric target)."},
+    {q:"Why use a fixed seed (e.g. seed=42) for the train/test split?", a:"For reproducibility — same data + same seed = same random split every time. Without a seed, you'd get a different split on every run, making results hard to compare or reproduce."},
+    {q:"Training vs Validation — the one-line distinction?", a:"Training asks 'can the model learn from this data?' Validation asks 'does the model generalize to data it hasn't seen?' Good training performance alone doesn't guarantee a good, non-overfit model."},
+    {q:"Batch inference vs Real-time inference?", a:"Batch = predictions generated for many records at once, when results don't need to be immediate (e.g. scoring 10 million customers overnight). Real-time = a user/app sends a request and expects a quick response (e.g. instant loan-risk prediction)."},
+    {q:"What is Model Drift?", a:"When real-world behavior changes after a model was trained, so its old patterns no longer hold — e.g. website visits used to correlate with conversion, but after a marketing strategy change, that relationship weakens or disappears. This is why monitoring matters."},
+    {q:"Tracking vs Registry vs Serving — three different jobs?", a:"<b>Tracking</b> = experiment memory (what did I try, how well did it do). <b>Registry</b> = manages model versions for reuse/deployment. <b>Serving</b> = exposes a specific registered model through an endpoint so applications can actually send it requests."},
+    {q:"Why does a model need a 'signature' before deployment?", a:"The signature is the model's contract — what input it expects and what output it produces. The serving system needs this schema to correctly validate and route real application requests to the model."},
+  ]},
+};
+
+function buildDecks(){
+  Object.keys(DECKS).forEach(deckId=>{
+    const deck = DECKS[deckId];
+    const grid = document.getElementById('grid-'+deckId);
+    deck.cards.forEach((c,i)=>{
+      const card = document.createElement('div');
+      card.className = 'flashcard deck-'+deck.color;
+      card.id = deckId+'-card-'+i;
+      card.onclick = ()=>card.classList.toggle('flipped');
+      card.innerHTML = `
+        <div class="flashcard-inner">
+          <div class="flashcard-face flashcard-front">
+            <span class="card-tag">Q${i+1}</span>
+            ${c.q}
+            <span class="flip-hint">tap to flip</span>
+          </div>
+          <div class="flashcard-face flashcard-back">
+            <span class="card-tag">A${i+1}</span>
+            ${c.a}
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+    document.getElementById('prog-'+deckId).textContent = deck.cards.length + ' cards';
+  });
+}
+function flipAll(deckId, state){
+  document.querySelectorAll('#grid-'+deckId+' .flashcard').forEach(c=>{
+    c.classList.toggle('flipped', state);
+  });
+}
+buildDecks();
+
+const links = document.querySelectorAll('nav.tabs a');
+const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href')));
+window.addEventListener('scroll', () => {
+  let idx = 0;
+  sections.forEach((s,i) => { if (s && s.getBoundingClientRect().top < 140) idx = i; });
+  links.forEach((a,i) => a.classList.toggle('active', i===idx));
+});
+</script>
+</body>
+</html>
