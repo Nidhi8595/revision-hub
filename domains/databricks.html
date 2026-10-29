@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Databricks | My Tech Revision Hub</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #243247;
+    }
+
+    header {
+      background: #172b4d;
+      color: white;
+      padding: 35px 20px;
+      text-align: center;
+    }
+
+    header h1 { margin: 0 0 10px; }
+    header p { color: #d5e2f4; margin: 0; }
+
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 24px;
+      color: #1765c0;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .search {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 24px;
+      border: 1px solid #d5dce7;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      display: block;
+      padding: 23px;
+      background: white;
+      border: 1px solid #e0e7f0;
+      border-radius: 14px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px #172b4d15;
+    }
+
+    .card .icon { font-size: 30px; }
+    .card h2 { font-size: 19px; margin: 14px 0 8px; }
+    .card p { color: #66758a; line-height: 1.5; }
+    .open { display: inline-block; margin-top: 10px; color: #1765c0; font-weight: bold; }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #738096;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>🧱 Databricks & Data Engineering</h1>
+    <p>All my Databricks projects and revision guides in one place.</p>
+  </header>
+
+  <main>
+    <a class="back" href="../index.html">← Back to Main Revision Hub</a>
+
+    <input
+      class="search"
+      id="search"
+      type="search"
+      placeholder="Search Databricks projects..."
+      aria-label="Search Databricks projects"
+    >
+
+    <div class="grid" id="guides">
+
+      <!-- Replace these example cards with your actual projects. -->
+
+      <a class="card" href="../guides/REPLACE_WITH_ACTUAL_FILENAME.html">
+        <span class="icon">🧠</span>
+        <h2>RAG Pipeline</h2>
+        <p>Revise retrieval, chunking, embeddings and evaluation.</p>
+        <span class="open">Open revision guide →</span>
+      </a>
+
+      <a class="card" href="../guides/REPLACE_WITH_ACTUAL_FILENAME.html">
+        <span class="icon">🔍</span>
+        <h2>Salesforce Lead Anomaly Detection</h2>
+        <p>Revise ingestion, data engineering, lead scoring and integration.</p>
+        <span class="open">Open revision guide →</span>
+      </a>
+
+      <a class="card" href="../guides/REPLACE_WITH_ACTUAL_FILENAME.html">
+        <span class="icon">🏞️</span>
+        <h2>Delta Lake & Lakehouse</h2>
+        <p>Revise Delta tables, storage formats and lakehouse architecture.</p>
+        <span class="open">Open revision guide →</span>
+      </a>
+
+    </div>
+  </main>
+
+  <footer>My Tech Revision Hub · Databricks Collection</footer>
+
+  <script>
+    const search = document.getElementById("search");
+    const cards = document.querySelectorAll(".card");
+
+    search.addEventListener("input", () => {
+      const query = search.value.toLowerCase().trim();
+
+      cards.forEach(card => {
+        card.hidden = !card.textContent.toLowerCase().includes(query);
+      });
+    });
+  </script>
+</body>
+</html>
