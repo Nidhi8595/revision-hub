@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MedCare platform: revision guide</title>
+<style>
+:root{--bg:#f3f6fb;--card:#fff;--ink:#0d2340;--mut:#51637d;--line:#dbe3ee;--cy:#0f9fc4;--cyL:#dcf3fa;--ro:#d93f6b;--roL:#fde3ea;--vi:#6d4fd1;--viL:#ebe5fb;--gr:#1f9d6b;--grL:#dcf4e8;--am:#e8a317;--amL:#fff1cc;--sa:#f4e6d3;--ic:#e3ebf4}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,'Segoe UI',sans-serif}
+h1,h2,h3{font-family:'Trebuchet MS',system-ui,sans-serif;line-height:1.2}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);max-width:1180px;margin:0 auto}
+nav{position:sticky;top:0;height:100vh;overflow:auto;padding:20px 14px 20px 22px}
+nav input{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:12px;font-size:14px}
+.line{position:relative;padding-left:22px}.line::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:4px;border-radius:4px;background:var(--line)}
+.line i{position:absolute;left:7px;top:8px;width:4px;height:0;background:var(--cy);border-radius:4px;transition:height .3s}
+.line a{display:block;position:relative;padding:5px 0;font-size:14px;color:var(--mut);text-decoration:none}
+.line a::before{content:"";position:absolute;left:-21px;top:11px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--line)}
+.line a.seen::before{border-color:var(--cy)}.line a.on{color:var(--ink);font-weight:700}.line a.on::before{background:var(--cy);border-color:var(--ink)}
+main{padding:22px 24px 90px;min-width:0}
+.hero{border-radius:20px;padding:30px 32px;margin-bottom:22px;color:#fff;background:radial-gradient(600px 240px at 90% 0,#6d4fd1aa,transparent),linear-gradient(135deg,#0d2340,#14507a)}
+.hero h1{font-size:2.2rem;margin:0 0 8px}.hero p{max-width:60ch;color:#d5e6f3;margin:6px 0}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px;margin:3px 6px 3px 0}
+.p-s{background:var(--sa);color:#8a5a1c}.p-i{background:var(--ic);color:#33506b}.p-g{background:var(--amL);color:#7a5600}.p-r{background:var(--roL);color:#a3254a}.p-v{background:var(--viL);color:#4b32a8}.p-c{background:var(--cyL);color:#0a6f8a}.p-k{background:var(--grL);color:#136e48}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 24px;margin-bottom:18px;box-shadow:0 2px 10px #0d234010}
+h2{margin:0 0 8px;font-size:1.4rem}h3{margin:16px 0 4px;font-size:1.05rem}p,li{max-width:72ch}
+code{background:#eef3f9;padding:1px 5px;border-radius:4px;font-size:.88em;overflow-wrap:anywhere}
+pre{position:relative;background:#0d2340;color:#dbe9f5;border-radius:10px;padding:14px;overflow-x:auto;font-size:13px;white-space:pre-wrap;word-break:break-word}
+pre button{position:absolute;top:6px;right:6px;font-size:12px;padding:3px 9px}
+.note{border-radius:10px;padding:9px 14px;margin:12px 0;font-size:.95rem}.n1{background:var(--amL)}.n2{background:var(--roL)}.n3{background:var(--grL)}.n4{background:var(--viL)}.n5{background:var(--cyL)}
+table{border-collapse:collapse;width:100%;font-size:14px;display:block;overflow-x:auto}th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}th{background:#eef3f9}
+button,select{font:inherit;font-size:14px}
+button{cursor:pointer;border:1px solid var(--cy);background:#fff;color:#0a6f8a;border-radius:8px;padding:6px 12px}button:hover,button.act{background:var(--cy);color:#fff}
+select{padding:6px;border:1px solid var(--line);border-radius:8px;max-width:100%}
+:focus-visible{outline:3px solid var(--am);outline-offset:2px}
+svg{width:100%;height:auto;display:block;margin:8px 0}svg text{font:12px system-ui,sans-serif;fill:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}.three div{border-radius:12px;padding:12px 14px}
+.cell{display:inline-block;min-width:60px;text-align:center;border-radius:6px;padding:1px 8px;font-size:13px;font-weight:600}.y{background:var(--grL);color:#136e48}.n{background:var(--roL);color:#a3254a}.m{background:var(--amL);color:#7a5600}
+.bug{border:1px solid var(--line);border-left:6px solid var(--cy);border-radius:10px;padding:8px 14px;margin:8px 0}.bug b{font-family:'Trebuchet MS',sans-serif}
+.fc{width:100%;min-height:140px;text-align:left;background:var(--cyL);color:var(--ink);border:1px solid #b6e0ee;border-radius:14px;padding:18px;font-size:16px}.fc:hover{background:var(--cyL);color:var(--ink)}.fc.back{background:var(--viL);border-color:#cbbdf2}
+.opt{display:block;width:100%;text-align:left;margin:6px 0}.opt.good{background:var(--grL);color:#136e48}.opt.bad{background:var(--roL);color:#a3254a}
+#top{position:fixed;right:16px;bottom:16px}
+@media(max-width:860px){.layout{display:block}nav{position:static;height:auto}}
+@media print{nav,#top,button,.row,select{display:none!important}.layout{display:block}section{break-inside:avoid;box-shadow:none}.hero{background:#fff;color:#000}}
+</style></head><body><div class="layout">
+<nav aria-label="Stations"><input id="q" type="search" placeholder="Search the guide" aria-label="Search the guide"><div class="line" id="toc"><i id="pb"></i></div></nav>
+<main>
+<div class="hero"><h1>Answers that know who is asking</h1>
+<p>MedCare joins hospital files from Amazon S3 with Salesforce records, cleans them, turns them into metrics, secures them by role, and lets people ask questions in plain language. Revise it as a journey of nine stations.</p>
+<span class="pill p-s">Bronze</span><span class="pill p-i">Silver</span><span class="pill p-g">Gold</span><span class="pill p-r">Security</span><span class="pill p-v">AI</span><span class="pill p-c">Serving</span><span class="pill p-k">Seen in your PDF</span>
+<p>Healthcare data here is the project&rsquo;s sample data. Anything not shown in the PDF is marked as a gap or a suggestion.</p></div>
+
+<section id="s1" data-t="The big picture"><h2>The big picture</h2>
+<p>Not &ldquo;load CSVs, draw charts&rdquo;. It is a shared, governed foundation with three ways to consume it: dashboards, a Q&amp;A agent, and role-based access.</p>
+<div id="d1"></div>
+<table><tr><th>Source</th><th>System</th><th>Holds</th></tr>
+<tr><td><code>lab_results.csv</code>, <code>patient_vitals.csv</code>, <code>hospital_admissions.csv</code>, <code>patient_queries.csv</code></td><td>Amazon S3</td><td>Clinical and portal activity</td></tr>
+<tr><td><code>Account</code>, <code>Case</code>, <code>Appointment__c</code>, <code>Claim__c</code></td><td>Salesforce</td><td>Patients, complaints, visits, billing</td></tr></table>
+<div class="note n5">S3 and Salesforce are complementary, not alternatives. Both land in Bronze with <code>source_system</code>, <code>file_name</code> or <code>object_name</code>, and <code>load_timestamp</code>.</div></section>
+
+<section id="s2" data-t="The key that joins it all"><h2>One key joins everything</h2>
+<p><code>patient_mrn</code> is the hub. Vitals also match admissions on <code>patient_mrn + facility_id</code>, and claims link to <code>admission_id</code>.</p>
+<div id="d2"></div>
+<div class="note n1"><b>Why it matters.</b> If MRNs are formatted differently across sources, every join silently loses rows. That is why Silver standardizes MRNs first.</div></section>
+
+<section id="s3" data-t="Bronze, Silver, Gold"><h2>Bronze, Silver, Gold</h2>
+<div class="three"><div style="background:var(--sa)"><b>Bronze</b><br>&ldquo;Did I receive it?&rdquo; Raw as-is, plus three metadata columns. S3 CSVs via a Lakeflow pipeline; Salesforce via Lakeflow Connect (Account, Case, Appointment, Claim). Bronze appointments: 300 rows.</div>
+<div style="background:var(--ic)"><b>Silver</b><br>&ldquo;Can I trust it?&rdquo; Standardize, validate dates, dedupe, quarantine, mask PII, derive fields.</div>
+<div style="background:var(--amL)"><b>Gold</b><br>&ldquo;Can the business use it?&rdquo; Eight curated tables for metrics, search and Q&amp;A.</div></div>
+<h3>Silver work per table (from the spec)</h3>
+<table><tr><th>Table</th><th>Key work</th></tr>
+<tr><td>lab_results</td><td>MRN format, units, reference ranges, dedupe <code>lab_result_id</code>, quarantine missing <code>collected_datetime</code></td></tr>
+<tr><td>patient_vitals</td><td>Standardize vital names, dedupe same-minute readings, join admissions</td></tr>
+<tr><td>hospital_admissions</td><td>Discharge after admission, <code>length_of_stay</code>, diagnosis lookup, 30-day readmission</td></tr>
+<tr><td>patient_queries</td><td>Classify, strip PII, dedupe, standardize channel</td></tr>
+<tr><td>Account, Case, Appointment, Claim</td><td>Mask or tokenize PII; <code>resolution_time_hours</code>; <code>lead_time_days</code>; <code>turnaround_days</code></td></tr></table>
+<h3>Gold tables</h3>
+<p><span class="pill p-g">patient_360</span><span class="pill p-g">readmission_metrics</span><span class="pill p-g">length_of_stay_metrics</span><span class="pill p-g">lab_result_metrics</span><span class="pill p-g">appointment_metrics</span><span class="pill p-g">claims_metrics</span><span class="pill p-g">department_visit_metrics</span><span class="pill p-g">patient_query_metrics</span></p>
+<div class="note n2"><b>Known gap in your PDF.</b> Blank diagnoses became <code>Unknown</code>, but the planned external diagnosis lookup table was not completed.</div>
+<div class="note n1"><b>Grain.</b> Metric tables hold rows per day, week, month or year, not one row per patient. Mixing grains gives wrong answers (see the AI station).</div></section>
+
+<section id="s4" data-t="Security"><h2>Security: three tools, three questions</h2>
+<div class="three"><div style="background:var(--cyL)"><b>Row filter</b><br>&ldquo;Which rows may I see?&rdquo; Cardiology staff get Cardiology rows.</div>
+<div style="background:var(--amL)"><b>Column mask</b><br>&ldquo;What value do I see here?&rdquo; Billing sees a masked <code>patient_mrn</code>.</div>
+<div style="background:var(--viL)"><b>Secure view</b><br>&ldquo;What door am I given?&rdquo; <code>patient_360_secure</code> for patients.</div></div>
+<h3>The patient_360 decision</h3>
+<div id="d3"></div>
+<p>Row filters directly on <code>patient_360</code> caused nested policy errors because policies referenced mapping tables. Those experiments were discarded. The canonical Gold table stayed clean, and the per-user restriction moved to <code>security.patient_360_secure</code>, matched through <code>security.patient_identity_map</code>. Clinicians use <code>user_department_map</code> and <code>department_row_filter</code>.</p>
+<h3>Access explorer</h3>
+<div class="row"><label for="role">Role:</label><select id="role"></select></div><div id="acc"></div>
+<div class="note n3"><b>Verified in the PDF.</b> MRN000001 vs MRN000002 tests showed one patient cannot retrieve another. Audit result field is <code>response.status_code</code>. Customer-managed keys were not available on Free Edition, so they were not claimed.</div></section>
+
+<section id="s5" data-t="AI Q&A agent"><h2>The AI layer: retrieve, calculate, explain</h2>
+<p>Four AI Search indexes (patient_360, appointment, claims, case descriptions) sit in schema <code>ai_search</code>. AI Search retrieves rows; it does not aggregate. Admin questions go to Unity Catalog functions instead.</p>
+<div id="d4"></div>
+<h3>Which tool answers this?</h3>
+<div class="row"><label for="qs">Question:</label><select id="qs"></select></div><div id="route" aria-live="polite"></div>
+<h3>The grain trap (illustrative numbers, not from your data)</h3>
+<p>Cardiology no-shows by day: 1 of 1, 4 of 40, 5 of 59. Pick a strategy:</p>
+<div class="row"><button data-m="max">Highest single row</button><button data-m="avg">Average of the rate rows</button><button data-m="w">Weighted (total no-shows / total appointments)</button></div><div id="trap" aria-live="polite"></div>
+<div class="note n2">Your agent needed explicit rules: never mix Day, Week, Month and Year rows; use weighted aggregation; <code>admission_count</code> is not unique patients; never invent a year.</div></section>
+
+<section id="s6" data-t="Ship the agent"><h2>Ship the agent</h2>
+<div id="d5"></div>
+<pre>class MedCareAgent(ResponsesAgent):
+    def predict(self, request: ResponsesAgentRequest) -&gt; ResponsesAgentResponse: ...
+    def predict_stream(self, request): ...   # Playground streams
+
+agent = MedCareAgent()
+set_model(agent)   # tells MLflow which object to log</pre>
+<p>Registered as <code>healthcare_insights.ai_search.medcare_agent</code>, with <code>DatabricksOpenAI</code> and endpoint <code>databricks-gpt-oss-20b</code>. Each red tag in the diagram is a real failure you hit.</p></section>
+
+<section id="s7" data-t="Bug museum"><h2>Bug museum</h2>
+<p>Real problems from your log. Filter by station.</p>
+<div class="row" id="bf"></div><div id="bugs"></div></section>
+
+<section id="s8" data-t="Gaps and honesty"><h2>Gaps and honesty</h2>
+<ul><li>Diagnosis lookup not completed (stated in the PDF).</li><li>In Playground there was no visible user email, so a test email was placed in the system prompt. That is a controlled test, not real authentication.</li><li>Patients with appointments in Gold was 0, accepted as legitimate after a check.</li><li>Unique patient counts are unavailable from the metrics; the agent must say so.</li><li>The spec asks for a filterable dashboard (visits, queries, readmissions, no-shows, claims, abnormal labs). I did not find a dashboard build step in the PDF&rsquo;s outline, so verify it.</li><li>&ldquo;Creatinine improving&rdquo; needs history, while <code>patient_360</code> holds latest labs. My inference, not tested in the PDF.</li></ul></section>
+
+<section id="s9" data-t="Revision center"><h2>Revision center</h2>
+<div id="fcbox"></div>
+<div class="row"><button id="prev">Previous</button><button id="flip">Flip</button><button id="next">Next</button><button id="know">I know it</button><button id="rev">Needs revision</button><button id="reset">Reset progress</button></div><p id="fcstat" aria-live="polite"></p>
+<h3>Knowledge check</h3><div id="quiz"></div>
+<h3>One-page summary</h3>
+<table><tr><th>Item</th><th>Value</th></tr>
+<tr><td>Flow</td><td>S3 + Salesforce &rarr; Bronze &rarr; Silver &rarr; Gold &rarr; AI Search + UC functions &rarr; agent &rarr; MLflow &rarr; Serving &rarr; Playground</td></tr>
+<tr><td>Names</td><td><code>healthcare_insights</code>, <code>security.patient_360_secure</code>, <code>medcare_clinicians</code>, <code>medcare_agent</code></td></tr>
+<tr><td>Rules</td><td>AI Search retrieves; functions calculate; LLM explains. Pipeline success is not user access.</td></tr></table></section>
+</main></div><button id="top" aria-label="Back to top">Top</button>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const COL={src:'#e3ebf4',br:'#f4e6d3',si:'#cfdff0',gd:'#fff1cc',ro:'#fde3ea',vi:'#ebe5fb',cy:'#dcf3fa',gr:'#dcf4e8'};
+function box(x,y,w,t,c,s){const p=t.split('|');return `<rect x="${x}" y="${y}" width="${w}" height="46" rx="10" fill="${COL[c]}" stroke="${s||'#8fa1b8'}"/>`+p.map((q,i)=>`<text x="${x+w/2}" y="${y+(p.length>1?20:28)+i*14}" text-anchor="middle" ${i?'':'font-weight="700"'}>${q}</text>`).join('')}
+const arr=(x1,y1,x2,y2)=>`<path d="M${x1} ${y1}L${x2} ${y2}" stroke="#0d2340" stroke-width="2" marker-end="url(#ar)"/>`;
+const defs='<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#0d2340"/></marker></defs>';
+function chain(id,title,items,y0){let h=`<svg viewBox="0 0 760 ${y0}" role="img" aria-label="${title}">${defs}`;items.forEach((n,i)=>{const x=4+i*(752/items.length),w=752/items.length-26;h+=box(x,40,w,n[0],n[1]);if(n[2])h+=`<rect x="${x+w/2-34}" y="92" width="68" height="18" rx="9" fill="#fde3ea"/><text x="${x+w/2}" y="105" text-anchor="middle" fill="#a3254a" style="font-size:10px">${n[2]}</text>`;if(i<items.length-1)h+=arr(x+w,63,x+w+22,63)});$(id).innerHTML=h+`<text x="4" y="18" font-weight="700">${title}</text></svg>`}
+/* D1 */
+$('#d1').innerHTML=`<svg viewBox="0 0 760 250" role="img" aria-label="Platform overview">${defs}${box(4,10,150,'Amazon S3|4 CSV files','src')}${box(4,80,150,'Salesforce|4 objects','src')}${box(200,45,120,'Bronze|raw + metadata','br')}${box(360,45,120,'Silver|clean, join, mask','si')}${box(520,45,120,'Gold|8 curated tables','gd')}${arr(154,33,200,60)}${arr(154,103,200,85)}${arr(320,68,360,68)}${arr(480,68,520,68)}${box(560,140,190,'Dashboard|filter by facility, date','cy')}${box(300,140,200,'AI Q&amp;A|index + functions + agent','vi')}${box(40,140,210,'Security|row filter, mask, secure view','ro')}${arr(580,91,640,140)}${arr(560,91,420,140)}<path d="M145 140L420 91" stroke="#d93f6b" stroke-width="2" stroke-dasharray="5" marker-end="url(#ar)"/><text x="40" y="215" fill="#a3254a">Security applies across the layers (dashed)</text></svg>`;
+/* D2 radial */
+{const N=[['labs','lab_results'],['vitals','+ facility_id'],['admissions','admission_id'],['cases','Case'],['appointments','Appointment__c'],['claims','Claim__c']];let h=`<svg viewBox="0 0 760 300" role="img" aria-label="patient_mrn hub">${defs}`;N.forEach((n,i)=>{const a=i/N.length*6.283-1.57,x=380+250*Math.cos(a),y=150+110*Math.sin(a);h+=`<path d="M380 150L${x} ${y}" stroke="#8fa1b8" stroke-width="2"/>`+`<rect x="${x-62}" y="${y-22}" width="124" height="44" rx="10" fill="${i%2?COL.si:COL.br}" stroke="#8fa1b8"/><text x="${x}" y="${y-3}" text-anchor="middle" font-weight="700">${n[0]}</text><text x="${x}" y="${y+13}" text-anchor="middle">${n[1]}</text>`});$('#d2').innerHTML=h+`<circle cx="380" cy="150" r="46" fill="#d93f6b"/><text x="380" y="155" text-anchor="middle" style="fill:#fff;font-weight:700">patient_mrn</text></svg>`}
+/* D3 */
+$('#d3').innerHTML=`<svg viewBox="0 0 760 170" role="img" aria-label="Patient secure serving path">${defs}${box(4,20,140,'gold.patient_360|canonical, clean','gd')}${box(190,20,170,'security.patient_360_secure|serving view','ro')}${box(400,20,150,'patient_identity_map|login to MRN','ro')}${box(590,20,160,'One patient row|patient_mrn = user','gr')}${arr(144,43,190,43)}${arr(360,43,400,43)}${arr(550,43,590,43)}<text x="4" y="110" fill="#51637d">Clinicians: user_department_map + department_row_filter on Silver and Gold tables.</text><text x="4" y="130" fill="#51637d">Billing: MRN mask on Silver claims. Executives: Gold schema only. Engineers: group grant, time-boxed.</text></svg>`;
+/* D4 */
+$('#d4').innerHTML=`<svg viewBox="0 0 760 270" role="img" aria-label="Agent routing">${defs}${box(4,100,130,'User question|via Playground','cy')}${box(170,100,130,'LLM agent|picks a tool','vi')}${box(350,20,170,'patient_tool|MRN from login','ro')}${box(350,180,170,'admin_tool|UC functions','gd')}${box(560,20,190,'AI Search|filtered by MRN','vi')}${box(560,180,190,'fn_*_metrics|Gold rows, one grain','gd')}${arr(134,123,170,123)}${arr(300,115,350,50)}${arr(300,131,350,200)}${arr(520,43,560,43)}${arr(520,203,560,203)}<text x="560" y="112" fill="#51637d">LLM explains the result</text><text x="560" y="268" fill="#51637d" style="font-size:11px">fn_readmission, appointment, claims, length_of_stay, lab_result, department_visit, patient_query</text></svg>`;
+chain('#d5','Deployment chain and where it broke',[['Python agent|ResponsesAgent','vi','predict_stream'],['MLflow|log_model','si','set_model'],['UC model|medcare_agent','gd','versions'],['Model Serving|endpoint','cy','no Spark'],['Playground|chat','gr','status: completed']],130);
+/* nav */
+const secs=$$('section');$('#toc').insertAdjacentHTML('beforeend',secs.map(s=>`<a href="#${s.id}" data-id="${s.id}">${s.dataset.t}</a>`).join(''));
+const seen=new Set(store.get('seen3',[]));const paint=()=>{$$('#toc a').forEach(a=>a.classList.toggle('seen',seen.has(a.dataset.id)));$('#pb').style.height=Math.max(0,(seen.size-1)/(secs.length-1))*($('#toc').clientHeight-16)+'px'};
+secs.forEach(s=>new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){seen.add(s.id);store.set('seen3',[...seen]);paint();$$('#toc a').forEach(a=>a.classList.toggle('on',a.dataset.id===s.id))}}),{threshold:.3}).observe(s));paint();
+$('#q').addEventListener('input',e=>{const v=e.target.value.toLowerCase().trim();secs.forEach(s=>{const hit=!v||s.textContent.toLowerCase().includes(v);s.hidden=!hit;$(`#toc a[data-id="${s.id}"]`).style.display=hit?'':'none'})});
+$$('pre').forEach(p=>{const b=document.createElement('button');b.textContent='Copy';b.onclick=()=>{const t=p.innerText.replace(/Copy$/,'').trim();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>b.textContent='Copied').catch(()=>b.textContent='Select text');setTimeout(()=>b.textContent='Copy',1500)};p.prepend(b)});
+$('#top').onclick=()=>scrollTo({top:0});
+/* access explorer */
+const cols=['Bronze','Silver','Gold metrics','patient_360','Other departments'];
+const roles={'Department clinician':[['n'],['m','own dept'],['m','own dept'],['m','their patients'],['n'],'Row filter on department (UC row filter function)'],
+'Department admin':[['n'],['n'],['m','own dept'],['n'],['n'],'SELECT on department-scoped Gold views only'],
+'Billing staff':[['n'],['m','claims only'],['m','claims_metrics'],['n'],['n'],'Column mask on patient_mrn plus a limited billing grant'],
+'Hospital executive':[['n'],['n'],['y','all depts'],['n','no PHI'],['y','aggregates'],'SELECT on Gold schema only, PHI columns masked'],
+'Data engineer':[['y'],['y'],['y'],['y'],['y','logged'],'Group-level grant, time-boxed, reviewed monthly'],
+'Patient (Q&A)':[['n'],['n'],['n'],['m','own record'],['n'],'Query-time patient_mrn filter in the serving view']};
+$('#role').innerHTML=Object.keys(roles).map(r=>`<option>${r}</option>`).join('');
+function acc(){const r=roles[$('#role').value];$('#acc').innerHTML='<table><tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr><tr>'+cols.map((c,i)=>{const v=r[i];return `<td><span class="cell ${v[0]}">${v[1]||(v[0]==='y'?'Yes':'No')}</span></td>`}).join('')+`</tr></table><p><b>How:</b> ${r[5]}</p>`}
+$('#role').onchange=acc;acc();
+/* router */
+const Q=[['What was my last HbA1c result?','p','patient_360 index','Latest labs live in patient_360.'],['When is my next appointment?','p','appointment index','Filtered to your MRN.'],['Has my latest claim been approved?','p','claims index','Filtered to your MRN.'],['What did the doctor note during my last visit?','p','case or patient index (verify)','The PDF does not say which index; treat as unverified.'],['Is my creatinine level improving?','p','patient_360 index','Trend needs history; patient_360 holds latest values (my inference).'],
+['Which department had the highest readmission rate last month?','a','fn_readmission_metrics','Resolve "last month", use one grain, aggregate by department.'],['How many patients visited Cardiology this week?','a','fn_department_visit_metrics','Counts are visits, not unique patients. The agent must say unique count is unavailable.'],['What is the average claim turnaround time by payer?','a','fn_claims_metrics','Weight by claim counts, do not average monthly averages.'],['Which department has the highest appointment no-show rate?','a','fn_appointment_metrics','Weighted department rate, not the highest single row.']];
+$('#qs').innerHTML=Q.map((q,i)=>`<option value="${i}">${q[0]}</option>`).join('');
+function route(){const q=Q[$('#qs').value];$('#route').innerHTML=q[1]==='p'?`<div class="note n4"><b>patient_tool.</b> Login email &rarr; authorized MRN &rarr; AI Search filtered by that MRN (<b>${q[2]}</b>) &rarr; LLM explains.<br>${q[3]}</div>`:`<div class="note n1"><b>admin_tool.</b> Unity Catalog function <b>${q[2]}</b> &rarr; correct grain &rarr; aggregate &rarr; LLM explains.<br>${q[3]}</div>`}
+$('#qs').onchange=route;route();
+/* trap */
+const days=[[1,1],[40,4],[59,5]];
+function trap(m){const r=days.map(d=>d[1]/d[0]*100),w=days.reduce((a,d)=>a+d[1],0)/days.reduce((a,d)=>a+d[0],0)*100;const v=m==='max'?Math.max(...r):m==='avg'?r.reduce((a,b)=>a+b)/r.length:w;
+$('#trap').innerHTML=`<div class="note ${m==='w'?'n3':'n2'}"><b>${v.toFixed(1)}%</b> ${m==='w'?'Correct: 10 no-shows out of 100 appointments.':'Misleading: one tiny day or an unweighted mean skews the answer. True rate is 10.0%.'}</div>`}
+$$('[data-m]').forEach(b=>b.onclick=()=>{$$('[data-m]').forEach(x=>x.classList.remove('act'));b.classList.add('act');trap(b.dataset.m)});
+/* bugs */
+const B=[['Silver','Silver appointments showed 0 rows; Bronze had 300','Row filters hid rows from the querying user','Test with the right identity; the transform was fine'],['Silver','Pipeline succeeded but user still saw 0 rows','Pipeline success is not Unity Catalog access','Check who is querying'],['Gold','patient_360 had many null clinical fields','Materialized view refresh ran under an identity that could not see filtered Silver','Fix the refresh security context'],['Gold','1,001 rows but 1,000 identifiable patients','One null-MRN row','Removed only from the AI Search serving copy'],['Security','Nested policy errors on patient_360','Row policies layered through mapping tables','Discard; use patient_360_secure'],['Security','Which audit field shows the result?','Needed the system audit table field','Use response.status_code'],['AI Search','Index held stale patient_360 data','Serving copy was out of date','MERGE refresh, then sync; wait for ONLINE_NO_PENDING_UPDATE'],['AI Search','Case index creation failed','resolution_time_hours was DECIMAL, unsupported','Serving copy uses DOUBLE, enable CDF'],['Agent','OPENAI_API_KEY expected; ENDPOINT_NOT_FOUND','Wrong client and endpoint name','DatabricksOpenAI and databricks-gpt-oss-20b'],['Agent','MLflow logging failed; Playground rejected response','No set_model(); output item lacked status completed','Add set_model(agent); return completed items'],['Serving','Endpoint tried to create a Spark session; SQL Warehouse remote session failed','Notebook success did not carry into Model Serving','Switch admin analytics to UC functions'],['Agent','Streaming implementation not provided','Only predict() existed','Add predict_stream()'],['Agent','Wrong answer: a 100% no-show row; admissions counted as patients','AI Search is not an aggregation engine; mixed grains','Function routing and aggregation rules']];
+const L=['All',...new Set(B.map(b=>b[0]))];let lf='All';
+function bugs(){$('#bf').innerHTML=L.map(l=>`<button class="${l===lf?'act':''}" data-l="${l}">${l}</button>`).join('');$('#bugs').innerHTML=B.filter(b=>lf==='All'||b[0]===lf).map(b=>`<div class="bug"><span class="pill p-c">${b[0]}</span><b>${b[1]}</b><br>Cause: ${b[2]}.<br>Fix: ${b[3]}.</div>`).join('');$$('#bf button').forEach(x=>x.onclick=()=>{lf=x.dataset.l;bugs()})}bugs();
+/* flashcards */
+const cards=[['Row filter vs column mask vs secure view?','Rows you may see; value shown in a column; the controlled dataset you are given.'],['Why a separate patient_360_secure?','Keep canonical Gold clean and enforce the per-patient MRN filter in the serving layer.'],['Why did users see 0 rows after a successful pipeline?','Pipeline success is separate from Unity Catalog row filters on the querying identity.'],['Why null clinical fields in patient_360?','The refresh ran under an identity that could not see filtered Silver data.'],['AI Search vs UC function?','AI Search retrieves rows. UC functions calculate trusted metrics.'],['What is metric grain?','Whether a row is a day, week, month or year. Never mix grains in one answer.'],['Why is admission_count not patients?','One patient can have many admissions, so counts are visits, not unique people.'],['What does set_model() do?','Tells MLflow which object in the file is the agent to log.'],['Why predict_stream()?','Playground sends streaming requests; predict() alone fails.'],['Why UC functions in the deployed agent?','Direct SQL Warehouse sessions failed inside Model Serving.'],['Why Silver standardizes patient_mrn first?','It is the join key; mismatched formats silently drop joined rows.'],['How do patients stay isolated?','Query-time patient_mrn filter tied to login, enforced in the serving layer.']];
+let fi=0,fl=false,mk=store.get('marks3',{});
+function fc(){const c=cards[fi];$('#fcbox').innerHTML=`<button class="fc ${fl?'back':''}" id="card" aria-label="Flashcard, press to flip">${fl?c[1]:'<b>'+c[0]+'</b>'}</button>`;$('#card').onclick=()=>{fl=!fl;fc()};const k=Object.values(mk).filter(v=>v==='k').length,r=Object.values(mk).filter(v=>v==='r').length;$('#fcstat').textContent=`Card ${fi+1} of ${cards.length}. Known ${k}, needs revision ${r}.`}
+const go=d=>{fi=(fi+d+cards.length)%cards.length;fl=false;fc()};
+$('#prev').onclick=()=>go(-1);$('#next').onclick=()=>go(1);$('#flip').onclick=()=>{fl=!fl;fc()};$('#know').onclick=()=>{mk[fi]='k';store.set('marks3',mk);fc()};$('#rev').onclick=()=>{mk[fi]='r';store.set('marks3',mk);fc()};
+$('#reset').onclick=()=>{mk={};store.set('marks3',mk);store.set('seen3',[]);seen.clear();paint();fc()};fc();
+/* quiz */
+const qs=[['Billing staff must not see patient_mrn. Which tool?',['Row filter','Column mask','Secure view'],1],['The pipeline is green but a clinician sees 0 rows. First suspect?',['Broken ingestion','Row filter on their identity','Wrong LLM'],1],['Which department has the highest no-show rate? Best tool?',['AI Search top hit','fn_appointment_metrics with weighting','Ask the LLM directly'],1],['Logging the agent failed. Likely missing piece?',['set_model(agent)','A bigger cluster','Another index'],0]];
+$('#quiz').innerHTML=qs.map((q,i)=>`<div data-i="${i}"><p><b>${q[0]}</b></p>${q[1].map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}<p aria-live="polite"></p></div>`).join('');
+$$('#quiz .opt').forEach(b=>b.onclick=()=>{const d=b.closest('div'),ok=+b.dataset.j===qs[d.dataset.i][2];b.classList.toggle('good',ok);b.classList.toggle('bad',!ok);d.lastElementChild.textContent=ok?'Correct.':'Not quite. Try again.'});
+</script></body></html>
