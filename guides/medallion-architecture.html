@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medallion Architecture: Why Bronze, Silver &amp; Gold?</title>
+<meta name="description" content="My field guide to Medallion Architecture. Source-based notes with diagrams, an example and a decision framework.">
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --surface2:#efece4; --ink:#14202e; --muted:#4d5b6b; --line:#d9d4c7;
+  --accent:#0b5d7a; --accent-ink:#ffffff; --focus:#c25a00;
+  --bronze:#a8612c; --bronze-bg:#f4e3d4; --silver:#5f6e80; --silver-bg:#e4e9ee; --gold:#9a7000; --gold-bg:#f7ecc6;
+  --ok:#1b6e3c; --ok-bg:#dcf1e3; --bad:#a3262a; --bad-bg:#f8dcdc; --warn-bg:#fdf0d2;
+  --src:#0b5d7a; --add:#7a4a00; --ext:#3d6a1f;
+  --shadow:0 1px 2px rgba(20,32,46,.08),0 6px 20px rgba(20,32,46,.06);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#0e1620; --surface:#15212e; --surface2:#1b2a3a; --ink:#e8edf3; --muted:#a9b6c4; --line:#2b3c4f;
+  --accent:#5cc0e0; --accent-ink:#06222d; --focus:#ffb066;
+  --bronze:#e0955a; --bronze-bg:#3a2619; --silver:#b4c0ce; --silver-bg:#25313f; --gold:#f0c24a; --gold-bg:#3a3014;
+  --ok:#6fd49a; --ok-bg:#16301f; --bad:#ff8f93; --bad-bg:#3b1a1c; --warn-bg:#3a2f12;
+  --src:#6cc7e6; --add:#ffc36b; --ext:#a2d67a;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--sans);-webkit-text-size-adjust:100%}
+a{color:var(--accent);text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--accent);color:var(--accent-ink);padding:8px 12px;border-radius:6px;z-index:100}
+.skip:focus{left:8px}
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--bronze),var(--silver),var(--gold));z-index:60}
+.topbar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;gap:10px;align-items:center}
+.brand{font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.search{position:relative;flex:0 1 260px;min-width:120px}
+.search input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:.92rem}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 12px;font:inherit;font-size:.9rem;cursor:pointer;min-height:40px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.hero{background:linear-gradient(160deg,#0f2742 0%,#14405c 60%,#17506b 100%);color:#fff;padding:56px 16px 48px}
+[data-theme="dark"] .hero{background:linear-gradient(160deg,#0a121b,#10283b 70%,#123246)}
+.hero-in{max-width:1200px;margin:0 auto}
+.eyebrow{letter-spacing:.14em;text-transform:uppercase;font-size:.78rem;color:#cfe3ee;margin:0 0 10px}
+.hero h1{font-size:clamp(1.9rem,5.5vw,3.2rem);line-height:1.12;margin:0 0 14px;max-width:20ch}
+.hero p.lead{font-size:1.15rem;max-width:60ch;margin:0 0 22px;color:#e6f0f6}
+.medals{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 22px;padding:0;list-style:none}
+.medals li{padding:8px 14px;border-radius:999px;font-weight:600;font-size:.95rem;color:#14202e}
+.medals .b{background:#e9b384}.medals .s{background:#d3dae2}.medals .g{background:#f2d36a}
+.hero small{display:block;color:#cfe3ee;max-width:70ch}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.tag{display:inline-block;font:600 .72rem/1 var(--sans);letter-spacing:.04em;text-transform:uppercase;padding:4px 8px;border-radius:999px;border:1px solid currentColor;vertical-align:middle;white-space:nowrap}
+.tag.src{color:var(--src)}.tag.add{color:var(--add)}.tag.ext{color:var(--ext)}
+.hero .tag{background:rgba(255,255,255,.92)}
+.layout{max-width:1200px;margin:0 auto;padding:24px 16px 80px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:32px}
+.toc{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;font-size:.9rem}
+.toc h2{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.toc ol{list-style:none;margin:0;padding:0;border-left:2px solid var(--line)}
+.toc a{display:block;padding:6px 10px;color:var(--muted);text-decoration:none;border-left:3px solid transparent;margin-left:-2px;line-height:1.35}
+.toc a:hover{color:var(--ink)}
+.toc a[aria-current="true"]{color:var(--ink);font-weight:600;border-left-color:var(--accent);background:var(--surface2)}
+.toc li[hidden]{display:none}
+.toc-toggle{display:none}
+main{min-width:0}
+section{margin:0 0 56px}
+section>h2{font-size:clamp(1.5rem,3.4vw,2rem);line-height:1.2;margin:0 0 6px;padding-top:6px}
+.sub{color:var(--muted);margin:0 0 18px}
+h3{font-size:1.2rem;margin:30px 0 8px;line-height:1.3}
+h4{font-size:1rem;margin:20px 0 6px}
+p{margin:0 0 14px;max-width:72ch}
+ul,ol{max-width:72ch;padding-left:1.3em}
+li{margin:4px 0}
+code{font-family:var(--mono);font-size:.9em;background:var(--surface2);padding:1px 6px;border-radius:5px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);margin:0 0 18px}
+.callout{border-left:5px solid var(--accent);background:var(--surface);padding:14px 18px;border-radius:0 12px 12px 0;margin:0 0 18px;max-width:78ch}
+.callout.q{border-left-color:var(--gold);background:var(--gold-bg)}
+.callout.warn{border-left-color:var(--bad);background:var(--bad-bg)}
+.callout p:last-child{margin:0}
+.q{font-weight:600}
+.row{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+figure{margin:22px 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px 12px;box-shadow:var(--shadow)}
+figcaption.ft{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:700;margin:0 0 12px;font-size:.98rem}
+figure .note{margin:12px 0 0;color:var(--ink);font-size:.97rem}
+.diagram{overflow-x:auto}
+.flow{display:flex;gap:10px;align-items:stretch}
+.flow.col{flex-direction:column}
+.node{flex:1;min-width:0;border:2px solid var(--line);background:var(--surface2);border-radius:12px;padding:10px 12px;text-align:left}
+.node b{display:block}
+.node small{display:block;color:var(--muted);font-size:.84rem;line-height:1.4}
+.node.bronze{background:var(--bronze-bg);border-color:var(--bronze)}
+.node.silver{background:var(--silver-bg);border-color:var(--silver)}
+.node.gold{background:var(--gold-bg);border-color:var(--gold)}
+.node.bad{background:var(--bad-bg);border-color:var(--bad)}
+.node.ok{background:var(--ok-bg);border-color:var(--ok)}
+.node.dash{border-style:dashed;background:transparent}
+.arrow{align-self:center;font-size:1.5rem;color:var(--muted);flex:0 0 auto;line-height:1}
+.group{border:1.5px dashed var(--muted);border-radius:14px;padding:10px}
+.group>.glabel{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:.8rem;padding:3px 9px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+@media (max-width:760px){.flow.resp{flex-direction:column}.flow.resp>.arrow{transform:rotate(90deg)}}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:0 0 18px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:var(--surface2);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.tablewrap table{min-width:560px}
+.tablewrap.wide table{min-width:760px}
+td.bronze{background:var(--bronze-bg)}td.silver{background:var(--silver-bg)}td.gold{background:var(--gold-bg)}
+tr.pass td{background:var(--ok-bg)}tr.fail td{background:var(--bad-bg)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78rem;font-weight:700}
+.pill.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+.pill.bad{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad)}
+.tabs [role=tablist]{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.tabs [role=tab]{appearance:none;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px}
+.tabs [role=tab][aria-selected=true]{border-color:var(--ink)}
+.tabs [role=tab].t-b[aria-selected=true]{background:var(--bronze-bg);border-color:var(--bronze)}
+.tabs [role=tab].t-s[aria-selected=true]{background:var(--silver-bg);border-color:var(--silver)}
+.tabs [role=tab].t-g[aria-selected=true]{background:var(--gold-bg);border-color:var(--gold)}
+.tabs [role=tabpanel]{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+.tabs [role=tabpanel][hidden]{display:none}
+.tabs h3{margin-top:0}
+.tabs dl{margin:12px 0 0;display:grid;grid-template-columns:max-content 1fr;gap:6px 14px}
+.tabs dt{font-weight:700}
+.tabs dd{margin:0}
+@media (max-width:560px){.tabs dl{grid-template-columns:1fr}.tabs dd{margin-bottom:8px}}
+pre{position:relative;background:#0f1b27;color:#e8eef5;border-radius:12px;padding:16px 16px 14px;overflow-x:auto;font:.88rem/1.55 var(--mono);margin:0 0 6px;-webkit-overflow-scrolling:touch}
+pre code{background:none;padding:0;color:inherit;font-size:inherit}
+.codehead{display:flex;justify-content:space-between;align-items:center;background:#1c2d3f;color:#c8d6e4;border-radius:12px 12px 0 0;padding:6px 8px 6px 14px;font:600 .78rem var(--mono);margin-top:12px}
+.codehead+pre{border-radius:0 0 12px 12px}
+.codehead .btn{min-height:32px;padding:4px 10px;font-size:.8rem;background:#2a4057;color:#fff;border-color:#3b5873}
+.stepper .controls{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;padding:0;list-style:none;max-width:none}
+.steps button{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 10px;border-radius:999px;font:inherit;font-size:.85rem;cursor:pointer;min-height:36px}
+.steps button[aria-current="step"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.stepmsg{min-height:3.2em}
+.decide .answer{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.decide .result{padding:12px 16px;border-radius:12px;background:var(--ok-bg);border:1px solid var(--ok);font-weight:600}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0;margin:0 0 10px;max-width:78ch}
+details>summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:baseline}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"+";font-family:var(--mono);font-weight:700;color:var(--accent);flex:0 0 1em}
+details[open]>summary::before{content:"\2212"}
+details>div{padding:0 16px 14px}
+details[hidden]{display:none}
+.apgrid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.ap{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.ap h4{margin:0 0 6px}
+.ap .num{font:700 .8rem var(--mono);color:var(--bad)}
+.ap[hidden]{display:none}
+dl.gl{margin:0;display:grid;gap:10px}
+dl.gl>div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;max-width:78ch}
+dl.gl>div[hidden]{display:none}
+dl.gl dt{font-weight:700}dl.gl dd{margin:2px 0 0}
+.nores{padding:12px 16px;background:var(--warn-bg);border-radius:10px;margin:0 0 14px}
+#top{position:fixed;right:16px;bottom:16px;z-index:55;border-radius:999px;width:46px;height:46px;padding:0;font-size:1.2rem;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s}
+#top.show{opacity:1;pointer-events:auto}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(1100px,96vw);max-height:92vh}
+dialog::backdrop{background:rgba(5,12,20,.65)}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:700;position:sticky;top:0;background:var(--surface)}
+.zoom-body{padding:16px;overflow:auto;max-height:calc(92vh - 60px)}
+.zoom-body .diagram{min-width:760px}
+.zoom-body svg{min-width:640px}
+svg text{font-family:var(--sans);fill:var(--ink)}
+svg .t-s{font-size:12.5px;fill:var(--muted)}
+svg .t-b{font-size:14.5px;font-weight:700}
+svg .box{stroke-width:2;rx:10}
+svg .ln{stroke:var(--muted);stroke-width:2;fill:none}
+svg .ln.dash{stroke-dasharray:6 5}
+.src-note{font-size:.88rem;color:var(--muted)}
+footer{max-width:1200px;margin:0 auto;padding:0 16px 48px;color:var(--muted);font-size:.9rem}
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;gap:12px}
+  .toc{position:static;max-height:none;display:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .toc.open{display:block}
+  .toc-toggle{display:inline-flex}
+  body{font-size:16.5px}
+}
+@media (max-width:560px){
+  .brand{display:none}
+  .search{flex:1 1 auto}
+  .hero{padding:36px 16px 32px}
+  .card{padding:14px 14px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.topbar,#progress,#top,.toc,.btn{display:none!important}.layout{display:block}figure,.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div id="progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <button class="btn toc-toggle" id="tocBtn" aria-expanded="false" aria-controls="toc">Contents</button>
+    <div class="brand">Medallion Architecture field guide</div>
+    <div class="search">
+      <label class="sr" for="q" style="position:absolute;left:-999px">Search these notes</label>
+      <input id="q" type="search" placeholder="Search notes…" autocomplete="off">
+    </div>
+    <button class="btn" id="theme" aria-pressed="false" title="Toggle dark theme">Dark</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-in">
+    <p class="eyebrow">Field guide · data engineering</p>
+    <h1>Medallion Architecture: why Bronze, Silver &amp; Gold?</h1>
+    <p class="lead">I keep the incoming data. I improve it step by step. Then I prepare the data people actually need. Each boundary needs a reason to exist.</p>
+    <ul class="medals" aria-label="The three layers">
+      <li class="b">Bronze · what did the source provide?</li>
+      <li class="s">Silver · what can I trust and reuse?</li>
+      <li class="g">Gold · what business question am I answering?</li>
+    </ul>
+    <small>I wrote this from one source: <em>Medallion Architecture: Why Bronze, Silver &amp; Gold?</em> The source has no printed page numbers, so I cite section numbers like §3.1.</small>
+    <div class="legend" aria-label="Content labels">
+      <span><span class="tag src">Source</span> from the source document</span>
+      <span><span class="tag add">Added</span> my own explanation</span>
+      <span><span class="tag ext">External</span> from official docs I checked</span>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <ol id="tocList"></ol>
+    <p id="tocNone" class="src-note" hidden>No section matches.</p>
+  </nav>
+
+  <main id="content">
+
+  <!-- 1 OVERVIEW -->
+  <section id="overview" data-title="Overview">
+    <h2>Overview</h2>
+    <p class="sub"><span class="tag src">Source §Overview</span></p>
+    <p>Data comes from many places. Salesforce, databases, APIs, files, applications. It does not always arrive in a usable form.</p>
+    <ul>
+      <li>Some records are incomplete.</li>
+      <li>Some are duplicated.</li>
+      <li>Some use different formats.</li>
+      <li>Some need checks or changes before other teams can use them.</li>
+    </ul>
+    <p class="q">Where do I do all this work?</p>
+    <p>I could clean everything the moment it arrives. That has costs. I can lose useful source information. It gets harder to trace where a value came from. It gets hard to process the data again when something breaks.</p>
+    <p>So I give the data stages.</p>
+    <div class="callout"><p><b>Keep the incoming data first. Improve it step by step. Then prepare the data people actually need.</b></p></div>
+    <p>This is Medallion Architecture. The common names are Bronze, Silver and Gold. I look at what each boundary does, why it helps, and where it becomes unnecessary.</p>
+
+    <figure id="fig-overview">
+      <figcaption class="ft"><span>Diagram 1 · The problem and the refinement path</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="flow col" role="img" aria-label="Source data flows to problems, then refinement made of check, clean and standardize, then useful data.">
+          <div class="node"><b>Source data</b><div class="chips"><span class="chip">CRM</span><span class="chip">Database</span><span class="chip">API</span><span class="chip">Files</span></div></div>
+          <div class="arrow" aria-hidden="true" style="transform:rotate(90deg)">→</div>
+          <div class="node bad"><b>Problems</b><div class="chips"><span class="chip">Incomplete</span><span class="chip">Duplicates</span><span class="chip">Different formats</span></div></div>
+          <div class="arrow" aria-hidden="true" style="transform:rotate(90deg)">→</div>
+          <div class="group"><p class="glabel">Refinement</p>
+            <div class="flow resp"><div class="node"><b>Check</b></div><div class="arrow" aria-hidden="true">→</div><div class="node"><b>Clean</b></div><div class="arrow" aria-hidden="true">→</div><div class="node"><b>Standardize</b></div></div>
+          </div>
+          <div class="arrow" aria-hidden="true" style="transform:rotate(90deg)">→</div>
+          <div class="node ok"><b>Useful data</b><div class="chips"><span class="chip">Analytics</span><span class="chip">BI</span><span class="chip">Applications</span></div></div>
+        </div>
+      </div>
+      <p class="note">I read this top to bottom. Messy source data goes through checks, cleaning and standardizing. What comes out serves analytics, BI and applications.</p>
+    </figure>
+  </section>
+
+  <!-- 2 FOUNDATIONS -->
+  <section id="foundations" data-title="Foundations">
+    <h2>Foundations</h2>
+    <p class="sub"><span class="tag src">Source §2.1–2.7</span></p>
+
+    <h3>What Medallion is</h3>
+    <p>Medallion is a way of organizing data as it moves through a platform. I give data stages. At each stage I decide what happens to it and what the next users can expect.</p>
+    <p><code>Bronze → Silver → Gold</code></p>
+    <p>The names are not the point. Data becomes more useful as I refine it.</p>
+    <p>Medallion is a design pattern, not a specific technology. I can build it with Delta Lake tables, Spark, SQL, pipelines or other tools.</p>
+    <p><span class="tag ext">External</span> The <a href="https://docs.databricks.com/aws/en/lakehouse/medallion">Databricks medallion page</a> also calls it a data design pattern. It says following it is a recommended best practice, not a requirement.</p>
+
+    <h3>Why boundaries matter</h3>
+    <p>A boundary gives a stage a clear responsibility. If I keep source data apart from cleaned data, I know where to look when something breaks. I also decide which transformation belongs in which stage, instead of one large pipeline.</p>
+    <p><code>Where did the data come from? → What was changed? → What can we use it for?</code></p>
+    <p>This matters most when several teams or applications depend on the same data.</p>
+
+    <h3>Refinement is not just cleaning</h3>
+    <p>It is tempting to see three levels of cleanliness. That is too simple. The real idea is <b>progressive refinement</b>. At each stage I make the data more suitable for a purpose. I also try to keep the information and context that later stages may need.</p>
+
+    <figure id="fig-refine">
+      <figcaption class="ft"><span>Diagram 2 · Progressive refinement</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="flow resp" role="img" aria-label="Source data, then refined data, then purpose-specific data.">
+          <div class="node"><b>Source data</b><small>What did the source give me?</small><div class="chips"><span class="chip">keeps source meaning</span></div></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node silver"><b>Refined data</b><small>What can I validate and reuse?</small><div class="chips"><span class="chip">validated</span><span class="chip">standardized</span><span class="chip">reusable</span></div></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node gold"><b>Purpose-specific data</b><small>What do people actually need?</small><div class="chips"><span class="chip">analytics</span><span class="chip">reporting</span><span class="chip">business use</span></div></div>
+        </div>
+      </div>
+      <p class="note">I ask a different question at each step. That is why layers are engineering boundaries, not folders with different names.</p>
+    </figure>
+
+    <h3>What Medallion is not</h3>
+    <p>I keep these separate. They answer different questions. <span class="tag src">Source §2.4–2.7</span></p>
+    <ul>
+      <li><b>Not ETL or ELT.</b> ETL/ELT describe how I move and transform data. Medallion describes how I organize the result. Example: ELT into Bronze, clean in Silver, build business datasets in Gold.</li>
+      <li><b>Not dimensional modeling.</b> Dimensional modeling gives me facts and dimensions. A Gold layer can hold a dimensional model. Gold does not have to mean one.</li>
+      <li><b>Not Data Vault.</b> Data Vault uses hubs, links and satellites. Medallion does not prescribe a modeling method. I could use Data Vault inside one layer.</li>
+      <li><b>Not Data Mesh.</b> Data Mesh is about ownership across teams and domains. Domain teams can own data products and still use Bronze, Silver and Gold where they help.</li>
+    </ul>
+
+    <figure id="fig-vs">
+      <figcaption class="ft"><span>Diagram 3 · Which question each approach answers</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="tablewrap" style="margin:0"><table>
+          <thead><tr><th>Concept</th><th>Main question it answers</th><th>Typical vocabulary</th></tr></thead>
+          <tbody>
+            <tr class="searchable"><td><b>Medallion</b></td><td>How should data move through refinement stages?</td><td>Bronze, Silver, Gold</td></tr>
+            <tr class="searchable"><td><b>ETL / ELT</b></td><td>How do we move and transform the data?</td><td>Extract, Transform, Load</td></tr>
+            <tr class="searchable"><td><b>Dimensional modeling</b></td><td>How should analytical data be structured?</td><td>Facts, dimensions</td></tr>
+            <tr class="searchable"><td><b>Data Vault</b></td><td>How should integrated historical data be modeled?</td><td>Hubs, links, satellites</td></tr>
+            <tr class="searchable"><td><b>Data Mesh</b></td><td>How should data ownership and responsibility be organized?</td><td>Domains, data products, self-serve platform</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <p class="note">These are not competing choices. They work at different parts of the architecture. I should not ask "which one replaces Medallion?" I should ask "what problem is each one solving for me?"</p>
+    </figure>
+  </section>
+
+  <!-- 3 LAYERS -->
+  <section id="layers" data-title="Layers">
+    <h2>Architecture &amp; layers</h2>
+    <p class="sub"><span class="tag src">Source §3.1–3.4</span> Each layer has a different job. The boundaries stop me from mixing those jobs.</p>
+
+    <figure id="fig-layers">
+      <figcaption class="ft"><span>Diagram 4 · Bronze → Silver → Gold with responsibilities</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="flow resp" role="img" aria-label="Bronze keeps what the source provided. Silver validates, deduplicates, standardizes and makes reusable data. Gold builds business datasets.">
+          <div class="node bronze"><b>Bronze</b><small>What did the source provide?</small><div class="chips"><span class="chip">source fidelity</span><span class="chip">replayability</span><span class="chip">ingestion details</span></div></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node silver"><b>Silver</b><small>What can I trust and reuse?</small><div class="chips"><span class="chip">validation</span><span class="chip">deduplication</span><span class="chip">standardization</span><span class="chip">reusable data</span></div></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node gold"><b>Gold</b><small>What business question am I answering?</small><div class="chips"><span class="chip">business datasets</span><span class="chip">metrics</span><span class="chip">analytics</span><span class="chip">BI</span></div></div>
+        </div>
+      </div>
+      <p class="note">I use the three questions to decide where a transformation belongs. The source says this is an engineering mental model, not official Databricks terminology.</p>
+    </figure>
+
+    <div class="tabs" id="layerTabs">
+      <div role="tablist" aria-label="Layer details">
+        <button role="tab" class="t-b" id="tab-b" aria-controls="p-b" aria-selected="true">Bronze</button>
+        <button role="tab" class="t-s" id="tab-s" aria-controls="p-s" aria-selected="false" tabindex="-1">Silver</button>
+        <button role="tab" class="t-g" id="tab-g" aria-controls="p-g" aria-selected="false" tabindex="-1">Gold</button>
+      </div>
+
+      <div role="tabpanel" id="p-b" aria-labelledby="tab-b">
+        <h3>Bronze: keep what the source gave me <span class="tag src">§3.1</span></h3>
+        <p>Bronze is the first place I land the data. The main idea is <b>source fidelity</b>. I keep a reliable representation of what came from the source. I do not reshape everything at once.</p>
+        <p>Example from the source: a Salesforce record arrives with several fields. If I remove fields, change values or combine records before keeping the original, I may not be able to rebuild what actually arrived.</p>
+        <p>Bronze gives me a place to go back to. That makes <b>replayability</b> important. If a downstream transformation has a bug, I can potentially run the processing again from what Bronze kept.</p>
+        <p>I may also add ingestion details. When the record arrived. Which source it came from. These help me understand the journey of the data.</p>
+        <p>The goal is not a perfect Bronze.</p>
+        <dl>
+          <dt>Question</dt><dd>What did the source provide?</dd>
+          <dt>I can expect <span class="tag add">Added</span></dt><dd>A faithful copy of what arrived, with enough history and metadata to start again.</dd>
+          <dt>I cannot expect</dt><dd>Clean, deduplicated or standardized data.</dd>
+        </dl>
+        <p><span class="tag ext">External</span> The <a href="https://docs.databricks.com/aws/en/lakehouse/medallion">Databricks medallion page</a> says Bronze should limit cleanup and validation. It recommends storing most fields as string, VARIANT or binary. This protects against unexpected schema changes.</p>
+      </div>
+
+      <div role="tabpanel" id="p-s" aria-labelledby="tab-s" hidden>
+        <h3>Silver: make the data reusable <span class="tag src">§3.2</span></h3>
+        <p>Once the incoming data is preserved, I do the work that makes it easier and safer for other parts of the platform. Validation, deduplication, standardization and schema handling happen here.</p>
+        <p>Problems I may find:</p>
+        <ul><li>the same customer appears more than once</li><li>dates arrive in different formats</li><li>values use inconsistent naming</li><li>some records fail basic quality checks</li></ul>
+        <p>I fix these once. Downstream users then work with more consistent data.</p>
+        <p>Silver is also where I create reusable entities. Instead of every team cleaning customers its own way, I provide one commonly prepared customer dataset.</p>
+        <dl>
+          <dt>Question</dt><dd>What can downstream teams trust and reuse?</dd>
+          <dt>I can expect <span class="tag add">Added</span></dt><dd>Data that passed the rules I built, in a consistent shape that several consumers can use.</dd>
+          <dt>I cannot expect</dt><dd>Automatic quality. Silver does not mean perfect. Quality depends on the rules, checks, transformations and monitoring I build.</dd>
+        </dl>
+        <p><span class="tag ext">External</span> The same page lists Silver work such as schema enforcement, null handling, deduplication, late-arriving data, type casting and joins. It also says <a href="https://docs.databricks.com/aws/en/lakehouse/medallion">Databricks does not recommend writing to silver directly from ingestion</a>.</p>
+      </div>
+
+      <div role="tabpanel" id="p-g" aria-labelledby="tab-g" hidden>
+        <h3>Gold: prepare data for a business purpose <span class="tag src">§3.3</span></h3>
+        <p>Gold is more specific to how people or applications use the data. Reporting, analytics, dashboards, business metrics, particular applications.</p>
+        <p>Example from the source: instead of giving a business user many customer and transaction records, I give one dataset that supports a sales report.</p>
+        <p>Gold does not simply mean "aggregated data". A Gold dataset can be an aggregate. It can also be a specialized dataset, an analytical model, a data mart, or another structure for one use case.</p>
+        <dl>
+          <dt>Question</dt><dd>What business question does this dataset answer?</dd>
+          <dt>I can expect <span class="tag add">Added</span></dt><dd>A dataset shaped for a named purpose.</dd>
+          <dt>I cannot expect</dt><dd>Protection or approval. Calling something Gold does not control who can read it.</dd>
+        </dl>
+      </div>
+    </div>
+
+    <h3>Layer comparison</h3>
+    <figure id="fig-compare">
+      <figcaption class="ft"><span>Diagram 5 · Layer comparison</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="tablewrap wide" style="margin:0"><table>
+          <thead><tr><th>Layer</th><th>Main question</th><th>Work that happens</th><th>What I can expect <span class="tag add">Added</span></th><th>It does not promise</th></tr></thead>
+          <tbody>
+            <tr class="searchable"><td class="bronze"><b>Bronze</b></td><td>What did the source provide?</td><td>Land data. Keep source fidelity. Add ingestion details.</td><td>I can go back and replay.</td><td>Clean data.</td></tr>
+            <tr class="searchable"><td class="silver"><b>Silver</b></td><td>What can we trust and reuse?</td><td>Validation, deduplication, standardization, schema handling, reusable entities.</td><td>Consistent, shared data, as good as my rules.</td><td>Perfection or automatic trust.</td></tr>
+            <tr class="searchable"><td class="gold"><b>Gold</b></td><td>What business question are we answering?</td><td>Datasets for reports, analytics, dashboards, metrics, applications.</td><td>Data fit for a named use.</td><td>Aggregation by definition. Access control.</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <p class="note">I read across a row to see one layer's job. I read down a column to compare layers.</p>
+    </figure>
+
+    <h3>Silver and Gold operations in more detail <span class="tag add">Added</span></h3>
+    <p>The source names validation, deduplication, standardization and schema handling for Silver. It names reports, metrics and datasets for Gold. I add the joins and aggregates below as my own explanation.</p>
+    <figure id="fig-ops">
+      <figcaption class="ft"><span>Diagram 6 · What happens inside Silver and Gold</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="flow col">
+          <div class="group"><p class="glabel">Silver</p>
+            <div class="flow resp">
+              <div class="node silver"><b>Validate</b><small>Check required values and basic rules.</small></div><div class="arrow" aria-hidden="true">→</div>
+              <div class="node bad"><b>Quarantine</b><small>Set failures aside with a reason.</small></div><div class="arrow" aria-hidden="true">→</div>
+              <div class="node silver"><b>Deduplicate</b><small>Keep one version of repeats.</small></div><div class="arrow" aria-hidden="true">→</div>
+              <div class="node silver"><b>Standardize</b><small>Same formats and names.</small></div><div class="arrow" aria-hidden="true">→</div>
+              <div class="node silver"><b>Join / conform</b><small>Build a shared entity.</small></div>
+            </div>
+          </div>
+          <div class="arrow" aria-hidden="true" style="transform:rotate(90deg)">→</div>
+          <div class="group"><p class="glabel">Gold</p>
+            <div class="flow resp">
+              <div class="node gold"><b>Filter / select</b><small>Take only what the question needs.</small></div><div class="arrow" aria-hidden="true">→</div>
+              <div class="node gold"><b>Join / enrich</b><small>Bring in context.</small></div><div class="arrow" aria-hidden="true">→</div>
+              <div class="node gold"><b>Aggregate / derive</b><small>Totals, averages, metrics.</small></div><div class="arrow" aria-hidden="true">→</div>
+              <div class="node gold"><b>Business dataset</b><small>Report, metric set, mart.</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Quarantine sits next to validation. I do not drop failed records silently. Joins appear in both layers for different reasons. In Silver I build a reusable entity. In Gold I shape data for one question.</p>
+    </figure>
+    <p><span class="tag ext">External</span> In Lakeflow pipelines, <a href="https://docs.databricks.com/aws/en/ldp/expectations">expectations</a> can warn, drop or fail on invalid records. The docs also point to a pattern to <a href="https://docs.databricks.com/aws/en/ldp/expectation-patterns#quarantine-invalid-data">quarantine invalid records</a> without failing or dropping data.</p>
+    <div class="codehead"><span>SQL · from the expectations docs</span><button class="btn copy" type="button" data-target="code1">Copy</button></div>
+<pre><code id="code1">CREATE OR REFRESH STREAMING TABLE customers(
+  CONSTRAINT valid_customer_age EXPECT (age BETWEEN 0 AND 120)
+) AS SELECT * FROM STREAM(datasets.samples.raw_customers);</code></pre>
+    <p class="src-note">Copied from the docs. It keeps invalid rows and records metrics. That is the default "warn" action. It is not a quarantine example.</p>
+    <div class="codehead"><span>SQL · from the medallion docs (a Gold-style aggregate)</span><button class="btn copy" type="button" data-target="code2">Copy</button></div>
+<pre><code id="code2">CREATE OR REPLACE MATERIALIZED VIEW main.example_output.weekly_bookings AS
+SELECT date_trunc('week', check_in) AS week,
+       property_id,
+       status,
+       count(*) AS total_bookings,
+       sum(total_amount) AS total_revenue
+FROM samples.wanderbricks.bookings
+GROUP BY week, property_id, status</code></pre>
+    <p class="src-note">Copied from the Databricks medallion page. I cite it only to show an aggregate. The source says Gold is not only aggregates.</p>
+  </section>
+
+  <!-- 4 EXAMPLE -->
+  <section id="example" data-title="Refinement example">
+    <h2>One messy record set, refined</h2>
+    <p class="sub"><span class="tag add">Added</span> This example is mine. The data is made up. It is not from the source.</p>
+    <p>I step through five rows. Use the buttons or the step chips. Each step shows what Bronze, Silver or Gold would do.</p>
+
+    <figure id="fig-example" class="stepper">
+      <figcaption class="ft"><span>Diagram 7 · Refinement example (interactive)</span></figcaption>
+      <ol class="steps" id="stepChips" aria-label="Steps"></ol>
+      <div class="controls">
+        <button class="btn" id="prevStep" type="button">← Back</button>
+        <button class="btn primary" id="nextStep" type="button">Next step →</button>
+        <button class="btn" id="resetStep" type="button">Restart</button>
+      </div>
+      <p class="stepmsg" id="stepMsg" aria-live="polite"></p>
+      <div class="tablewrap" style="margin:0 0 10px"><table id="exTable"><thead></thead><tbody></tbody></table></div>
+      <div id="exQuar" class="tablewrap" style="margin:0" hidden><table><caption style="text-align:left;padding:8px 12px;font-weight:700">Quarantine</caption><thead><tr><th>order_id</th><th>Reason</th></tr></thead><tbody id="exQuarBody"></tbody></table></div>
+      <p class="note">I assume <code>07/01/2024</code> means day/month/year. That is a rule I must confirm with the source owner. A wrong guess here would be a silent error.</p>
+    </figure>
+
+    <p><span class="tag src">Source §6.5 image</span> The source shows a similar idea with an order table. Orders 1001 and 1004 pass. Order 1002 has no customer. Order 1003 has no date. It lists four checks: completeness, accuracy, consistency and timeliness.</p>
+  </section>
+
+  <!-- 5 LINEAGE -->
+  <section id="lineage" data-title="Lineage and reprocessing">
+    <h2>Lineage and reprocessing</h2>
+    <p class="sub"><span class="tag src">Source §3.1, §7.1</span> <span class="tag add">Added</span> diagram</p>
+    <p>The source says Bronze gives me a place to go back to. If a downstream transformation has a bug, I can potentially process again from Bronze. It warns that a destructive Bronze removes this option.</p>
+
+    <figure id="fig-lineage">
+      <figcaption class="ft"><span>Diagram 8 · Normal flow and replay after a bug</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram" style="display:flex;justify-content:center">
+      <svg viewBox="0 0 460 450" width="100%" style="max-width:520px;height:auto" role="img" aria-labelledby="lin-t lin-d">
+        <title id="lin-t">Lineage and replay</title>
+        <desc id="lin-d">Left column: Source flows to Bronze, then Silver, then Gold. Right column: a bug is found, the logic is fixed, retained Bronze is read again, then Silver and Gold are rebuilt.</desc>
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+        <text x="110" y="10" text-anchor="middle" class="t-s">NORMAL FLOW</text>
+        <text x="350" y="10" text-anchor="middle" class="t-s">REPLAY AFTER A BUG</text>
+        <rect class="box" x="15" y="22" width="190" height="46" fill="var(--surface2)" stroke="var(--muted)"/>
+        <text x="110" y="50" text-anchor="middle" class="t-b">Source</text>
+        <rect class="box" x="15" y="108" width="190" height="72" fill="var(--bronze-bg)" stroke="var(--bronze)"/>
+        <text x="110" y="136" text-anchor="middle" class="t-b">Bronze</text>
+        <text x="110" y="155" text-anchor="middle" class="t-s">kept as received</text>
+        <text x="110" y="171" text-anchor="middle" class="t-s">+ ingestion details</text>
+        <rect class="box" x="15" y="222" width="190" height="62" fill="var(--silver-bg)" stroke="var(--silver)"/>
+        <text x="110" y="248" text-anchor="middle" class="t-b">Silver</text>
+        <text x="110" y="266" text-anchor="middle" class="t-s">validated, reusable</text>
+        <rect class="box" x="15" y="326" width="190" height="62" fill="var(--gold-bg)" stroke="var(--gold)"/>
+        <text x="110" y="352" text-anchor="middle" class="t-b">Gold</text>
+        <text x="110" y="370" text-anchor="middle" class="t-s">business dataset</text>
+        <path class="ln" d="M110 68V106" marker-end="url(#ah)"/>
+        <path class="ln" d="M110 180V220" marker-end="url(#ah)"/>
+        <path class="ln" d="M110 284V324" marker-end="url(#ah)"/>
+
+        <rect class="box" x="255" y="22" width="190" height="62" fill="var(--bad-bg)" stroke="var(--bad)"/>
+        <text x="350" y="48" text-anchor="middle" class="t-b">Bug found</text>
+        <text x="350" y="66" text-anchor="middle" class="t-s">in a downstream step</text>
+        <rect class="box" x="255" y="108" width="190" height="48" fill="var(--surface2)" stroke="var(--muted)"/>
+        <text x="350" y="138" text-anchor="middle" class="t-b">Fix the logic</text>
+        <rect class="box" x="255" y="190" width="190" height="62" fill="var(--bronze-bg)" stroke="var(--bronze)"/>
+        <text x="350" y="216" text-anchor="middle" class="t-b">Read Bronze again</text>
+        <text x="350" y="234" text-anchor="middle" class="t-s">retained data, not the source</text>
+        <rect class="box" x="255" y="284" width="190" height="48" fill="var(--silver-bg)" stroke="var(--silver)"/>
+        <text x="350" y="314" text-anchor="middle" class="t-b">Rebuild Silver</text>
+        <rect class="box" x="255" y="366" width="190" height="48" fill="var(--gold-bg)" stroke="var(--gold)"/>
+        <text x="350" y="396" text-anchor="middle" class="t-b">Rebuild Gold</text>
+        <path class="ln" d="M350 84V106" marker-end="url(#ah)"/>
+        <path class="ln" d="M350 156V188" marker-end="url(#ah)"/>
+        <path class="ln" d="M350 252V282" marker-end="url(#ah)"/>
+        <path class="ln" d="M350 332V364" marker-end="url(#ah)"/>
+        <path class="ln dash" d="M205 144C230 144 232 221 253 221" marker-end="url(#ah)"/>
+        <path class="ln dash" d="M255 308C232 308 232 253 207 253" marker-end="url(#ah)"/>
+        <path class="ln dash" d="M255 390C228 390 228 357 207 357" marker-end="url(#ah)"/>
+      </svg>
+      </div>
+      <p class="note">On the left is the normal path. On the right is what I do after I find a bug. I fix the logic. I read the retained Bronze data again. I rebuild Silver, then Gold. If Bronze was destructive, this path is closed.</p>
+    </figure>
+    <p><span class="tag ext">External</span> <a href="https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-lineage">Unity Catalog can track lineage automatically</a>. That is a tool feature. It is separate from the Medallion boundaries.</p>
+  </section>
+
+  <!-- 6 TRADE-OFFS -->
+  <section id="tradeoffs" data-title="Trade-offs">
+    <h2>Architectural trade-offs</h2>
+    <p class="sub"><span class="tag src">Source §4</span></p>
+    <div class="callout q"><p>Why stop at three layers? Why not create more?</p></div>
+    <p>I could add layers for validation, standardized data, shared data, reporting data and so on. But every new boundary has a cost.</p>
+    <ul>
+      <li>Another place to store data.</li>
+      <li>More processing to run.</li>
+      <li>More transformations to test.</li>
+      <li>More failures to monitor.</li>
+      <li>More pipelines to manage, and more owners to decide.</li>
+      <li><b>Latency.</b> Data passes through more steps before it reaches the person or application.</li>
+      <li><b>Duplicated logic.</b> Without clear responsibilities, the same transformation starts to appear in several places.</li>
+    </ul>
+    <p>More layers do not automatically mean better architecture.</p>
+
+    <figure id="fig-trade">
+      <figcaption class="ft"><span>Diagram 9 · Three possible structures</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="flow col">
+          <div class="node"><b>1 · Small and simple</b> <span class="pill ok">operational work: lower</span>
+            <div class="flow resp" style="margin-top:8px"><div class="node dash"><b>Source</b></div><div class="arrow" aria-hidden="true">→</div><div class="node ok"><b>Curated</b></div></div>
+            <small>Few transformation needs. Three physical layers may add more work than value.</small></div>
+          <div class="node"><b>2 · Somewhat larger</b> <span class="pill" style="background:var(--warn-bg);border:1px solid var(--muted)">operational work: moderate</span>
+            <div class="flow resp" style="margin-top:8px"><div class="node dash"><b>Source</b></div><div class="arrow" aria-hidden="true">→</div><div class="node bronze"><b>Bronze</b></div><div class="arrow" aria-hidden="true">→</div><div class="node silver"><b>Silver</b></div></div>
+            <small>Incoming data stays apart from reusable data. No separate Gold.</small></div>
+          <div class="node"><b>3 · Complex analytical platform</b> <span class="pill bad">operational work: higher</span>
+            <div class="flow resp" style="margin-top:8px"><div class="node dash"><b>Source</b></div><div class="arrow" aria-hidden="true">→</div><div class="node bronze"><b>Bronze</b></div><div class="arrow" aria-hidden="true">→</div><div class="node silver"><b>Silver</b></div><div class="arrow" aria-hidden="true">→</div><div class="node gold"><b>Gold</b></div></div>
+            <small>Preserve source data, create shared reusable data, build several business-specific datasets.</small></div>
+        </div>
+      </div>
+      <p class="note">The source's diagram rates storage, compute, testing, monitoring, maintenance and latency as lower, moderate and higher. It gives no numbers. I keep it qualitative too. These three are examples. They are not a rule that every pipeline must use exactly three physical schemas.</p>
+    </figure>
+
+    <div class="callout q"><p>The important question is not "Do we have all three layers?" It is "Does each boundary solve a real problem?"</p></div>
+  </section>
+
+  <!-- 7 PATTERNS -->
+  <section id="patterns" data-title="Patterns and relationships">
+    <h2>Patterns &amp; relationships</h2>
+    <p class="sub"><span class="tag src">Source §5</span> Medallion does not work alone. I may also use Delta Lake, Unity Catalog, Lakeflow, batch and streaming. They solve different problems. I should not treat Medallion as a technology.</p>
+
+    <figure id="fig-stack">
+      <figcaption class="ft"><span>Diagram 10 · Where the pieces sit</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="flow col">
+          <div class="node"><b>Sources</b><div class="chips"><span class="chip">Databases</span><span class="chip">Files</span><span class="chip">Cloud apps</span><span class="chip">SaaS</span><span class="chip">Streaming data</span></div></div>
+          <div class="arrow" aria-hidden="true" style="transform:rotate(90deg)">→</div>
+          <div class="flow resp">
+            <div class="node"><b>ETL / ELT</b><small>Extract · Transform · Load. How data moves and changes.</small></div>
+            <div class="arrow" aria-hidden="true">↔</div>
+            <div class="node"><b>Lakeflow</b><small>Builds and operates pipelines: orchestration, scheduling, monitoring.</small></div>
+          </div>
+          <div class="arrow" aria-hidden="true" style="transform:rotate(90deg)">→</div>
+          <div class="group"><p class="glabel">Delta Lake · how tables are stored</p>
+            <div class="flow resp"><div class="node bronze"><b>Bronze</b></div><div class="arrow" aria-hidden="true">→</div><div class="node silver"><b>Silver</b></div><div class="arrow" aria-hidden="true">→</div><div class="node gold"><b>Gold</b></div></div>
+            <p class="src-note" style="margin:8px 0 0">The three layers are the Medallion Architecture.</p>
+          </div>
+          <div class="node dash"><b>Unity Catalog</b> <small style="display:inline">governs the data above: access control, metadata, lineage, security.</small></div>
+          <div class="arrow" aria-hidden="true" style="transform:rotate(90deg)">→</div>
+          <div class="node"><b>Consumption</b><div class="chips"><span class="chip">BI &amp; analytics</span><span class="chip">Data science &amp; ML</span><span class="chip">Operational apps</span><span class="chip">Data sharing</span></div></div>
+        </div>
+      </div>
+      <p class="note">Medallion is only the three layers in the middle. Every other box is a different tool or approach with its own job.</p>
+    </figure>
+
+    <div class="tablewrap"><table>
+      <thead><tr><th>Part</th><th>What it helps me do</th></tr></thead>
+      <tbody>
+        <tr class="searchable"><td><b>Medallion</b></td><td>Organize data into refinement stages</td></tr>
+        <tr class="searchable"><td><b>Delta Lake</b></td><td>Store and work with tables</td></tr>
+        <tr class="searchable"><td><b>Unity Catalog</b></td><td>Govern and manage data</td></tr>
+        <tr class="searchable"><td><b>Lakeflow</b></td><td>Build and operate data pipelines</td></tr>
+        <tr class="searchable"><td><b>Data quality practices</b></td><td>Check whether data meets my expectations</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Delta Lake</h3>
+    <p><code>Delta Lake</code> is how I store and work with tables. Medallion is how I organize stages. Bronze, Silver and Gold can be Delta tables. Using Delta Lake does not mean I use Medallion.</p>
+    <p><span class="tag ext">External</span> <a href="https://docs.delta.io">Delta Lake</a> provides ACID transactions, schema enforcement and time travel.</p>
+
+    <h3>Unity Catalog</h3>
+    <p>Unity Catalog is about governance and metadata. Access, objects, ownership. Having Bronze, Silver and Gold tables does not give me access control.</p>
+    <p><code>Unity Catalog → who can access and manage the data?</code><br><code>Medallion → how is the data organized as it becomes more refined?</code></p>
+    <p><span class="tag ext">External</span> Unity Catalog covers <a href="https://docs.databricks.com/aws/en/data-governance/unity-catalog/access-control/">access control</a>, discovery, lineage, auditing and more. See <a href="https://docs.databricks.com/aws/en/data-governance/unity-catalog/">What is Unity Catalog?</a></p>
+
+    <h3>Lakeflow</h3>
+    <p>Lakeflow helps me build and operate pipelines. I can use it to move data through the stages. Medallion does not require it. The pattern describes the organization. The pipeline tool is one way to run the flow.</p>
+    <p><span class="tag ext">External</span> Lakeflow Spark Declarative Pipelines is a <a href="https://docs.databricks.com/aws/en/ldp/concepts/">declarative framework for batch and streaming pipelines</a>. For files in cloud storage, <a href="https://docs.databricks.com/aws/en/ingestion/auto-loader/">Auto Loader</a> incrementally processes new files as they arrive.</p>
+
+    <h3>ETL / ELT</h3>
+    <p>ETL and ELT are the work of moving and transforming. Medallion says where that work happens. An ELT process could load into Bronze, refine in Silver, and prepare outputs in Gold. They work together.</p>
+
+    <h3>Streaming</h3>
+    <p>Medallion is not limited to large batches. Data can arrive continuously.</p>
+    <p><code>Incoming events → Bronze → Silver → Gold</code></p>
+    <p>The question stays the same: what should happen to the data at each stage?</p>
+    <div class="callout"><p><b>Medallion organizes the data journey. Other technologies and approaches help me store, govern, process and consume that data.</b></p></div>
+  </section>
+
+  <!-- 8 DATABRICKS -->
+  <section id="databricks" data-title="Databricks perspective">
+    <h2>Databricks perspective</h2>
+    <p class="sub"><span class="tag src">Source §6</span></p>
+    <p>Medallion fits a lakehouse. It gives me a simple way to organize data from ingestion toward different uses. But I keep the responsibilities separate.</p>
+    <div class="callout"><p><b>Medallion is the organization pattern, not the whole Databricks platform.</b></p></div>
+    <ul>
+      <li><b>6.1 Delta Lake.</b> The table and storage foundation. I do not need Bronze, Silver and Gold for every use case.</li>
+      <li><b>6.2 Unity Catalog.</b> Governance. The layer tells me the role of the data. Governance decides who can work with it and how. A table called Silver has no automatic access rules.</li>
+      <li><b>6.3 Lakeflow.</b> Builds and runs pipelines that move data through the stages. Medallion does not depend on it.</li>
+      <li><b>6.4 Batch and incremental.</b> Batch processes a group of records periodically. Incremental or streaming processes data as it arrives. The logical idea stays <code>Source → Bronze → Silver → Gold</code>, whether data arrives once a day or continuously.</li>
+      <li><b>6.5 Data quality.</b> Layers give me places for checks and transformations. The name Silver does not guarantee good data.</li>
+      <li><b>6.6 Together.</b> None of these makes Bronze, Silver and Gold mandatory. I design around the actual data, users, processing needs and operating cost.</li>
+    </ul>
+
+    <figure id="fig-quality">
+      <figcaption class="ft"><span>Diagram 11 · Structure is not the same as content quality</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="flow resp">
+          <div class="node silver"><b>Logical data layer (structure)</b><small>Organizes data into layers, tables and schemas. Defines how data is stored and accessed.</small></div>
+          <div class="arrow" aria-hidden="true">+</div>
+          <div class="node gold"><b>Data quality (content)</b><small>Checks that data is correct, complete, consistent and reliable.</small>
+            <div class="chips"><span class="chip">completeness</span><span class="chip">accuracy</span><span class="chip">consistency</span><span class="chip">timeliness</span></div></div>
+          <div class="arrow" aria-hidden="true">=</div>
+          <div class="node ok"><b>Useful, trustworthy data</b><small>Well structured and of good quality.</small></div>
+        </div>
+      </div>
+      <p class="note">I need both. Having a layer is not the same as having data quality. I still need rules, validation, monitoring and handling for bad records.</p>
+    </figure>
+
+    <p><span class="tag ext">External</span> The <a href="https://docs.databricks.com/aws/en/lakehouse/medallion">Databricks page</a> also gives an example where customer and transaction data is cleaned by dropping nulls and quarantining invalid records in Silver. I mention it only because it shows quarantine in a medallion flow.</p>
+  </section>
+
+  <!-- 9 ANTI-PATTERNS -->
+  <section id="antipatterns" data-title="Anti-patterns">
+    <h2>Anti-patterns</h2>
+    <p class="sub"><span class="tag src">Source §7.1–7.7</span> The trouble starts when I treat Bronze, Silver and Gold as rules to follow, not as a way to solve real engineering problems.</p>
+    <div class="apgrid">
+      <article class="ap searchable"><h4><span class="num">7.1</span> Destructive Bronze</h4><p>I remove fields, overwrite values or make heavy changes before keeping the source. If a transformation was wrong, I cannot process again.</p><p><b>Instead:</b> do not destroy useful source information before I know I no longer need it.</p></article>
+      <article class="ap searchable"><h4><span class="num">7.2</span> Silver dumping ground</h4><p>Validation, business rules, reporting logic, temporary transformations and special cases all pile into Silver. It loses its purpose.</p><p><b>Instead:</b> keep Silver for data refined into something downstream users can reasonably reuse.</p></article>
+      <article class="ap searchable"><h4><span class="num">7.3</span> Gold duplication</h4><p>Several Gold datasets each implement the same business logic. Five dashboards may define "active customer" five ways. Being in Gold does not fix that.</p><p><b>Instead:</b> find the shared logic and decide where it lives.</p></article>
+      <article class="ap searchable"><h4><span class="num">7.4</span> Unnecessary layers</h4><p>I add a layer because the diagram looks more complete. I get another place to store, process, test, monitor and maintain, with no clear gain.</p><p><b>Instead:</b> a boundary should solve a problem.</p></article>
+      <article class="ap searchable"><h4><span class="num">7.5</span> Duplicated business logic</h4><p>The same calculation sits in several pipelines. They can disagree. A rule change needs several edits.</p><p><b>Instead:</b> keep responsibilities clear so logic has a sensible home.</p></article>
+      <article class="ap searchable"><h4><span class="num">7.6</span> Medallion as governance</h4><p>Bronze, Silver and Gold are data organization boundaries. They are not access-control rules. Gold does not mean protected or approved.</p><p><b>Instead:</b> governance needs its own controls and processes.</p></article>
+      <article class="ap searchable"><h4><span class="num">7.7</span> Silver as automatic quality</h4><p>A Silver table is not high quality because of its name.</p><p><b>Instead:</b> build validation rules, quality checks, monitoring and a way to handle problems. The layer is a place to do the work. It does not do the work.</p></article>
+    </div>
+
+    <figure id="fig-ap">
+      <figcaption class="ft"><span>Diagram 12 · Anti-pattern summary</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="tablewrap wide" style="margin:0"><table>
+          <thead><tr><th>#</th><th>Anti-pattern</th><th>Symptom</th><th>Healthy sign</th></tr></thead>
+          <tbody>
+            <tr class="searchable"><td>7.1</td><td>Destructive Bronze</td><td>Source details lost</td><td>Source kept, replay possible</td></tr>
+            <tr class="searchable"><td>7.2</td><td>Silver dumping ground</td><td>Everything lands in one place</td><td>Silver is reusable refined data</td></tr>
+            <tr class="searchable"><td>7.3</td><td>Gold duplication</td><td>Same logic in many Gold datasets</td><td>Shared logic has one home</td></tr>
+            <tr class="searchable"><td>7.4</td><td>Unnecessary layers</td><td>More layers than needed</td><td>Each layer solves a real problem</td></tr>
+            <tr class="searchable"><td>7.5</td><td>Duplicated business logic</td><td>Pipelines disagree</td><td>One place to change a rule</td></tr>
+            <tr class="searchable"><td>7.6</td><td>Medallion as governance</td><td>Assuming Gold is protected</td><td>Separate access controls</td></tr>
+            <tr class="searchable"><td>7.7</td><td>Silver as automatic quality</td><td>Trusting the name</td><td>Rules, checks and monitoring exist</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <p class="note">I use this as a quick review list. The symptom column is what I look for. The last column is what I want to see.</p>
+    </figure>
+  </section>
+
+  <!-- 10 DECISION -->
+  <section id="decision" data-title="Decision framework">
+    <h2>A simple decision framework</h2>
+    <p class="sub"><span class="tag src">Source §7, Decision Framework</span></p>
+    <p>Before I create a new layer, or adopt the full Bronze, Silver, Gold structure, I ask:</p>
+    <ol>
+      <li>Do I need to replay or reprocess the source data?</li>
+      <li>Do multiple consumers need the same reusable data?</li>
+      <li>Are the quality and standardization rules big enough to deserve their own boundary?</li>
+      <li>Do I need business-specific datasets or outputs?</li>
+      <li>Do different teams or domains need clear ownership boundaries?</li>
+      <li>Is another modeling approach already solving the problem?</li>
+      <li>Is the new physical layer worth the storage, compute, testing, monitoring and maintenance it adds?</li>
+    </ol>
+    <p>These questions help me design around the problem, not around the names Bronze, Silver and Gold.</p>
+    <div class="callout warn"><p><b>Source inconsistency.</b> The text lists 7 questions. The source's flowchart has 5 steps. It merges some questions and has no ownership step. I show both. I did not change either.</p></div>
+
+    <figure id="fig-decide" class="decide">
+      <figcaption class="ft"><span>Diagram 13 · The source's flowchart, as a walk-through</span></figcaption>
+      <p id="dq" aria-live="polite" class="q" style="font-size:1.1rem"></p>
+      <div class="answer" id="dBtns">
+        <button class="btn primary" id="dYes" type="button">Yes</button>
+        <button class="btn" id="dNo" type="button">No</button>
+        <button class="btn" id="dBack" type="button">Back</button>
+        <button class="btn" id="dReset" type="button">Restart</button>
+      </div>
+      <p id="dr" class="result" hidden></p>
+      <p class="note">I answer for my own situation. The result is a prompt for thinking. It is not a verdict.</p>
+    </figure>
+
+    <figure id="fig-flowstatic">
+      <figcaption class="ft"><span>Diagram 14 · The same flowchart, all paths</span><button class="btn expand" type="button">Expand</button></figcaption>
+      <div class="diagram">
+        <div class="tablewrap wide" style="margin:0"><table>
+          <thead><tr><th>Step</th><th>Question</th><th>If yes</th><th>If no</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>Need another data boundary?</td><td>Go to step 1</td><td>Keep current design</td></tr>
+            <tr><td>1</td><td>Need source replay?</td><td>Add a boundary for raw data</td><td>Go to step 2</td></tr>
+            <tr><td>2</td><td>Need shared reusable data?</td><td>Add a boundary for shared data</td><td>Go to step 3</td></tr>
+            <tr><td>3</td><td>Need business-specific output?</td><td>Add a boundary for business use</td><td>Go to step 4</td></tr>
+            <tr><td>4</td><td>Does another model already solve it?</td><td>Use the existing model (for example data product, data mesh, data fabric)</td><td>Go to step 5</td></tr>
+            <tr><td>5</td><td>Is the operational cost worth it?</td><td>Add a new data boundary</td><td>Keep it simple</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <p class="note">Each "yes" in steps 1 to 3 stops the walk with a boundary. That matches the three layers: raw, shared, business.</p>
+    </figure>
+  </section>
+
+  <!-- 11 TAKEAWAYS -->
+  <section id="takeaways" data-title="Takeaways">
+    <h2>Engineering takeaways</h2>
+    <p class="sub"><span class="tag src">Source, Engineering Takeaways</span></p>
+    <p>Medallion is not three tables with three names. It gives each stage of the data journey a clear purpose.</p>
+    <ul>
+      <li><b>Bronze</b> retains what the source gave me and gives me a place to start again.</li>
+      <li><b>Silver</b> creates reusable data through validation, deduplication and standardization.</li>
+      <li><b>Gold</b> shapes data around business needs: metrics, analytics, reporting, specialized datasets.</li>
+      <li>Three layers are not mandatory. A simpler flow may be better.</li>
+      <li>Every physical boundary has a cost: storage, compute, testing, monitoring, maintenance, latency.</li>
+      <li>Medallion differs from the tools around it. Delta Lake, Unity Catalog, Lakeflow and ETL/ELT solve different problems.</li>
+      <li>A layer name does not guarantee quality or governance. Those need real rules, controls and processes.</li>
+    </ul>
+    <div class="callout"><p><b>I add a data boundary when it gives a clear engineering benefit. Not because the diagram has room for another box.</b></p></div>
+  </section>
+
+  <!-- 12 ACCURACY -->
+  <section id="accuracy" data-title="Version and accuracy notes">
+    <h2>Version &amp; accuracy notes</h2>
+    <p class="sub">Places where the source is unclear, or where it differs from current official docs. I did not change the source silently.</p>
+    <details open class="searchable"><summary>Decision framework: 7 questions vs 5 steps</summary><div><p>The text lists 7 questions. The flowchart image shows 5 steps. The flowchart merges some questions and drops the ownership question. I keep the text as the main version and show the flowchart separately.</p></div></details>
+    <details class="searchable"><summary>Gold and dimensional modeling</summary><div><p>The source says Gold does not have to mean dimensional modeling. The <a href="https://docs.databricks.com/aws/en/lakehouse/medallion">Databricks medallion page</a> describes Gold as where I model with a dimensional model, and says Gold is often highly aggregated. I read this as a difference in emphasis, not an error. The source also allows aggregates, marts and other structures.</p></div></details>
+    <details class="searchable"><summary>"Quality of data" vs "progressive refinement"</summary><div><p>The Databricks page says the layers describe the quality of the data. The source says refinement is not the same as simply cleaning. I keep the source's framing. Both agree that the name Silver does not guarantee quality.</p></div></details>
+    <details class="searchable"><summary>Product naming</summary><div><p>The source says "Lakeflow". Official pages I checked use both "Lakeflow Spark Declarative Pipelines" and "Lakeflow pipelines". Names can change. I use the source's short name and link current docs.</p></div></details>
+    <details class="searchable"><summary>Anti-patterns 7.3 and 7.5 overlap</summary><div><p>Both describe repeated business logic. The source does not say how they differ. I read 7.3 as repeats across Gold datasets, and 7.5 as repeats across any pipelines.</p></div></details>
+    <details class="searchable"><summary>Details I added from external docs</summary><div><p>The Bronze advice on storing fields as string, VARIANT or binary is not in the source. Neither is the advice about not writing to Silver directly from ingestion. I label both as external.</p></div></details>
+    <details class="searchable"><summary>Source terms I could not tie to one official page</summary><div><p>The source says the three questions are not official Databricks terminology. I did not look for an official equivalent.</p></div></details>
+  </section>
+
+  <!-- 13 COVERAGE -->
+  <section id="coverage" data-title="Coverage checklist">
+    <h2>Coverage checklist</h2>
+    <p class="sub">I use this to confirm every source topic is in the page.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Source topic</th><th>Where in this page</th></tr></thead>
+      <tbody>
+        <tr class="searchable"><td>Overview, the "where do I do the work" question</td><td><a href="#overview">Overview</a></td></tr>
+        <tr class="searchable"><td>What Medallion is, boundaries, progressive refinement</td><td><a href="#foundations">Foundations</a></td></tr>
+        <tr class="searchable"><td>Not ETL/ELT, dimensional modeling, Data Vault, Data Mesh</td><td><a href="#foundations">Foundations</a></td></tr>
+        <tr class="searchable"><td>Bronze, Silver, Gold, mental model</td><td><a href="#layers">Layers</a></td></tr>
+        <tr class="searchable"><td>Trade-offs and the three flows</td><td><a href="#tradeoffs">Trade-offs</a></td></tr>
+        <tr class="searchable"><td>Delta Lake, Unity Catalog, Lakeflow, ETL/ELT, streaming</td><td><a href="#patterns">Patterns</a></td></tr>
+        <tr class="searchable"><td>Databricks perspective 6.1 to 6.6</td><td><a href="#databricks">Databricks perspective</a></td></tr>
+        <tr class="searchable"><td>Anti-patterns 7.1 to 7.7</td><td><a href="#antipatterns">Anti-patterns</a></td></tr>
+        <tr class="searchable"><td>Decision framework</td><td><a href="#decision">Decision framework</a></td></tr>
+        <tr class="searchable"><td>Engineering takeaways</td><td><a href="#takeaways">Takeaways</a></td></tr>
+        <tr class="searchable"><td>Required extras: refinement example, lineage, validation, quarantine, deduplication, standardization, joins, aggregates</td><td><a href="#example">Example</a>, <a href="#lineage">Lineage</a>, <a href="#layers">Layers</a></td></tr>
+        <tr class="searchable"><td>Reference list</td><td><a href="#links">Sources &amp; links</a></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 14 GLOSSARY -->
+  <section id="glossary" data-title="Glossary">
+    <h2>Glossary</h2>
+    <p class="sub"><span class="tag add">Added</span> Short definitions in my words.</p>
+    <dl class="gl">
+      <div class="searchable"><dt>Source fidelity</dt><dd>Keeping a reliable copy of what the source sent.</dd></div>
+      <div class="searchable"><dt>Replayability</dt><dd>Running processing again from retained data.</dd></div>
+      <div class="searchable"><dt>Progressive refinement</dt><dd>Making data more fit for a purpose at each stage while keeping context.</dd></div>
+      <div class="searchable"><dt>Validation</dt><dd>Checking records against rules, such as required values.</dd></div>
+      <div class="searchable"><dt>Quarantine</dt><dd>Setting invalid records aside with a reason. I do not drop them silently.</dd></div>
+      <div class="searchable"><dt>Deduplication</dt><dd>Keeping one version of repeated records.</dd></div>
+      <div class="searchable"><dt>Standardization</dt><dd>Making formats, names and types consistent.</dd></div>
+      <div class="searchable"><dt>Conform</dt><dd>Aligning data to a shared entity or definition.</dd></div>
+      <div class="searchable"><dt>Reusable entity</dt><dd>A commonly prepared dataset, like customers, that many consumers use.</dd></div>
+      <div class="searchable"><dt>Gold dataset</dt><dd>A dataset built for a business purpose. It may be an aggregate, a specialized dataset, a model or a data mart.</dd></div>
+      <div class="searchable"><dt>Physical boundary</dt><dd>A real separate place for data, with its own storage, processing, tests and monitoring.</dd></div>
+    </dl>
+  </section>
+
+  <!-- 15 REVISION -->
+  <section id="revise" data-title="Revision prompts">
+    <h2>Revision prompts</h2>
+    <p class="sub"><span class="tag add">Added</span> I try to answer first. Then I open the answer.</p>
+    <details class="searchable"><summary>What question does each layer answer?</summary><div><p>Bronze: what did the source provide? Silver: what can we trust and reuse? Gold: what business question are we answering?</p></div></details>
+    <details class="searchable"><summary>Why is a destructive Bronze painful?</summary><div><p>If a later transformation was wrong, I no longer have enough information to process the data again.</p></div></details>
+    <details class="searchable"><summary>Name three things Silver does that are not aggregation.</summary><div><p>Validation, deduplication and standardization. Also schema handling and creating reusable entities.</p></div></details>
+    <details class="searchable"><summary>Why is Gold not simply "aggregated data"?</summary><div><p>It can also be a specialized dataset, analytical model, data mart or another structure built for one use case.</p></div></details>
+    <details class="searchable"><summary>What does a new physical layer cost me?</summary><div><p>Storage, compute, testing, monitoring, maintenance, ownership decisions and latency. It can also duplicate logic.</p></div></details>
+    <details class="searchable"><summary>What is the difference between Delta Lake and Medallion?</summary><div><p>Delta Lake is how I store and work with tables. Medallion is how I organize data into refinement stages.</p></div></details>
+    <details class="searchable"><summary>Does a table named Gold have access control?</summary><div><p>No. Layers are data organization boundaries. Governance needs its own controls, such as Unity Catalog.</p></div></details>
+    <details class="searchable"><summary>When might Source → Curated be enough?</summary><div><p>For a small, simple use case with few transformation needs. Three physical layers may add more work than value.</p></div></details>
+  </section>
+
+  <!-- 16 LINKS -->
+  <section id="links" data-title="Sources and links">
+    <h2>Sources &amp; links</h2>
+    <p class="sub">Main source: <em>Medallion Architecture: Why Bronze, Silver &amp; Gold?</em> (the document I was given). Provenance is shown by the labels in each section.</p>
+    <h3>Official docs I checked</h3>
+    <ul>
+      <li><a href="https://docs.databricks.com/aws/en/lakehouse/medallion">What is the medallion lakehouse architecture?</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/ldp/expectations">Manage data quality with pipeline expectations</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/data-governance/unity-catalog/">What is Unity Catalog?</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/ldp/concepts/">Lakeflow Spark Declarative Pipelines concepts</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/ingestion/auto-loader/">What is Auto Loader?</a></li>
+      <li><a href="https://docs.delta.io">Delta Lake documentation</a></li>
+    </ul>
+    <h3>Documentation links to verify</h3>
+    <p>The source lists these. I did not open them, so I give titles only. I did not guess URLs.</p>
+    <ul>
+      <li>Design Delta Lake Architecture</li>
+      <li>Best Practices for Lakeflow Pipelines</li>
+      <li>Databricks Architecture Overview</li>
+      <li>Databricks Data Warehousing Architecture</li>
+    </ul>
+  </section>
+  </main>
+</div>
+
+<footer>Built from one source document. Single file, no build step.</footer>
+
+<button class="btn primary" id="top" type="button" aria-label="Back to top">↑</button>
+
+<dialog id="zoom" aria-label="Expanded diagram">
+  <div class="dlg-head"><span id="zoomTitle">Diagram</span><button class="btn" id="zoomClose" type="button">Close</button></div>
+  <div class="zoom-body" id="zoomBody"></div>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s,r){return (r||document).querySelector(s)};
+  var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+  var root=document.documentElement;
+
+  /* theme */
+  var themeBtn=$("#theme");
+  function setTheme(t){
+    root.setAttribute("data-theme",t);
+    themeBtn.setAttribute("aria-pressed",t==="dark"?"true":"false");
+    themeBtn.textContent=t==="dark"?"Light":"Dark";
+    try{localStorage.setItem("med-theme",t)}catch(e){}
+  }
+  var saved=null;
+  try{saved=localStorage.getItem("med-theme")}catch(e){}
+  if(!saved){saved=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"}
+  setTheme(saved);
+  themeBtn.addEventListener("click",function(){setTheme(root.getAttribute("data-theme")==="dark"?"light":"dark")});
+
+  /* toc */
+  var sections=$$("main > section[id]");
+  var tocList=$("#tocList");
+  sections.forEach(function(s){
+    var li=document.createElement("li");
+    var a=document.createElement("a");
+    a.href="#"+s.id;a.textContent=s.getAttribute("data-title")||s.id;
+    li.appendChild(a);tocList.appendChild(li);
+    s._li=li;s._a=a;
+    s._text=s.textContent.toLowerCase();
+  });
+  var tocBtn=$("#tocBtn"),toc=$("#toc");
+  tocBtn.addEventListener("click",function(){
+    var o=toc.classList.toggle("open");
+    tocBtn.setAttribute("aria-expanded",o?"true":"false");
+  });
+  tocList.addEventListener("click",function(e){
+    if(e.target.tagName==="A"&&window.innerWidth<=980){toc.classList.remove("open");tocBtn.setAttribute("aria-expanded","false")}
+  });
+
+  /* scrollspy */
+  if("IntersectionObserver" in window){
+    var visible={};
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){visible[en.target.id]=en.isIntersecting});
+      var cur=null;
+      for(var i=0;i<sections.length;i++){if(visible[sections[i].id]){cur=sections[i];break}}
+      if(cur){sections.forEach(function(s){s._a.removeAttribute("aria-current")});cur._a.setAttribute("aria-current","true")}
+    },{rootMargin:"-80px 0px -60% 0px",threshold:0});
+    sections.forEach(function(s){io.observe(s)});
+  }
+
+  /* progress + back to top */
+  var bar=$("#progress"),topBtn=$("#top");
+  function onScroll(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    var p=max>0?Math.min(100,Math.max(0,h.scrollTop/max*100)):0;
+    bar.style.width=p+"%";
+    bar.setAttribute("aria-valuenow",String(Math.round(p)));
+    topBtn.classList.toggle("show",h.scrollTop>600);
+  }
+  window.addEventListener("scroll",onScroll,{passive:true});onScroll();
+  topBtn.addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"})});
+
+  /* copy buttons */
+  $$(".copy").forEach(function(b){
+    b.addEventListener("click",function(){
+      var code=document.getElementById(b.getAttribute("data-target"));
+      var txt=code?code.textContent:"";
+      function done(ok){var o=b.textContent;b.textContent=ok?"Copied":"Press Ctrl+C";setTimeout(function(){b.textContent="Copy"},1600)}
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(function(){done(true)},function(){fallback()});
+      }else{fallback()}
+      function fallback(){
+        try{
+          var r=document.createRange();r.selectNodeContents(code);
+          var s=window.getSelection();s.removeAllRanges();s.addRange(r);
+          done(document.execCommand("copy"));
+        }catch(e){done(false)}
+      }
+    });
+  });
+
+  /* diagram expand */
+  var dlg=$("#zoom"),zb=$("#zoomBody"),zt=$("#zoomTitle");
+  $$(".expand").forEach(function(b){
+    b.addEventListener("click",function(){
+      var fig=b.closest("figure");
+      var d=$(".diagram",fig);
+      zt.textContent=$(".ft span",fig).textContent;
+      zb.innerHTML="";
+      var c=d.cloneNode(true);
+      $$("[id]",c).forEach(function(n){n.removeAttribute("id")});
+      zb.appendChild(c);
+      if(dlg.showModal){dlg.showModal()}else{dlg.setAttribute("open","")}
+    });
+  });
+  $("#zoomClose").addEventListener("click",function(){if(dlg.close){dlg.close()}else{dlg.removeAttribute("open")}});
+  dlg.addEventListener("click",function(e){if(e.target===dlg&&dlg.close){dlg.close()}});
+
+  /* layer tabs */
+  (function(){
+    var tabs=$$("#layerTabs [role=tab]");
+    function sel(t,focus){
+      tabs.forEach(function(x){
+        var on=x===t;
+        x.setAttribute("aria-selected",on?"true":"false");
+        x.tabIndex=on?0:-1;
+        document.getElementById(x.getAttribute("aria-controls")).hidden=!on;
+      });
+      if(focus)t.focus();
+    }
+    tabs.forEach(function(t,i){
+      t.addEventListener("click",function(){sel(t,false)});
+      t.addEventListener("keydown",function(e){
+        var n=null;
+        if(e.key==="ArrowRight")n=tabs[(i+1)%tabs.length];
+        else if(e.key==="ArrowLeft")n=tabs[(i+tabs.length-1)%tabs.length];
+        else if(e.key==="Home")n=tabs[0];
+        else if(e.key==="End")n=tabs[tabs.length-1];
+        if(n){e.preventDefault();sel(n,true)}
+      });
+    });
+  })();
+
+  /* refinement stepper */
+  (function(){
+    var raw=[
+      {id:"1001",c:"A",a:"250",d:"2024-01-05",s:"crm"},
+      {id:"1001",c:"A",a:"250",d:"2024-01-05",s:"crm"},
+      {id:"1002",c:"",a:"300",d:"2024-01-05",s:"crm"},
+      {id:"1003",c:"C",a:"300",d:"",s:"crm"},
+      {id:"1004",c:"A",a:"300",d:"07/01/2024",s:"api"}
+    ];
+    var steps=[
+      {n:"Bronze",m:"Bronze keeps all five rows exactly as they arrived. I do not fix anything yet. I add the source and arrival details."},
+      {n:"Validate",m:"Silver starts with validation. Order 1002 has no customer. Order 1003 has no date. Both fail. The rest pass for now."},
+      {n:"Quarantine",m:"I set the two failed rows aside with a reason. I do not delete them. Someone can review and fix them later."},
+      {n:"Deduplicate",m:"Order 1001 appears twice. I keep one copy."},
+      {n:"Standardize",m:"Order 1004 has a different date format. I convert it to YYYY-MM-DD."},
+      {n:"Silver",m:"This is my reusable Silver data. I could also join it to a shared customer entity here."},
+      {n:"Gold",m:"Gold answers one business question: total amount per customer per day. It is an aggregate, built from Silver."}
+    ];
+    var i=0;
+    var chips=$("#stepChips"),msg=$("#stepMsg"),tbl=$("#exTable"),qwrap=$("#exQuar"),qbody=$("#exQuarBody");
+    var btns=steps.map(function(s,k){
+      var li=document.createElement("li");var b=document.createElement("button");
+      b.type="button";b.textContent=(k+1)+". "+s.n;
+      b.addEventListener("click",function(){i=k;render()});
+      li.appendChild(b);chips.appendChild(li);return b;
+    });
+    function cell(tr,txt,tag){var c=document.createElement(tag||"td");c.textContent=txt;tr.appendChild(c);return c}
+    function head(cols){
+      var th=$("thead",tbl);th.innerHTML="";var tr=document.createElement("tr");
+      cols.forEach(function(c){cell(tr,c,"th")});th.appendChild(tr);
+    }
+    function render(){
+      var tb=$("tbody",tbl);tb.innerHTML="";qbody.innerHTML="";qwrap.hidden=true;
+      btns.forEach(function(b,k){if(k===i)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current")});
+      msg.textContent=steps[i].m;
+      var rows=raw.slice();
+      if(i===0){
+        head(["order_id","customer","amount","order_date","_source","_ingested_at"]);
+        rows.forEach(function(r){var tr=document.createElement("tr");
+          cell(tr,r.id);cell(tr,r.c||"(missing)");cell(tr,r.a);cell(tr,r.d||"(missing)");cell(tr,r.s);cell(tr,r.s==="crm"?"2024-01-06":"2024-01-08");tb.appendChild(tr)});
+      }else if(i===1){
+        head(["order_id","customer","amount","order_date","check"]);
+        rows.forEach(function(r){var bad=(!r.c||!r.d);var tr=document.createElement("tr");tr.className=bad?"fail":"pass";
+          cell(tr,r.id);cell(tr,r.c||"(missing)");cell(tr,r.a);cell(tr,r.d||"(missing)");
+          var td=cell(tr,bad?(!r.c?"FAIL: no customer":"FAIL: no date"):"pass");tb.appendChild(tr)});
+      }else if(i<=4){
+        head(["order_id","customer","amount","order_date"]);
+        var good=raw.filter(function(r){return r.c&&r.d});
+        qwrap.hidden=false;
+        raw.filter(function(r){return !(r.c&&r.d)}).forEach(function(r){
+          var tr=document.createElement("tr");cell(tr,r.id);cell(tr,!r.c?"Missing customer":"Missing order date");qbody.appendChild(tr)});
+        if(i>=3){var seen={};good=good.filter(function(r){var k=r.id;if(seen[k])return false;seen[k]=1;return true})}
+        good.forEach(function(r){var tr=document.createElement("tr");
+          var d=r.d;if(i>=4&&d==="07/01/2024")d="2024-01-07";
+          cell(tr,r.id);cell(tr,r.c);cell(tr,r.a);cell(tr,d);tb.appendChild(tr)});
+      }else if(i===5){
+        head(["order_id","customer","amount","order_date"]);
+        [["1001","A","250","2024-01-05"],["1004","A","300","2024-01-07"]].forEach(function(r){
+          var tr=document.createElement("tr");r.forEach(function(v){cell(tr,v)});tb.appendChild(tr)});
+        qwrap.hidden=false;
+        [["1002","Missing customer"],["1003","Missing order date"]].forEach(function(r){var tr=document.createElement("tr");cell(tr,r[0]);cell(tr,r[1]);qbody.appendChild(tr)});
+      }else{
+        head(["customer","order_date","total_amount"]);
+        [["A","2024-01-05","250"],["A","2024-01-07","300"]].forEach(function(r){
+          var tr=document.createElement("tr");r.forEach(function(v){cell(tr,v)});tb.appendChild(tr)});
+      }
+      $("#prevStep").disabled=(i===0);
+      $("#nextStep").disabled=(i===steps.length-1);
+    }
+    $("#prevStep").addEventListener("click",function(){if(i>0){i--;render()}});
+    $("#nextStep").addEventListener("click",function(){if(i<steps.length-1){i++;render()}});
+    $("#resetStep").addEventListener("click",function(){i=0;render()});
+    render();
+  })();
+
+  /* decision walk-through */
+  (function(){
+    var nodes={
+      s0:{q:"Do I need another data boundary?",y:"s1",n:{r:"Keep the current design."}},
+      s1:{q:"Do I need source replay?",y:{r:"Add a boundary for raw data."},n:"s2"},
+      s2:{q:"Do I need shared reusable data?",y:{r:"Add a boundary for shared data."},n:"s3"},
+      s3:{q:"Do I need business-specific output?",y:{r:"Add a boundary for business use."},n:"s4"},
+      s4:{q:"Does another model already solve it?",y:{r:"Use the existing model, for example data product, data mesh or data fabric."},n:"s5"},
+      s5:{q:"Is the operational cost worth it?",y:{r:"Add a new data boundary."},n:{r:"Keep it simple."}}
+    };
+    var cur="s0",hist=[];
+    var q=$("#dq"),r=$("#dr"),yes=$("#dYes"),no=$("#dNo"),back=$("#dBack");
+    function show(){
+      var n=nodes[cur];
+      if(n){q.textContent=n.q;r.hidden=true;yes.disabled=false;no.disabled=false}
+      back.disabled=hist.length===0;
+    }
+    function go(ans){
+      var n=nodes[cur];var t=ans?n.y:n.n;
+      hist.push(cur);
+      if(typeof t==="string"){cur=t;show()}
+      else{q.textContent=n.q+" "+(ans?"Yes.":"No.");r.textContent="Result: "+t.r;r.hidden=false;yes.disabled=true;no.disabled=true;cur=hist.pop();hist.push(cur);back.disabled=false;done=true}
+    }
+    var done=false;
+    yes.addEventListener("click",function(){go(true)});
+    no.addEventListener("click",function(){go(false)});
+    back.addEventListener("click",function(){
+      if(done){done=false;hist.pop();show();return}
+      if(hist.length){cur=hist.pop();show()}
+    });
+    $("#dReset").addEventListener("click",function(){cur="s0";hist=[];done=false;show()});
+    show();
+  })();
+
+  /* search */
+  (function(){
+    var input=$("#q");
+    var items=$$(".searchable");
+    var none=$("#tocNone");
+    items.forEach(function(el){el._t=el.textContent.toLowerCase()});
+    function run(){
+      var v=input.value.trim().toLowerCase();
+      var anySection=false;
+      sections.forEach(function(s){
+        var m=!v||s._text.indexOf(v)>-1;
+        s._li.hidden=!m;
+        if(m)anySection=true;
+      });
+      none.hidden=anySection;
+      items.forEach(function(el){
+        var m=!v||el._t.indexOf(v)>-1;
+        el.hidden=!m;
+        if(el.tagName==="DETAILS"&&v&&m)el.open=true;
+      });
+      if(v){
+        $$("tbody",document).forEach(function(tb){
+          if(!tb.querySelector("tr.searchable"))return;
+        });
+      }
+    }
+    input.addEventListener("input",run);
+    input.addEventListener("keydown",function(e){if(e.key==="Escape"){input.value="";run()}});
+  })();
+})();
+</script>
+</body>
+</html>

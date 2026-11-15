@@ -1,0 +1,1063 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Ingestion on Databricks - field guide</title>
+<meta name="description" content="Choosing how data enters the lakehouse. My field guide, built from one source document.">
+<script>try{var t=localStorage.getItem('dbx-theme');if(!t){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--soft:#eef1f5;--text:#18212d;--muted:#566275;--border:#dfe4ea;--accent:#1d4ed8;--accent-bg:#e8efff;--edge:#4b5a70;
+--blue:#2563eb;--blue-bg:#e3ecff;--green:#0f8a5f;--green-bg:#dcf5ea;--purple:#7c3aed;--purple-bg:#eee6ff;--orange:#d9730d;--orange-bg:#ffeedb;
+--teal:#0e7490;--teal-bg:#d9f1f6;--red:#d6372c;--red-bg:#fde6e3;--gold:#b7860b;--gold-bg:#fbf1cf;--gray:#6b7788;--gray-bg:#eceff3;
+--sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--shadow:0 1px 2px rgba(20,30,50,.06),0 4px 14px rgba(20,30,50,.05)}
+:root[data-theme=dark]{--bg:#0e131a;--surface:#151c26;--soft:#1b2430;--text:#e7ecf3;--muted:#9aa8ba;--border:#283444;--accent:#7aa5ff;--accent-bg:#1a2744;--edge:#9db0c8;
+--blue:#6aa0ff;--blue-bg:#16294d;--green:#3ccf97;--green-bg:#12382c;--purple:#b392ff;--purple-bg:#2a2149;--orange:#ffa044;--orange-bg:#3b2a14;
+--teal:#4fc3dc;--teal-bg:#103540;--red:#ff7a6e;--red-bg:#401c19;--gold:#f0c24a;--gold-bg:#3a300f;--gray:#9aa8ba;--gray-bg:#232d3a;--shadow:none}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:68px}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 var(--sans);-webkit-text-size-adjust:100%}
+a{color:var(--accent);text-underline-offset:2px}a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--accent);color:#fff;padding:8px 12px;border-radius:6px;z-index:100}.skip:focus{left:8px}
+header.top{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 14px;height:52px}
+header.top .brand{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.btn{font:600 13px var(--sans);color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;cursor:pointer;min-height:34px}
+.btn:hover{background:var(--soft)}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--accent);transition:width .1s}
+#menu{display:none}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1320px;margin:0 auto}
+nav.side{position:sticky;top:52px;align-self:start;height:calc(100vh - 52px);overflow:auto;padding:18px 14px 40px 18px;border-right:1px solid var(--border);font-size:14px}
+nav.side .srch{display:block;margin-bottom:12px}
+nav.side input[type=search],.tfilter input{width:100%;font:15px var(--sans);padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text)}
+#qcount{font-size:12px;color:var(--muted);min-height:18px;margin:4px 0 8px}
+nav.side ul{list-style:none;margin:0;padding:0}nav.side>ul>li{margin:2px 0}
+nav.side a{display:block;color:var(--text);text-decoration:none;padding:5px 9px;border-radius:7px;line-height:1.35}
+nav.side a:hover{background:var(--soft)}nav.side li.active>a{background:var(--accent-bg);color:var(--accent);font-weight:700}
+nav.side ul ul{margin:0 0 4px 10px;border-left:1px solid var(--border)}nav.side ul ul a{font-size:13px;color:var(--muted);padding:3px 9px}
+main{padding:0 28px 80px;min-width:0}
+.hero{margin:26px 0 8px;padding:34px 30px;border-radius:18px;background:linear-gradient(135deg,#10233f 0%,#183a6b 55%,#1d4ed8 100%);color:#fff;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;border:34px solid rgba(255,255,255,.07)}
+.hero .kicker{font:700 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.hero h1{font-size:clamp(28px,5vw,44px);line-height:1.12;margin:8px 0 10px;letter-spacing:-.02em}
+.hero p{margin:0 0 16px;max-width:640px;font-size:17px;opacity:.92}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}.chip{font:600 12px var(--sans);padding:5px 10px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22)}
+.hero .go{display:inline-block;background:#fff;color:#10233f;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:10px}
+.legend{margin:18px 0 0;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font-size:14px;color:var(--muted)}
+.legend .tag{margin-right:6px}
+.sec{margin-top:46px}.sec>h2{font-size:clamp(24px,3.4vw,32px);line-height:1.2;margin:4px 0 14px;letter-spacing:-.015em}
+.ref{display:inline-block;font:700 11px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h3{font-size:20px;margin:30px 0 8px;line-height:1.3}
+p{margin:0 0 14px;max-width:72ch}ul,ol{margin:0 0 16px;padding-left:22px;max-width:72ch}li{margin:3px 0}
+code{font:0.9em var(--mono);background:var(--soft);padding:1px 5px;border-radius:5px}
+.note{margin:16px 0;padding:12px 16px;border-radius:10px;border:1px solid var(--border);border-left-width:5px;background:var(--surface);max-width:76ch}
+.note p{margin:6px 0 0;font-size:15px}.note .tag,.legend .tag{display:inline-block;font:700 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px}
+.n-source{border-left-color:var(--green)}.n-source .tag,.legend .t-source{background:var(--green-bg);color:var(--green)}
+.n-added{border-left-color:var(--blue)}.n-added .tag,.legend .t-added{background:var(--blue-bg);color:var(--blue)}
+.n-accuracy{border-left-color:var(--orange)}.n-accuracy .tag,.legend .t-accuracy{background:var(--orange-bg);color:var(--orange)}
+.n-me{border-left-color:var(--purple)}.n-me .tag,.legend .t-me{background:var(--purple-bg);color:var(--purple)}
+figure{margin:20px 0}
+figure.code{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);max-width:860px}
+figure.code figcaption{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--soft);border-bottom:1px solid var(--border);font-size:12px}
+.lang{font:700 11px var(--mono);text-transform:uppercase;color:var(--accent)}.lbl{color:var(--muted);flex:1;line-height:1.35}
+.copy{font:600 12px var(--sans);border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:6px;padding:4px 9px;cursor:pointer;margin-left:auto}
+pre{margin:0;padding:14px;overflow:auto;font:13.5px/1.55 var(--mono);tab-size:2}pre code{background:none;padding:0;font:inherit}
+figure.diagram{border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+.ftitle{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;font-weight:700;font-size:15px;border-bottom:1px solid var(--border)}
+.zoom{font:600 12px var(--sans);border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:7px;padding:5px 10px;cursor:pointer}.zoom:hover{background:var(--soft)}
+.dscroll{overflow-x:auto;padding:10px 8px}.dinner svg{width:100%;height:auto;display:block}
+.fcap{margin:0;padding:10px 16px 14px;font-size:14.5px;color:var(--muted);border-top:1px dashed var(--border);max-width:none}
+svg .node{stroke-width:1.5}svg .ntext{fill:var(--text);font:600 13px var(--sans)}
+svg .n-blue{fill:var(--blue-bg);stroke:var(--blue)}svg .n-green{fill:var(--green-bg);stroke:var(--green)}svg .n-purple{fill:var(--purple-bg);stroke:var(--purple)}svg .n-orange{fill:var(--orange-bg);stroke:var(--orange)}
+svg .n-teal{fill:var(--teal-bg);stroke:var(--teal)}svg .n-red{fill:var(--red-bg);stroke:var(--red)}svg .n-gold{fill:var(--gold-bg);stroke:var(--gold)}svg .n-gray{fill:var(--gray-bg);stroke:var(--gray)}
+svg .edge{stroke:var(--edge);fill:none;stroke-width:1.6}svg .dash{stroke-dasharray:5 4}svg .ah{fill:var(--edge)}
+svg .grp{fill:none;stroke-width:1.4;stroke-dasharray:6 5;opacity:.9}svg .g-blue{stroke:var(--blue)}svg .g-green{stroke:var(--green)}svg .g-gold{stroke:var(--gold)}svg .g-red{stroke:var(--red)}svg .g-gray{stroke:var(--gray)}
+svg .glabel{fill:var(--muted);font:700 12px var(--sans)}svg .elabel{fill:var(--text);font:600 11px var(--sans)}svg .elabel-bg{fill:var(--surface);stroke:var(--border)}
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface);margin:10px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}caption{caption-side:bottom;text-align:left;padding:10px 14px;color:var(--muted);font-size:13px}
+th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border)}th{background:var(--soft);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0}
+tbody tr:last-child td{border-bottom:0}td:first-child{font-weight:700}
+.tfilter{display:block;max-width:360px;margin:14px 0 0}.tfilter span{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px}
+details{border:1px solid var(--border);border-radius:12px;background:var(--surface);margin:10px 0;max-width:860px}
+summary{cursor:pointer;padding:12px 16px;font-weight:700;list-style:none;display:flex;gap:10px;align-items:center}summary::-webkit-details-marker{display:none}
+summary:before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--accent-bg);color:var(--accent);font-weight:800;flex:none}
+details[open]>summary:before{content:"\2212"}.dbody{padding:0 16px 8px;border-top:1px solid var(--border);padding-top:12px}
+.checkbox-wrap{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:6px 16px 8px;max-width:860px;box-shadow:var(--shadow)}
+.ckbar{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-weight:700}
+ul.check{list-style:none;padding:0;margin:0;max-width:none}ul.check li{padding:10px 0;border-bottom:1px solid var(--border)}ul.check li:last-child{border-bottom:0}
+ul.check label{display:flex;gap:12px;cursor:pointer}ul.check input{width:20px;height:20px;margin-top:3px;flex:none;accent-color:var(--accent)}
+ul.check .d{display:block;color:var(--muted);font-size:14.5px;margin-top:2px}ul.check input:checked+span strong{text-decoration:line-through;opacity:.65}
+.cov{columns:2;gap:24px;font-size:14px;max-width:none}.cov li{break-inside:avoid;margin:4px 0}
+footer{margin:56px 0 0;padding-top:18px;border-top:1px solid var(--border);color:var(--muted);font-size:13.5px}
+#top{position:fixed;right:18px;bottom:18px;z-index:30;opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:var(--shadow)}#top.show{opacity:1;pointer-events:auto}
+dialog#zoomdlg{width:min(1200px,96vw);max-height:92vh;padding:0;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text)}
+dialog::backdrop{background:rgba(5,10,20,.6)}
+.zhead{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:2}.zhead strong{flex:1;font-size:15px}
+.zbody{overflow:auto;max-height:calc(92vh - 60px);padding:14px}.zbody svg{display:block;height:auto}
+@media (max-width:980px){.layout{display:block}#menu{display:inline-block}
+nav.side{position:fixed;left:0;top:52px;width:min(86vw,320px);height:calc(100vh - 52px);height:calc(100dvh - 52px);overflow:auto;background:var(--surface);z-index:45;transform:translateX(-102%);transition:transform .2s;box-shadow:var(--shadow)}
+nav.side.open{transform:none}main{padding:0 16px 80px}.hero{padding:26px 20px}.cov{columns:1}}
+@media (max-width:720px){
+#matrix thead{display:none}#matrix,#matrix tbody,#matrix tr,#matrix td{display:block;width:100%}
+#matrix tr{border-bottom:6px solid var(--soft);padding:6px 0}#matrix td{border:0;padding:5px 12px}
+#matrix td:before{content:attr(data-label);display:block;font:700 11px var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+#matrix td:first-child{font-size:16px;padding-top:8px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{header.top,nav.side,#top,.zoom,.copy{display:none}.layout{display:block}details:not([open])>.dbody{display:block}.hero{background:#fff;color:#000;border:1px solid #999}}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+  <button class="btn" id="menu" type="button" aria-expanded="false" aria-controls="side">Contents</button>
+  <div class="brand">Data Ingestion on Databricks</div>
+  <button class="btn" id="expandall" type="button" aria-pressed="false">Expand all</button>
+  <button class="btn" id="theme" type="button" aria-label="Toggle dark mode" aria-pressed="false">Theme</button>
+  <div id="progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+</header>
+<div class="layout">
+<nav class="side" id="side" aria-label="Table of contents">
+  <label class="srch"><span class="sr" style="position:absolute;left:-999px">Search sections</span><input id="q" type="search" placeholder="Search this guide  ( / )" autocomplete="off"></label>
+  <div id="qcount" aria-live="polite"></div>
+  <ul id="toc">
+<li class="tocsec" data-sec="overview"><a href="#overview">Overview: how should data enter Databricks?</a><ul><li><a href="#source-changes">The source changes the problem</a></li><li><a href="#mental-model">A simple mental model</a></li><li><a href="#first-question">The first architectural question</a></li></ul></li>
+<li class="tocsec" data-sec="glance"><a href="#glance">At a glance: decision flowchart and matrix</a></li>
+<li class="tocsec" data-sec="foundations"><a href="#foundations">Foundations</a><ul><li><a href="#what-is-ingestion">What does ingestion mean?</a></li><li><a href="#boundary">The ingestion boundary</a></li><li><a href="#batch-streaming">Batch and streaming are different operating models</a></li><li><a href="#not-transformation">Ingestion is not transformation</a></li><li><a href="#not-federation">Ingestion is not federation</a></li><li><a href="#why-foundations">Why these foundations matter</a></li></ul></li>
+<li class="tocsec" data-sec="architecture"><a href="#architecture">Architecture by source type</a><ul><li><a href="#files">3.1 Cloud files</a></li><li><a href="#auto-loader">Auto Loader</a></li><li><a href="#copy-into">COPY INTO</a></li><li><a href="#saas">3.2 SaaS sources</a></li><li><a href="#databases">3.3 Databases</a></li><li><a href="#streaming">3.4 Streaming sources</a></li><li><a href="#apis">3.5 APIs</a></li><li><a href="#zerobus">3.6 Zerobus</a></li><li><a href="#federation">3.7 Federation</a></li></ul></li>
+<li class="tocsec" data-sec="tradeoffs"><a href="#tradeoffs">Architectural trade-offs</a><ul><li><a href="#t-latency">Latency</a></li><li><a href="#t-source">Source impact</a></li><li><a href="#t-control">Control</a></li><li><a href="#t-schema">Schema change</a></li><li><a href="#t-failure">Failure recovery</a></li><li><a href="#t-security">Security</a></li><li><a href="#t-ops">Operations</a></li><li><a href="#t-cost">Cost</a></li></ul></li>
+<li class="tocsec" data-sec="patterns"><a href="#patterns">Patterns and relationships</a><ul><li><a href="#p-medallion">5.1 Ingestion + Medallion</a></li><li><a href="#p-etl">5.2 Ingestion + ETL/ELT</a></li><li><a href="#p-uc">5.3 Ingestion + Unity Catalog</a></li><li><a href="#p-cdc">5.4 CDC + ingestion</a></li><li><a href="#p-cdf">5.5 CDF + ingestion</a></li><li><a href="#p-scd">5.6 SCD + ingestion</a></li><li><a href="#p-bigger">5.7 The bigger picture</a></li></ul></li>
+<li class="tocsec" data-sec="perspective"><a href="#perspective">The Databricks perspective</a><ul><li><a href="#l-connect">6.1 Lakeflow Connect</a></li><li><a href="#l-pipelines">6.2 Lakeflow Pipelines</a></li><li><a href="#l-autoloader">6.3 Auto Loader</a></li><li><a href="#l-copyinto">6.4 COPY INTO</a></li><li><a href="#l-streaming">6.5 Structured Streaming</a></li><li><a href="#l-zerobus">6.6 Zerobus</a></li><li><a href="#l-federation">6.7 Lakehouse Federation</a></li><li><a href="#l-managed">6.8 The move toward more managed ingestion</a></li><li><a href="#l-one">6.9 One ecosystem, different problems</a></li></ul></li>
+<li class="tocsec" data-sec="antipatterns"><a href="#antipatterns">Anti-patterns</a></li>
+<li class="tocsec" data-sec="framework"><a href="#framework">Questions I ask before choosing</a></li>
+<li class="tocsec" data-sec="recap"><a href="#recap">Quick recap and revision prompts</a></li>
+<li class="tocsec" data-sec="accuracy"><a href="#accuracy">Version and accuracy notes</a></li>
+<li class="tocsec" data-sec="verify"><a href="#verify">Documentation links to verify</a></li>
+  </ul>
+</nav>
+<main id="content">
+  <div class="hero">
+    <div class="kicker">Technical field guide</div>
+    <h1>Data Ingestion on Databricks</h1>
+    <p>Choosing how data enters the lakehouse. My field guide, built from one source document.</p>
+    <div class="chips"><span class="chip">Source-first decisions</span><span class="chip">18 diagrams</span><span class="chip">Docs checked 8 Nov 2026</span></div>
+    <a class="go" href="#overview">Start reading</a>
+  </div>
+  <div class="legend"><strong>Source:</strong> Data Ingestion on Databricks: Choosing How Data Enters the Lakehouse (source PDF; brief title: &quot;From Files to Lakeflow Connect&quot;). I cite sections by name. The PDF text has no page numbers.<br>
+    <span class="tag t-source">From the source</span><span class="tag t-added">Added: current docs</span><span class="tag t-accuracy">Accuracy note</span><span class="tag t-me">My note</span>
+    Plain text is from the source. Labelled boxes are not.</div>
+<section id="overview" class="sec"><span class="ref">Source: Overview</span><h2>Overview: how should data enter Databricks?</h2>
+<p>The source starts with one question. How should data enter Databricks?</p>
+<p>It looks like a loading problem. It is not. Ingestion is where several architecture decisions begin.</p>
+<ul><li>A file in cloud storage does not behave like a production database.</li><li>A SaaS app does not expose data the way a Kafka topic does.</li><li>An app that generates events is a different problem again.</li><li>Sometimes the data does not need to move into Databricks at all.</li></ul>
+<p>So the hard part is not getting data from A to B. The hard part is deciding how the move happens, what the ingestion layer owns, and where that ownership sits.</p>
+<p>The source links this to the "reference blog". Its point: the key question is not how many capabilities a platform has. It is how they fit together, and what my team still designs and runs.</p>
+<aside class="note n-accuracy"><span class="tag">Accuracy note</span><p>The source mentions a "reference blog" and a "supplied research brief" but never names them. I cannot check them. I only note them as the source does.</p></aside>
+<h3 id="source-changes">The source changes the problem</h3>
+<ul><li>A file may land in cloud storage every hour.</li><li>A database may get thousands of row changes a day.</li><li>A SaaS app may expose customer records through an API.</li><li>An event-producing app may send telemetry nonstop.</li><li>An external database may already hold the data, so a query fits better than a copy.</li></ul>
+<p>The destination is the same. The ingestion problem is not. So I start with the source.</p>
+<figure class="diagram" id="fig-overview"><figcaption class="ftitle"><span>Diagram 1. The source decides the ingestion pattern</span><button type="button" class="zoom" data-title="The source decides the ingestion pattern" aria-label="Expand diagram: The source decides the ingestion pattern">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:532px"><svg viewBox="0 0 740 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-overview d-overview" data-w="740" data-h="350">
+<title id="t-overview">The source decides the ingestion pattern</title><desc id="d-overview">I read this left to right. Each source gets its own ingestion pattern. Only federation leaves the data where it is.</desc>
+<defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<polyline points="160.0,40.0 250.0,40.0" class="edge" marker-end="url(#ah1)"/>
+<polyline points="420.0,40.0 560.0,165.0" class="edge" marker-end="url(#ah1)"/>
+<polyline points="160.0,106.0 250.0,106.0" class="edge" marker-end="url(#ah1)"/>
+<polyline points="420.0,106.0 560.0,165.0" class="edge" marker-end="url(#ah1)"/>
+<polyline points="160.0,172.0 250.0,172.0" class="edge" marker-end="url(#ah1)"/>
+<polyline points="420.0,172.0 560.0,165.0" class="edge" marker-end="url(#ah1)"/>
+<polyline points="160.0,238.0 250.0,238.0" class="edge" marker-end="url(#ah1)"/>
+<polyline points="420.0,238.0 560.0,165.0" class="edge" marker-end="url(#ah1)"/>
+<polyline points="160.0,304.0 250.0,304.0" class="edge" marker-end="url(#ah1)"/>
+<polyline points="420.0,304.0 560.0,165.0" class="edge dash" marker-end="url(#ah1)"/>
+<rect x="10" y="15" width="150" height="50" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="85.0" y="37.0">Recurring</tspan><tspan x="85.0" y="52.0">files</tspan></text>
+<rect x="250" y="15" width="170" height="50" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="335.0" y="37.0">File</tspan><tspan x="335.0" y="52.0">ingestion</tspan></text>
+<rect x="10" y="81" width="150" height="50" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="85.0" y="110.5">Database</tspan></text>
+<rect x="250" y="81" width="170" height="50" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="335.0" y="103.0">CDC / query-based</tspan><tspan x="335.0" y="118.0">ingestion</tspan></text>
+<rect x="10" y="147" width="150" height="50" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="85.0" y="169.0">SaaS</tspan><tspan x="85.0" y="184.0">application</tspan></text>
+<rect x="250" y="147" width="170" height="50" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="335.0" y="169.0">Managed</tspan><tspan x="335.0" y="184.0">connector</tspan></text>
+<rect x="10" y="213" width="150" height="50" rx="9" class="node n-orange"/>
+<text class="ntext" text-anchor="middle"><tspan x="85.0" y="235.0">Application</tspan><tspan x="85.0" y="250.0">events</tspan></text>
+<rect x="250" y="213" width="170" height="50" rx="9" class="node n-orange"/>
+<text class="ntext" text-anchor="middle"><tspan x="335.0" y="235.0">Push-based</tspan><tspan x="335.0" y="250.0">ingestion</tspan></text>
+<rect x="10" y="279" width="150" height="50" rx="9" class="node n-teal"/>
+<text class="ntext" text-anchor="middle"><tspan x="85.0" y="301.0">External</tspan><tspan x="85.0" y="316.0">database</tspan></text>
+<rect x="250" y="279" width="170" height="50" rx="9" class="node n-teal"/>
+<text class="ntext" text-anchor="middle"><tspan x="335.0" y="301.0">Federation /</tspan><tspan x="335.0" y="316.0">query</tspan></text>
+<rect x="560" y="125" width="160" height="80" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="640.0" y="169.5">Databricks</tspan></text>
+<rect x="446.6" y="225.5" width="86.8" height="18" rx="4" class="elabel-bg"/>
+<text x="490.0" y="238.5" text-anchor="middle" class="elabel">No data copy</text>
+</svg></div></div><p class="fcap">I read this left to right. Each source gets its own ingestion pattern. Only federation leaves the data where it is.</p></figure>
+<h3 id="mental-model">A simple mental model</h3>
+<p>Before I pick a mechanism, I ask six questions.</p>
+<figure class="diagram" id="fig-questions"><figcaption class="ftitle"><span>Diagram 2. How to think about data ingestion</span><button type="button" class="zoom" data-title="How to think about data ingestion" aria-label="Expand diagram: How to think about data ingestion">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:420px"><svg viewBox="0 0 420 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-questions d-questions" data-w="420" data-h="480">
+<title id="t-questions">How to think about data ingestion</title><desc id="d-questions">I ask these six questions in order. They lead me to a pattern. They do not start with a product name.</desc>
+<defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<polyline points="210.0,60.0 210.0,76.0" class="edge" marker-end="url(#ah2)"/>
+<polyline points="210.0,126.0 210.0,142.0" class="edge" marker-end="url(#ah2)"/>
+<polyline points="210.0,192.0 210.0,208.0" class="edge" marker-end="url(#ah2)"/>
+<polyline points="210.0,258.0 210.0,274.0" class="edge" marker-end="url(#ah2)"/>
+<polyline points="210.0,324.0 210.0,340.0" class="edge" marker-end="url(#ah2)"/>
+<polyline points="210.0,390.0 210.0,406.0" class="edge" marker-end="url(#ah2)"/>
+<rect x="40" y="10" width="340" height="50" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="210.0" y="39.5">1. Where does the data live?</tspan></text>
+<rect x="40" y="76" width="340" height="50" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="210.0" y="105.5">2. How does the data change?</tspan></text>
+<rect x="40" y="142" width="340" height="50" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="210.0" y="171.5">3. How quickly do we need it?</tspan></text>
+<rect x="40" y="208" width="340" height="50" rx="9" class="node n-orange"/>
+<text class="ntext" text-anchor="middle"><tspan x="210.0" y="237.5">4. Does the data actually need to move?</tspan></text>
+<rect x="40" y="274" width="340" height="50" rx="9" class="node n-teal"/>
+<text class="ntext" text-anchor="middle"><tspan x="210.0" y="303.5">5. How much control do we need?</tspan></text>
+<rect x="40" y="340" width="340" height="50" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="210.0" y="362.0">6. How much of the ingestion system</tspan><tspan x="210.0" y="377.0">do we want to operate?</tspan></text>
+<rect x="40" y="406" width="340" height="50" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="210.0" y="428.0">Choose the appropriate</tspan><tspan x="210.0" y="443.0">ingestion pattern</tspan></text>
+</svg></div></div><p class="fcap">I ask these six questions in order. They lead me to a pattern. They do not start with a product name.</p></figure>
+<p>These questions lead me to a pattern, not to a product name. Recurring files may lead me to <a href="https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/" target="_blank" rel="noopener noreferrer">Auto Loader</a> or <a href="https://docs.databricks.com/sql/language-manual/delta-copy-into.html" target="_blank" rel="noopener noreferrer">COPY INTO</a>. A database may need CDC or query-based ingestion. A supported SaaS source may fit <a href="https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/" target="_blank" rel="noopener noreferrer">Lakeflow Connect</a>. Application events may use a push-based approach such as <a href="https://docs.databricks.com/aws/en/ingestion/zerobus-overview" target="_blank" rel="noopener noreferrer">Zerobus</a>. When the data need not be copied, <a href="https://docs.databricks.com/aws/query-federation" target="_blank" rel="noopener noreferrer">Lakehouse Federation</a> changes the architecture.</p>
+<h3 id="first-question">The first architectural question</h3>
+<p>One question is easy to skip: <strong>does this data need to move?</strong></p>
+<ul><li>If yes, I design an ingestion path.</li><li>If no, I may be looking at a federation or query-based design.</li></ul>
+<p>This matters because every physical ingestion path adds work. Someone must manage connectivity, authentication, incremental processing, schema changes, failures, monitoring, and the impact on the source system.</p>
+<p>So the goal is not to move everything into Databricks. The goal is a data path that fits the source, the latency I need, and how the data will be used.</p>
+<aside class="note n-source"><span class="tag">From the source</span><p><strong>Engineering insight (source):</strong> Start with the source, not the ingestion tool. Databricks has several ingestion approaches because sources create different engineering problems.</p></aside>
+</section>
+<section id="glance" class="sec"><span class="ref">Built from: Source §3, §6.9, §7</span><h2>At a glance: decision flowchart and matrix</h2>
+<p>This section pulls the whole source into two pictures. I use it for revision. The detail follows below.</p>
+<figure class="diagram" id="fig-decision"><figcaption class="ftitle"><span>Diagram 3. Source-to-ingestion decision flowchart</span><button type="button" class="zoom" data-title="Source-to-ingestion decision flowchart" aria-label="Expand diagram: Source-to-ingestion decision flowchart">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:691px"><svg viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-decision d-decision" data-w="960" data-h="520">
+<title id="t-decision">Source-to-ingestion decision flowchart</title><desc id="d-decision">I start at the left. First I ask if the data must move. If not, I stop at federation. If yes, the source type picks the row, and one question picks the pattern.</desc>
+<defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<polyline points="150.0,260.0 185.0,260.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="260.0,230.0 265.0,100.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="335.0,260.0 410.0,60.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="540.0,60.0 575.0,60.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,60.0 760.0,34.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,60.0 760.0,86.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="335.0,260.0 410.0,160.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="540.0,160.0 575.0,160.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,160.0 760.0,134.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,160.0 760.0,186.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="335.0,260.0 410.0,260.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="540.0,260.0 575.0,260.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,260.0 760.0,234.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,260.0 760.0,286.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="335.0,260.0 410.0,360.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="540.0,360.0 575.0,360.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,360.0 760.0,334.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,360.0 760.0,386.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="335.0,260.0 410.0,460.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="540.0,460.0 575.0,460.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,460.0 760.0,434.0" class="edge" marker-end="url(#ah3)"/>
+<polyline points="725.0,460.0 760.0,486.0" class="edge" marker-end="url(#ah3)"/>
+<rect x="10" y="230" width="140" height="60" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="80.0" y="257.0">Where does the</tspan><tspan x="80.0" y="272.0">data live?</tspan></text>
+<rect x="185" y="230" width="150" height="60" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="260.0" y="257.0">Does the data</tspan><tspan x="260.0" y="272.0">need to move?</tspan></text>
+<rect x="150" y="40" width="230" height="60" rx="9" class="node n-teal"/>
+<text class="ntext" text-anchor="middle"><tspan x="265.0" y="67.0">No: Lakehouse Federation</tspan><tspan x="265.0" y="82.0">query it in place</tspan></text>
+<rect x="410" y="35" width="130" height="50" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="475.0" y="57.0">Cloud files</tspan><tspan x="475.0" y="72.0">(S3, ADLS, GCS)</tspan></text>
+<rect x="575" y="33" width="150" height="54" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="650.0" y="57.0">Recurring files,</tspan><tspan x="650.0" y="72.0">incremental?</tspan></text>
+<rect x="760" y="14" width="195" height="40" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="31.0">Yes: Auto Loader</tspan><tspan x="857.5" y="46.0">state + checkpoints</tspan></text>
+<rect x="760" y="66" width="195" height="40" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="83.0">No: COPY INTO</tspan><tspan x="857.5" y="98.0">SQL batch load</tspan></text>
+<rect x="410" y="135" width="130" height="50" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="475.0" y="164.5">Database</tspan></text>
+<rect x="575" y="133" width="150" height="54" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="650.0" y="157.0">Does the source</tspan><tspan x="650.0" y="172.0">expose changes?</tspan></text>
+<rect x="760" y="114" width="195" height="40" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="131.0">Yes: CDC-based</tspan><tspan x="857.5" y="146.0">ingestion</tspan></text>
+<rect x="760" y="166" width="195" height="40" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="183.0">No: query-based</tspan><tspan x="857.5" y="198.0">ingestion</tspan></text>
+<rect x="410" y="235" width="130" height="50" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="475.0" y="257.0">SaaS</tspan><tspan x="475.0" y="272.0">application</tspan></text>
+<rect x="575" y="233" width="150" height="54" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="650.0" y="257.0">Supported managed</tspan><tspan x="650.0" y="272.0">connector?</tspan></text>
+<rect x="760" y="214" width="195" height="40" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="231.0">Yes: Lakeflow Connect</tspan><tspan x="857.5" y="246.0">managed connector</tspan></text>
+<rect x="760" y="266" width="195" height="40" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="283.0">No: API extraction</tspan><tspan x="857.5" y="298.0">→ raw landing</tspan></text>
+<rect x="410" y="335" width="130" height="50" rx="9" class="node n-orange"/>
+<text class="ntext" text-anchor="middle"><tspan x="475.0" y="357.0">App / event</tspan><tspan x="475.0" y="372.0">producer</tspan></text>
+<rect x="575" y="333" width="150" height="54" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="650.0" y="357.0">Can the producer</tspan><tspan x="650.0" y="372.0">push records?</tspan></text>
+<rect x="760" y="314" width="195" height="40" rx="9" class="node n-orange"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="331.0">Yes: Zerobus</tspan><tspan x="857.5" y="346.0">push-based path</tspan></text>
+<rect x="760" y="366" width="195" height="40" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="383.0">No: producer → message</tspan><tspan x="857.5" y="398.0">system → consumer</tspan></text>
+<rect x="410" y="435" width="130" height="50" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="475.0" y="457.0">Streaming source</tspan><tspan x="475.0" y="472.0">(e.g. Kafka)</tspan></text>
+<rect x="575" y="433" width="150" height="54" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="650.0" y="457.0">How much control</tspan><tspan x="650.0" y="472.0">is needed?</tspan></text>
+<rect x="760" y="414" width="195" height="40" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="431.0">Less: managed connector</tspan><tspan x="857.5" y="446.0">or Lakeflow pipeline</tspan></text>
+<rect x="760" y="466" width="195" height="40" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="857.5" y="483.0">More: Structured</tspan><tspan x="857.5" y="498.0">Streaming</tspan></text>
+<rect x="251.1" y="156.0" width="22.8" height="18" rx="4" class="elabel-bg"/>
+<text x="262.5" y="169.0" text-anchor="middle" class="elabel">No</text>
+<rect x="357.9" y="251.0" width="29.2" height="18" rx="4" class="elabel-bg"/>
+<text x="372.5" y="264.0" text-anchor="middle" class="elabel">Yes</text>
+</svg></div></div><p class="fcap">I start at the left. First I ask if the data must move. If not, I stop at federation. If yes, the source type picks the row, and one question picks the pattern.</p></figure>
+<aside class="note n-me"><span class="tag">My note</span><p>The flowchart is my own drawing. Every box comes from the source: the federation question, the five source types, and the patterns in §3 and §6.9. The two "No" branches for SaaS and events (API extraction, message system) come from §3.5 and §3.6.</p></aside>
+<label class="tfilter"><span>Filter rows</span><input type="search" data-table="matrix" placeholder="Type a source, pattern or word"></label><div class="tablewrap"><table id="matrix"><caption>Comparison matrix: source, pattern, responsibility, operations. Built from Source §3, §4 and §6.9.</caption><thead><tr><th scope="col">Source or need</th><th scope="col">Pattern</th><th scope="col">What the pattern takes on</th><th scope="col">What I still own</th><th scope="col">Operational considerations</th></tr></thead><tbody><tr><td data-label="Source or need">Recurring files</td><td data-label="Pattern">Auto Loader</td><td data-label="What the pattern takes on">Discovers new files. Keeps state in checkpoints. Supports schema inference and evolution. Can rescue unexpected data.</td><td data-label="What I still own">Judging what a schema change means downstream.</td><td data-label="Operational considerations">Checkpoints support recovery when the streaming query restarts.</td></tr><tr><td data-label="Source or need">Straightforward file load</td><td data-label="Pattern">COPY INTO</td><td data-label="What the pattern takes on">SQL load. Can run repeatedly. Designed to skip files already loaded.</td><td data-label="What I still own">Running it again when new files arrive.</td><td data-label="Operational considerations">Batch-oriented. Fits a simple operating model.</td></tr><tr><td data-label="Source or need">SaaS application</td><td data-label="Pattern">Lakeflow Connect managed connector</td><td data-label="What the pattern takes on">Much of the source-specific work: API calls, incremental extraction, retries.</td><td data-label="What I still own">Authentication, permissions, networking, source behavior, data quality, downstream modeling.</td><td data-label="Operational considerations">Connector availability varies by source and environment. Check the current docs.</td></tr><tr><td data-label="Source or need">Database (changes)</td><td data-label="Pattern">CDC-based ingestion (Lakeflow Connect / CDC)</td><td data-label="What the pattern takes on">Captures the changes the source exposes.</td><td data-label="What I still own">Making sure the source exposes changes in a usable way.</td><td data-label="Operational considerations">Transaction-log retention. CDC overhead.</td></tr><tr><td data-label="Source or need">Database (queries)</td><td data-label="Pattern">Query-based ingestion</td><td data-label="What the pattern takes on">Periodically queries the source.</td><td data-label="What I still own">Query frequency and complexity. Connection use.</td><td data-label="Operational considerations">Source load from repeated queries.</td></tr><tr><td data-label="Source or need">Streaming source</td><td data-label="Pattern">Managed connector / Lakeflow pipeline / Structured Streaming</td><td data-label="What the pattern takes on">Depends on the level. More managed means less I build.</td><td data-label="What I still own">More control means more state, checkpoint, failure and monitoring work.</td><td data-label="Operational considerations">Late data, restarts, continuous monitoring.</td></tr><tr><td data-label="Source or need">API with no managed connector</td><td data-label="Pattern">Custom extraction → raw landing → processing</td><td data-label="What the pattern takes on">Nothing. I build it.</td><td data-label="What I still own">Authentication, pagination, rate limits, retries, backoff, partial failures, schema changes.</td><td data-label="Operational considerations">Request limits and auth limits at the source.</td></tr><tr><td data-label="Source or need">Application events / telemetry</td><td data-label="Pattern">Zerobus (push-based)</td><td data-label="What the pattern takes on">A direct push path from producer into Databricks ingestion.</td><td data-label="What I still own">The producer sending records. The wider event architecture.</td><td data-label="Operational considerations">Not a universal replacement for Kafka.</td></tr><tr><td data-label="Source or need">Data that can stay at the source</td><td data-label="Pattern">Lakehouse Federation</td><td data-label="What the pattern takes on">Queries supported external sources without copying into Delta.</td><td data-label="What I still own">Source constraints, latency fit, governance.</td><td data-label="Operational considerations">The source still has to serve every query.</td></tr></tbody></table></div>
+</section>
+<section id="foundations" class="sec"><span class="ref">Source: Foundations</span><h2>Foundations</h2>
+<p>Before Auto Loader, Lakeflow Connect, CDC, streaming or federation, I need a few basic ideas. The aim is to set the boundaries that make the patterns easier to read later.</p>
+<h3 id="what-is-ingestion">What does ingestion mean?</h3>
+<p>At its simplest, ingestion gets data from a source into a place where it can be used. But the source shapes the process.</p>
+<ul><li>A file may already sit in cloud storage. It only needs to be discovered and loaded.</li><li>A database already stores tables. The real question is often how to find what changed.</li><li>A SaaS app exposes data through its own interfaces.</li><li>An event system keeps producing records.</li></ul>
+<p>These are all ingestion problems. They are not the same problem. The source type is the first architectural boundary.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">Simple examples from the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">File        Cloud Storage -&gt; Databricks
+Database    Database -&gt; Databricks
+SaaS        Salesforce -&gt; Databricks
+Streaming   Kafka -&gt; Databricks
+Federation  External Database &lt;- Query &lt;- Databricks</code></pre></figure>
+<p>Federation needs extra care. The data does not enter Databricks as part of the query. It stays in the external system.</p>
+<h3 id="boundary">The ingestion boundary</h3>
+<p>An ingestion pipeline crosses a boundary between two systems. The source is on one side. The Databricks environment is on the other. That boundary is more than a connection.</p>
+<figure class="diagram" id="fig-boundary"><figcaption class="ftitle"><span>Diagram 4. The ingestion boundary</span><button type="button" class="zoom" data-title="The ingestion boundary" aria-label="Expand diagram: The ingestion boundary">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:576px"><svg viewBox="0 0 800 335" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-boundary d-boundary" data-w="800" data-h="335">
+<title id="t-boundary">The ingestion boundary</title><desc id="d-boundary">I treat the line between source and Databricks as a system boundary. These eight topics sit on it.</desc>
+<defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<polyline points="185.0,165.0 315.0,165.0" class="edge" marker-end="url(#ah4)"/>
+<polyline points="485.0,165.0 615.0,165.0" class="edge" marker-end="url(#ah4)"/>
+<polyline points="100.0,51.0 400.0,140.0" class="edge dash" marker-end="url(#ah4)"/>
+<polyline points="300.0,51.0 400.0,140.0" class="edge dash" marker-end="url(#ah4)"/>
+<polyline points="500.0,51.0 400.0,140.0" class="edge dash" marker-end="url(#ah4)"/>
+<polyline points="700.0,51.0 400.0,140.0" class="edge dash" marker-end="url(#ah4)"/>
+<polyline points="100.0,280.0 400.0,190.0" class="edge dash" marker-end="url(#ah4)"/>
+<polyline points="300.0,280.0 400.0,190.0" class="edge dash" marker-end="url(#ah4)"/>
+<polyline points="500.0,280.0 400.0,190.0" class="edge dash" marker-end="url(#ah4)"/>
+<polyline points="700.0,280.0 400.0,190.0" class="edge dash" marker-end="url(#ah4)"/>
+<rect x="15" y="130" width="170" height="70" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="100.0" y="169.5">Source system</tspan></text>
+<rect x="315" y="140" width="170" height="50" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="400.0" y="169.5">Data ingestion</tspan></text>
+<rect x="615" y="130" width="170" height="70" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="700.0" y="169.5">Databricks</tspan></text>
+<rect x="15" y="15" width="170" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="100.0" y="37.5">Authentication</tspan></text>
+<rect x="215" y="15" width="170" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="300.0" y="37.5">Network access</tspan></text>
+<rect x="415" y="15" width="170" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="500.0" y="37.5">Source permissions</tspan></text>
+<rect x="615" y="15" width="170" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="700.0" y="37.5">Data discovery</tspan></text>
+<rect x="15" y="280" width="170" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="100.0" y="302.5">Source-system impact</tspan></text>
+<rect x="215" y="280" width="170" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="300.0" y="302.5">Schema changes</tspan></text>
+<rect x="415" y="280" width="170" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="500.0" y="302.5">Failure recovery</tspan></text>
+<rect x="615" y="280" width="170" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="700.0" y="302.5">Destination permissions</tspan></text>
+</svg></div></div><p class="fcap">I treat the line between source and Databricks as a system boundary. These eight topics sit on it.</p></figure>
+<ul><li>authentication</li><li>network access</li><li>source permissions</li><li>source-system impact</li><li>data discovery</li><li>schema changes</li><li>failure recovery</li><li>destination permissions</li></ul>
+<p>So I design ingestion as a system boundary. I do not treat it as a piece of code that reads data.</p>
+<h3 id="batch-streaming">Batch and streaming are different operating models</h3>
+<p>Batch processes data in groups. A source may produce a file every night. The pipeline runs, processes what is there, and finishes.</p>
+<p>Streaming works differently. Data keeps arriving. The pipeline keeps processing new records.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Batch      Daily File -&gt; Ingestion -&gt; Delta
+Streaming  Events -&gt; Streaming Pipeline -&gt; Delta</code></pre></figure>
+<figure class="diagram" id="fig-batch_stream"><figcaption class="ftitle"><span>Diagram 5. Batch and streaming are different operating models</span><button type="button" class="zoom" data-title="Batch and streaming are different operating models" aria-label="Expand diagram: Batch and streaming are different operating models">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:547px"><svg viewBox="0 0 760 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-batch_stream d-batch_stream" data-w="760" data-h="270">
+<title id="t-batch_stream">Batch and streaming are different operating models</title><desc id="d-batch_stream">I see batch as run, finish, stop. I see streaming as never stopping. That brings state, checkpoints, failures, late data and constant monitoring.</desc>
+<defs><marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="10" y="10" width="740" height="115" rx="12" class="grp g-blue"/>
+<text x="22" y="29" class="glabel">Batch: process data in groups</text>
+<rect x="10" y="140" width="740" height="115" rx="12" class="grp g-green"/>
+<text x="22" y="159" class="glabel">Streaming: keep processing as data arrives</text>
+<polyline points="190.0,78.0 305.0,78.0" class="edge" marker-end="url(#ah5)"/>
+<polyline points="455.0,78.0 570.0,78.0" class="edge" marker-end="url(#ah5)"/>
+<polyline points="190.0,208.0 305.0,208.0" class="edge" marker-end="url(#ah5)"/>
+<polyline points="455.0,208.0 570.0,208.0" class="edge" marker-end="url(#ah5)"/>
+<rect x="40" y="55" width="150" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="115.0" y="82.5">Daily file</tspan></text>
+<rect x="305" y="55" width="150" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="380.0" y="82.5">Ingestion</tspan></text>
+<rect x="570" y="55" width="150" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="645.0" y="82.5">Delta</tspan></text>
+<rect x="40" y="185" width="150" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="115.0" y="212.5">Events</tspan></text>
+<rect x="305" y="185" width="150" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="380.0" y="212.5">Streaming pipeline</tspan></text>
+<rect x="570" y="185" width="150" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="645.0" y="212.5">Delta</tspan></text>
+<rect x="204.1" y="69.0" width="86.8" height="18" rx="4" class="elabel-bg"/>
+<text x="247.5" y="82.0" text-anchor="middle" class="elabel">data arrives</text>
+<rect x="446.7" y="69.0" width="131.6" height="18" rx="4" class="elabel-bg"/>
+<text x="512.5" y="82.0" text-anchor="middle" class="elabel">runs, then finishes</text>
+<rect x="197.7" y="199.0" width="99.6" height="18" rx="4" class="elabel-bg"/>
+<text x="247.5" y="212.0" text-anchor="middle" class="elabel">keeps arriving</text>
+<rect x="456.3" y="199.0" width="112.4" height="18" rx="4" class="elabel-bg"/>
+<text x="512.5" y="212.0" text-anchor="middle" class="elabel">keeps processing</text>
+</svg></div></div><p class="fcap">I see batch as run, finish, stop. I see streaming as never stopping. That brings state, checkpoints, failures, late data and constant monitoring.</p></figure>
+<p>The key difference is not that streaming is "faster". Streaming brings state, <a href="https://docs.databricks.com/structured-streaming/checkpoints.html" target="_blank" rel="noopener noreferrer">checkpoints</a>, failures, late-arriving data and continuous monitoring. So choosing streaming is choosing a different operating model.</p>
+<h3 id="not-transformation">Ingestion is not transformation</h3>
+<p>This matters as soon as the pipeline grows.</p>
+<ul><li><strong>Ingestion asks:</strong> How does the data enter the platform?</li><li><strong>Transformation asks:</strong> What should the data look like after it enters?</li></ul>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Source -&gt; Ingestion -&gt; Bronze -&gt; Transformation -&gt; Silver -&gt; Gold</code></pre></figure>
+<p>Ingestion builds a reliable path from the source. Transformation then cleans data, applies business rules, joins datasets and builds downstream models.</p>
+<figure class="diagram" id="fig-ing_trans"><figcaption class="ftitle"><span>Diagram 6. Ingestion and transformation solve different problems</span><button type="button" class="zoom" data-title="Ingestion and transformation solve different problems" aria-label="Expand diagram: Ingestion and transformation solve different problems">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:648px"><svg viewBox="0 0 900 135" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-ing_trans d-ing_trans" data-w="900" data-h="135">
+<title id="t-ing_trans">Ingestion and transformation solve different problems</title><desc id="d-ing_trans">I keep one line in mind. Ingestion gets the data in. Transformation makes it useful.</desc>
+<defs><marker id="ah6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="10" y="10" width="440" height="115" rx="12" class="grp g-blue"/>
+<text x="22" y="29" class="glabel">Getting data into the platform</text>
+<rect x="465" y="10" width="425" height="115" rx="12" class="grp g-green"/>
+<text x="477" y="29" class="glabel">Shaping the data</text>
+<polyline points="115.0,78.0 165.0,78.0" class="edge" marker-end="url(#ah6)"/>
+<polyline points="275.0,78.0 325.0,78.0" class="edge" marker-end="url(#ah6)"/>
+<polyline points="435.0,78.0 480.0,78.0" class="edge" marker-end="url(#ah6)"/>
+<polyline points="610.0,78.0 660.0,78.0" class="edge" marker-end="url(#ah6)"/>
+<polyline points="750.0,78.0 790.0,78.0" class="edge" marker-end="url(#ah6)"/>
+<rect x="25" y="55" width="90" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="70.0" y="82.5">Source</tspan></text>
+<rect x="165" y="55" width="110" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="220.0" y="82.5">Ingestion</tspan></text>
+<rect x="325" y="55" width="110" height="46" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="380.0" y="82.5">Bronze</tspan></text>
+<rect x="480" y="55" width="130" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="545.0" y="82.5">Transformation</tspan></text>
+<rect x="660" y="55" width="90" height="46" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="705.0" y="82.5">Silver</tspan></text>
+<rect x="790" y="55" width="90" height="46" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="835.0" y="82.5">Gold</tspan></text>
+</svg></div></div><p class="fcap">I keep one line in mind. Ingestion gets the data in. Transformation makes it useful.</p></figure>
+<p>The source says the two layers can sometimes be built together. They still solve different problems. Keeping them apart stops ingestion code from becoming the place where every piece of business logic ends up.</p>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> The <a href="https://docs.databricks.com/aws/lakehouse/medallion" target="_blank" rel="noopener noreferrer">medallion architecture page</a> says the bronze layer should hold raw data with minimal validation. It also says Databricks does not recommend writing to silver tables directly from ingestion. This supports the source's point.</p></aside>
+<h3 id="not-federation">Ingestion is not federation</h3>
+<p>The source calls this the most important distinction in the foundations.</p>
+<ul><li><strong>Ingestion:</strong> External source → ingestion → Databricks / Delta. The data moves.</li><li><strong>Federation:</strong> Databricks queries the external system. The source data stays outside Databricks.</li></ul>
+<figure class="diagram" id="fig-ing_fed"><figcaption class="ftitle"><span>Diagram 7. Ingestion vs federation</span><button type="button" class="zoom" data-title="Ingestion vs federation" aria-label="Expand diagram: Ingestion vs federation">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:475px"><svg viewBox="0 0 660 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-ing_fed d-ing_fed" data-w="660" data-h="330">
+<title id="t-ing_fed">Ingestion vs federation</title><desc id="d-ing_fed">I see one arrow pointing down and one pointing up. With ingestion, data flows into Delta. With federation, Databricks reaches out and the data stays where it is.</desc>
+<defs><marker id="ah7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="10" y="10" width="305" height="310" rx="12" class="grp g-blue"/>
+<text x="22" y="29" class="glabel">Ingestion: the data moves</text>
+<rect x="345" y="10" width="305" height="310" rx="12" class="grp g-green"/>
+<text x="357" y="29" class="glabel">Federation: the data stays external</text>
+<polyline points="162.5,101.0 162.5,150.0" class="edge" marker-end="url(#ah7)"/>
+<polyline points="162.5,196.0 162.5,245.0" class="edge" marker-end="url(#ah7)"/>
+<polyline points="497.5,245.0 497.5,196.0" class="edge" marker-end="url(#ah7)"/>
+<polyline points="497.5,150.0 497.5,101.0" class="edge" marker-end="url(#ah7)"/>
+<rect x="85" y="55" width="155" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="162.5" y="82.5">External source</tspan></text>
+<rect x="85" y="150" width="155" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="162.5" y="177.5">Ingestion</tspan></text>
+<rect x="85" y="245" width="155" height="46" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="162.5" y="272.5">Databricks / Delta</tspan></text>
+<rect x="420" y="55" width="155" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="497.5" y="82.5">External source</tspan></text>
+<rect x="420" y="150" width="155" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="497.5" y="177.5">Query</tspan></text>
+<rect x="420" y="245" width="155" height="46" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="497.5" y="272.5">Databricks</tspan></text>
+<rect x="470.1" y="211.5" width="54.8" height="18" rx="4" class="elabel-bg"/>
+<text x="497.5" y="224.5" text-anchor="middle" class="elabel">queries</text>
+<rect x="447.7" y="116.5" width="99.6" height="18" rx="4" class="elabel-bg"/>
+<text x="497.5" y="129.5" text-anchor="middle" class="elabel">reads in place</text>
+</svg></div></div><p class="fcap">I see one arrow pointing down and one pointing up. With ingestion, data flows into Delta. With federation, Databricks reaches out and the data stays where it is.</p></figure>
+<p>So federation is not just another ingestion mechanism. It is a different architectural decision. I stop asking "How should we move this data?" and first ask "Does this data need to move?"</p>
+<p>The answer depends on the workload, latency needs, governance needs, source-system limits and how the data will be used. The source says its research brief makes the same split: ingestion moves data into the platform, and federation queries external data without copying it into Delta as part of the query.</p>
+<h3 id="why-foundations">Why these foundations matter</h3>
+<p>Once the boundaries are clear, the landscape is easier to read. A file problem looks different from a database change problem. A database change problem looks different from an event stream. An API extraction problem looks different from a managed SaaS connector. And federation may remove the ingestion problem altogether.</p>
+<p>The next step is not to compare tools. It is to look at each source type and its engineering problem.</p>
+</section>
+<section id="architecture" class="sec"><span class="ref">Source: §3 Architecture &amp; Layers</span><h2>Architecture by source type</h2>
+<p>This is the main technical section. A file, a SaaS app, a database, an event stream and an API expose data differently. That affects discovery, change tracking, schema handling, latency, failure recovery, and how much engineering work I own.</p>
+<figure class="diagram" id="fig-source_arch"><figcaption class="ftitle"><span>Diagram 8. Source type shapes the ingestion architecture</span><button type="button" class="zoom" data-title="Source type shapes the ingestion architecture" aria-label="Expand diagram: Source type shapes the ingestion architecture">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:633px"><svg viewBox="0 0 880 305" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-source_arch d-source_arch" data-w="880" data-h="305">
+<title id="t-source_arch">Source type shapes the ingestion architecture</title><desc id="d-source_arch">I read the top row as what the source is. I read the bottom row as what that choice changes for me.</desc>
+<defs><marker id="ah8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<polyline points="165.0,35.0 290.0,150.0" class="edge" marker-end="url(#ah8)"/>
+<polyline points="265.0,60.0 440.0,125.0" class="edge" marker-end="url(#ah8)"/>
+<polyline points="440.0,60.0 440.0,125.0" class="edge" marker-end="url(#ah8)"/>
+<polyline points="615.0,60.0 440.0,125.0" class="edge" marker-end="url(#ah8)"/>
+<polyline points="715.0,35.0 590.0,150.0" class="edge" marker-end="url(#ah8)"/>
+<polyline points="290.0,150.0 165.0,265.0" class="edge" marker-end="url(#ah8)"/>
+<polyline points="440.0,175.0 265.0,240.0" class="edge" marker-end="url(#ah8)"/>
+<polyline points="440.0,175.0 440.0,240.0" class="edge" marker-end="url(#ah8)"/>
+<polyline points="440.0,175.0 615.0,240.0" class="edge" marker-end="url(#ah8)"/>
+<polyline points="590.0,150.0 715.0,265.0" class="edge" marker-end="url(#ah8)"/>
+<rect x="15" y="10" width="150" height="50" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="90.0" y="39.5">File</tspan></text>
+<rect x="190" y="10" width="150" height="50" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="265.0" y="32.0">SaaS</tspan><tspan x="265.0" y="47.0">application</tspan></text>
+<rect x="365" y="10" width="150" height="50" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="440.0" y="39.5">Database</tspan></text>
+<rect x="540" y="10" width="150" height="50" rx="9" class="node n-orange"/>
+<text class="ntext" text-anchor="middle"><tspan x="615.0" y="32.0">Event</tspan><tspan x="615.0" y="47.0">stream</tspan></text>
+<rect x="715" y="10" width="150" height="50" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="790.0" y="39.5">API</tspan></text>
+<rect x="290" y="125" width="300" height="50" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="440.0" y="154.5">Ingestion architecture</tspan></text>
+<rect x="15" y="240" width="150" height="50" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="90.0" y="269.5">Discovery</tspan></text>
+<rect x="190" y="240" width="150" height="50" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="265.0" y="262.0">Change</tspan><tspan x="265.0" y="277.0">tracking</tspan></text>
+<rect x="365" y="240" width="150" height="50" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="440.0" y="262.0">Schema</tspan><tspan x="440.0" y="277.0">handling</tspan></text>
+<rect x="540" y="240" width="150" height="50" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="615.0" y="269.5">Latency</tspan></text>
+<rect x="715" y="240" width="150" height="50" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="790.0" y="262.0">Engineering</tspan><tspan x="790.0" y="277.0">work</tspan></text>
+</svg></div></div><p class="fcap">I read the top row as what the source is. I read the bottom row as what that choice changes for me.</p></figure>
+<h3 id="files">3.1 Cloud files</h3>
+<p>Cloud object storage is one of the most common sources. A file lands in S3, ADLS or GCS. Databricks must discover it, read it, handle its schema and write it to a Delta table.</p>
+<p>For recurring incremental file ingestion, I use <a href="https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/" target="_blank" rel="noopener noreferrer">Auto Loader</a>. It keeps state about discovered files through checkpoints. It supports schema inference and schema evolution. Depending on configuration, unexpected data can be rescued instead of failing the whole ingestion.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">File arrives -&gt; discovery -&gt; state -&gt; schema handling -&gt; Delta</code></pre></figure>
+<h3 id="auto-loader">Auto Loader</h3>
+<p>Auto Loader helps when files keep arriving and I want Databricks to process only new ones. The important idea is <strong>state</strong>. The process must remember what it has discovered and processed. <a href="https://docs.databricks.com/structured-streaming/checkpoints.html" target="_blank" rel="noopener noreferrer">Checkpoints</a> hold that state. They also support recovery when the streaming query restarts.</p>
+<figure class="diagram" id="fig-autoloader"><figcaption class="ftitle"><span>Diagram 9. Auto Loader: stateful file ingestion</span><button type="button" class="zoom" data-title="Auto Loader: stateful file ingestion" aria-label="Expand diagram: Auto Loader: stateful file ingestion">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:648px"><svg viewBox="0 0 900 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-autoloader d-autoloader" data-w="900" data-h="170">
+<title id="t-autoloader">Auto Loader: stateful file ingestion</title><desc id="d-autoloader">I follow the flow left to right. The dashed loop is the key idea: the checkpoint state tells discovery what it has already seen.</desc>
+<defs><marker id="ah9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<polyline points="150.0,85.0 185.0,85.0" class="edge" marker-end="url(#ah9)"/>
+<polyline points="325.0,85.0 360.0,85.0" class="edge" marker-end="url(#ah9)"/>
+<polyline points="530.0,85.0 565.0,85.0" class="edge" marker-end="url(#ah9)"/>
+<polyline points="725.0,85.0 760.0,85.0" class="edge" marker-end="url(#ah9)"/>
+<polyline points="445.0,55.0 445.0,21.0 255.0,21.0 255.0,55.0" class="edge dash" marker-end="url(#ah9)"/>
+<rect x="10" y="55" width="140" height="60" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="80.0" y="89.5">New files</tspan></text>
+<rect x="185" y="55" width="140" height="60" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="255.0" y="89.5">File discovery</tspan></text>
+<rect x="360" y="55" width="170" height="60" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="445.0" y="82.0">State / checkpoint</tspan><tspan x="445.0" y="97.0">tracks processed files</tspan></text>
+<rect x="565" y="55" width="160" height="60" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="645.0" y="74.5">Schema handling</tspan><tspan x="645.0" y="89.5">inference, evolution,</tspan><tspan x="645.0" y="104.5">rescued data</tspan></text>
+<rect x="760" y="55" width="130" height="60" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="825.0" y="89.5">Delta</tspan></text>
+<rect x="229.8" y="12.0" width="240.4" height="18" rx="4" class="elabel-bg"/>
+<text x="350.0" y="25.0" text-anchor="middle" class="elabel">state used for incremental discovery</text>
+</svg></div></div><p class="fcap">I follow the flow left to right. The dashed loop is the key idea: the checkpoint state tells discovery what it has already seen.</p></figure>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> The <a href="https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/" target="_blank" rel="noopener noreferrer">Auto Loader page</a> says file metadata is stored in a key-value store (RocksDB) inside the checkpoint location. It has two file detection modes: directory listing and file notification. It does not guarantee the order in which files are processed. It is compatible with Structured Streaming and Lakeflow pipelines, but it is not a fully managed connector.</p></aside>
+<figure class="code"><figcaption><span class="lang">python</span><span class="lbl">Added example. My own sketch of the usual shape. I did not run it. Paths are placeholders. Check option names in the Auto Loader docs.</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-python">(spark.readStream
+    .format(&quot;cloudFiles&quot;)
+    .option(&quot;cloudFiles.format&quot;, &quot;json&quot;)
+    .option(&quot;cloudFiles.schemaLocation&quot;, &quot;/Volumes/catalog/schema/volume/_schemas/orders&quot;)
+    .load(&quot;/Volumes/catalog/schema/volume/landing/orders&quot;)
+    .writeStream
+    .option(&quot;checkpointLocation&quot;, &quot;/Volumes/catalog/schema/volume/_checkpoints/orders&quot;)
+    .toTable(&quot;catalog.schema.orders_bronze&quot;))</code></pre></figure>
+<h3 id="copy-into">COPY INTO</h3>
+<p><a href="https://docs.databricks.com/sql/language-manual/delta-copy-into.html" target="_blank" rel="noopener noreferrer">COPY INTO</a> is another way to load files into Delta. It uses SQL. It fits a simpler batch pattern. I can run it again and again, and it is designed to avoid reprocessing files it already loaded.</p>
+<ul><li>Need recurring incremental file ingestion? Auto Loader is designed for that.</li><li>Need a straightforward SQL-based batch load? COPY INTO can fit.</li></ul>
+<p>Neither is better in general. The workload and operating model decide.</p>
+<figure class="diagram" id="fig-two_patterns"><figcaption class="ftitle"><span>Diagram 10. Recurring file ingestion: two patterns</span><button type="button" class="zoom" data-title="Recurring file ingestion: two patterns" aria-label="Expand diagram: Recurring file ingestion: two patterns">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:475px"><svg viewBox="0 0 660 370" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-two_patterns d-two_patterns" data-w="660" data-h="370">
+<title id="t-two_patterns">Recurring file ingestion: two patterns</title><desc id="d-two_patterns">I use Auto Loader for recurring incremental ingestion. I use COPY INTO for a straightforward SQL batch load. Neither is better in general. The workload decides.</desc>
+<defs><marker id="ah10" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="10" y="10" width="305" height="350" rx="12" class="grp g-blue"/>
+<text x="22" y="29" class="glabel">Auto Loader</text>
+<rect x="345" y="10" width="305" height="350" rx="12" class="grp g-green"/>
+<text x="357" y="29" class="glabel">COPY INTO</text>
+<polyline points="162.5,96.0 162.5,130.0" class="edge" marker-end="url(#ah10)"/>
+<polyline points="162.5,176.0 162.5,210.0" class="edge" marker-end="url(#ah10)"/>
+<polyline points="162.5,256.0 162.5,290.0" class="edge" marker-end="url(#ah10)"/>
+<polyline points="497.5,96.0 497.5,150.0" class="edge" marker-end="url(#ah10)"/>
+<polyline points="497.5,196.0 497.5,250.0" class="edge" marker-end="url(#ah10)"/>
+<rect x="70" y="50" width="185" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="162.5" y="77.5">Files arrive over time</tspan></text>
+<rect x="70" y="130" width="185" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="162.5" y="157.5">Incremental discovery</tspan></text>
+<rect x="70" y="210" width="185" height="46" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="162.5" y="237.5">State / checkpoint</tspan></text>
+<rect x="70" y="290" width="185" height="46" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="162.5" y="317.5">Delta</tspan></text>
+<rect x="405" y="50" width="185" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="497.5" y="77.5">Files</tspan></text>
+<rect x="405" y="150" width="185" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="497.5" y="177.5">SQL-based load</tspan></text>
+<rect x="405" y="250" width="185" height="46" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="497.5" y="277.5">Delta</tspan></text>
+</svg></div></div><p class="fcap">I use Auto Loader for recurring incremental ingestion. I use COPY INTO for a straightforward SQL batch load. Neither is better in general. The workload decides.</p></figure>
+<figure class="code"><figcaption><span class="lang">sql</span><span class="lbl">From the official COPY INTO docs (Unity Catalog volume example)</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-sql">COPY INTO landing_table
+FROM &#x27;/Volumes/quickstart_catalog/quickstart_schema/quickstart_volume/raw_data&#x27;
+FILEFORMAT = PARQUET;</code></pre></figure>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> The <a href="https://docs.databricks.com/sql/language-manual/delta-copy-into.html" target="_blank" rel="noopener noreferrer">COPY INTO reference</a> calls it a retryable, idempotent operation. Files already loaded are skipped, even if they changed later. There are also <a href="https://docs.databricks.com/en/ingestion/copy-into/examples.html" target="_blank" rel="noopener noreferrer">common loading patterns</a>.</p></aside>
+<h3 id="saas">3.2 SaaS sources</h3>
+<p>SaaS ingestion is a different problem. The source usually exposes data through an application API. So ingestion must handle authentication, incremental extraction, source-specific behavior, schema changes, retries and failures.</p>
+<p><a href="https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/saas-overview" target="_blank" rel="noopener noreferrer">Lakeflow Connect</a> offers managed connectors for supported SaaS apps. The managed approach cuts the connector and infrastructure work my team builds and runs.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Salesforce -&gt; managed connector -&gt; Databricks</code></pre></figure>
+<p>The point is not the connector catalog. It is the operating model. A managed connector can take over much of the source-specific work. It does not mean I manage nothing. Authentication, permissions, networking, source behavior, data quality and downstream modeling still matter.</p>
+<figure class="diagram" id="fig-saas"><figcaption class="ftitle"><span>Diagram 11. Managed SaaS ingestion</span><button type="button" class="zoom" data-title="Managed SaaS ingestion" aria-label="Expand diagram: Managed SaaS ingestion">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:576px"><svg viewBox="0 0 800 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-saas d-saas" data-w="800" data-h="330">
+<title id="t-saas">Managed SaaS ingestion</title><desc id="d-saas">The connector takes much of the source-specific work. The five grey items still need my attention.</desc>
+<defs><marker id="ah11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<polyline points="185.0,165.0 315.0,165.0" class="edge" marker-end="url(#ah11)"/>
+<polyline points="485.0,165.0 615.0,165.0" class="edge" marker-end="url(#ah11)"/>
+<polyline points="230.0,56.0 400.0,140.0" class="edge dash" marker-end="url(#ah11)"/>
+<polyline points="400.0,56.0 400.0,140.0" class="edge dash" marker-end="url(#ah11)"/>
+<polyline points="570.0,56.0 400.0,140.0" class="edge dash" marker-end="url(#ah11)"/>
+<polyline points="315.0,280.0 400.0,190.0" class="edge dash" marker-end="url(#ah11)"/>
+<polyline points="495.0,280.0 400.0,190.0" class="edge dash" marker-end="url(#ah11)"/>
+<rect x="15" y="130" width="170" height="70" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="100.0" y="169.5">Salesforce</tspan></text>
+<rect x="315" y="140" width="170" height="50" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="400.0" y="169.5">Managed connector</tspan></text>
+<rect x="615" y="130" width="170" height="70" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="700.0" y="169.5">Databricks</tspan></text>
+<rect x="160" y="20" width="140" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="230.0" y="42.5">Authentication</tspan></text>
+<rect x="330" y="20" width="140" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="400.0" y="42.5">Permissions</tspan></text>
+<rect x="500" y="20" width="140" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="570.0" y="42.5">Networking</tspan></text>
+<rect x="245" y="280" width="140" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="315.0" y="302.5">Data quality</tspan></text>
+<rect x="415" y="280" width="160" height="36" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="495.0" y="302.5">Downstream modeling</tspan></text>
+</svg></div></div><p class="fcap">The connector takes much of the source-specific work. The five grey items still need my attention.</p></figure>
+<h3 id="databases">3.3 Databases</h3>
+<p>Database ingestion usually leads to two patterns: <strong>CDC-based ingestion</strong> and <strong>query-based ingestion</strong>.</p>
+<ul><li>With CDC, ingestion captures changes the source database exposes. Flow: Database → transaction log → CDC → Delta.</li><li>With query-based ingestion, a connector periodically queries the source. Flow: Database → scheduled query → Delta.</li></ul>
+<p>The difference matters. CDC rests on the source's change information. Query-based ingestion rests on reading the source with queries. They put different requirements on the source and behave differently in operation.</p>
+<p>I do not say one always wins. I ask what the source can expose and what the workload needs.</p>
+<figure class="diagram" id="fig-cdc_query"><figcaption class="ftitle"><span>Diagram 12. Database ingestion: CDC vs query-based</span><button type="button" class="zoom" data-title="Database ingestion: CDC vs query-based" aria-label="Expand diagram: Database ingestion: CDC vs query-based">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:576px"><svg viewBox="0 0 800 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-cdc_query d-cdc_query" data-w="800" data-h="270">
+<title id="t-cdc_query">Database ingestion: CDC vs query-based</title><desc id="d-cdc_query">I compare where the signal comes from. CDC uses what the source records about changes. Query-based ingestion reads the data with queries. They put different demands on the source.</desc>
+<defs><marker id="ah12" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="10" y="10" width="780" height="115" rx="12" class="grp g-green"/>
+<text x="22" y="29" class="glabel">CDC-based: read the source&#x27;s change information</text>
+<rect x="10" y="140" width="780" height="115" rx="12" class="grp g-blue"/>
+<text x="22" y="159" class="glabel">Query-based: read the source through queries</text>
+<polyline points="180.0,78.0 240.0,78.0" class="edge" marker-end="url(#ah12)"/>
+<polyline points="390.0,78.0 450.0,78.0" class="edge" marker-end="url(#ah12)"/>
+<polyline points="580.0,78.0 640.0,78.0" class="edge" marker-end="url(#ah12)"/>
+<polyline points="180.0,208.0 295.0,208.0" class="edge" marker-end="url(#ah12)"/>
+<polyline points="465.0,208.0 640.0,208.0" class="edge" marker-end="url(#ah12)"/>
+<rect x="30" y="55" width="150" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="105.0" y="82.5">Database</tspan></text>
+<rect x="240" y="55" width="150" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="315.0" y="82.5">Transaction log</tspan></text>
+<rect x="450" y="55" width="130" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="515.0" y="82.5">CDC</tspan></text>
+<rect x="640" y="55" width="130" height="46" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="705.0" y="82.5">Delta</tspan></text>
+<rect x="30" y="185" width="150" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="105.0" y="212.5">Database</tspan></text>
+<rect x="295" y="185" width="170" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="380.0" y="212.5">Scheduled query</tspan></text>
+<rect x="640" y="185" width="130" height="46" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="705.0" y="212.5">Delta</tspan></text>
+</svg></div></div><p class="fcap">I compare where the signal comes from. CDC uses what the source records about changes. Query-based ingestion reads the data with queries. They put different demands on the source.</p></figure>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> Lakeflow Connect now lists <a href="https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/cdc-overview" target="_blank" rel="noopener noreferrer">database connectors (CDC)</a> and <a href="https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/query-based-overview" target="_blank" rel="noopener noreferrer">query-based connectors</a> as separate types. The CDC connectors add an ingestion gateway and staging storage. Query-based connectors query the source on a schedule, with no gateway and no staging storage.</p></aside>
+<h3 id="streaming">3.4 Streaming sources</h3>
+<p>Streaming sources bring another set of choices. Databricks provides Structured Streaming, managed streaming connectors and Lakeflow pipelines. These are not simple competitors. They are different levels of abstraction and control.</p>
+<ul><li>A managed connector handles more source-specific connection and ingestion work.</li><li><a href="https://docs.databricks.com/aws/en/ldp/concepts/spark-declarative-pipelines" target="_blank" rel="noopener noreferrer">Lakeflow pipelines</a> give a managed pipeline abstraction.</li><li>Structured Streaming gives direct access to the streaming programming model.</li></ul>
+<figure class="diagram" id="fig-ladder"><figcaption class="ftitle"><span>Diagram 13. Streaming: abstraction vs control</span><button type="button" class="zoom" data-title="Streaming: abstraction vs control" aria-label="Expand diagram: Streaming: abstraction vs control">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:420px"><svg viewBox="0 0 440 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-ladder d-ladder" data-w="440" data-h="400">
+<title id="t-ladder">Streaming: abstraction vs control</title><desc id="d-ladder">I do not treat these as competitors. They are levels. Higher means more managed. Lower means more control and more to operate.</desc>
+<defs><marker id="ah13" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<polyline points="220.0,50.0 220.0,90.0" class="edge" marker-end="url(#ah13)"/>
+<polyline points="220.0,140.0 220.0,170.0" class="edge" marker-end="url(#ah13)"/>
+<polyline points="220.0,220.0 220.0,250.0" class="edge" marker-end="url(#ah13)"/>
+<polyline points="220.0,300.0 220.0,340.0" class="edge" marker-end="url(#ah13)"/>
+<rect x="100" y="10" width="240" height="40" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="220.0" y="34.5">More managed</tspan></text>
+<rect x="100" y="90" width="240" height="50" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="220.0" y="119.5">Managed connector</tspan></text>
+<rect x="100" y="170" width="240" height="50" rx="9" class="node n-orange"/>
+<text class="ntext" text-anchor="middle"><tspan x="220.0" y="199.5">Lakeflow pipeline</tspan></text>
+<rect x="100" y="250" width="240" height="50" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="220.0" y="279.5">Structured Streaming</tspan></text>
+<rect x="100" y="340" width="240" height="40" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="220.0" y="364.5">More control</tspan></text>
+</svg></div></div><p class="fcap">I do not treat these as competitors. They are levels. Higher means more managed. Lower means more control and more to operate.</p></figure>
+<p>The exact choice depends on the source and workload. I pick the abstraction level that matches the control the pipeline really needs.</p>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> The Lakeflow Connect docs now list <a href="https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/streaming-overview" target="_blank" rel="noopener noreferrer">streaming connectors</a> for message buses and event streams, and name RabbitMQ as an example. The source does not name specific streaming connectors, so I do not either.</p></aside>
+<h3 id="apis">3.5 APIs</h3>
+<p>An API can look simple from outside. Production API ingestion usually is not.</p>
+<ul><li>authentication</li><li>pagination</li><li>rate limits</li><li>retries</li><li>backoff</li><li>partial failures</li><li>schema changes</li></ul>
+<p>That is why I consider a managed connector first, when one exists and fits.</p>
+<p>With no suitable connector, one useful design splits extraction from downstream processing: <strong>API → raw landing → processing</strong>. The extraction layer focuses on talking to the source reliably. Downstream pipelines focus on transformation and modeling. This is a pattern, not a rule.</p>
+<figure class="diagram" id="fig-api"><figcaption class="ftitle"><span>Diagram 14. Separate API extraction from processing</span><button type="button" class="zoom" data-title="Separate API extraction from processing" aria-label="Expand diagram: Separate API extraction from processing">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:648px"><svg viewBox="0 0 900 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-api d-api" data-w="900" data-h="290">
+<title id="t-api">Separate API extraction from processing</title><desc id="d-api">I let the extraction layer fight the API. Downstream pipelines then only worry about transformation and modeling. This is a pattern, not a rule.</desc>
+<defs><marker id="ah14" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="10" y="10" width="560" height="270" rx="12" class="grp g-blue"/>
+<text x="22" y="29" class="glabel">Extraction</text>
+<rect x="600" y="10" width="290" height="270" rx="12" class="grp g-green"/>
+<text x="612" y="29" class="glabel">Downstream processing</text>
+<polyline points="180.0,148.0 330.0,148.0" class="edge" marker-end="url(#ah14)"/>
+<polyline points="490.0,148.0 670.0,148.0" class="edge" marker-end="url(#ah14)"/>
+<polyline points="90.0,77.0 110.0,120.0" class="edge dash" marker-end="url(#ah14)"/>
+<polyline points="220.0,77.0 110.0,120.0" class="edge dash" marker-end="url(#ah14)"/>
+<polyline points="345.0,77.0 110.0,120.0" class="edge dash" marker-end="url(#ah14)"/>
+<polyline points="200.0,225.0 110.0,176.0" class="edge dash" marker-end="url(#ah14)"/>
+<polyline points="335.0,225.0 110.0,176.0" class="edge dash" marker-end="url(#ah14)"/>
+<rect x="40" y="120" width="140" height="56" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="110.0" y="152.5">API</tspan></text>
+<rect x="330" y="120" width="160" height="56" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="410.0" y="152.5">Raw landing</tspan></text>
+<rect x="670" y="120" width="150" height="56" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="745.0" y="152.5">Processing</tspan></text>
+<rect x="30" y="45" width="120" height="32" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="90.0" y="65.5">Authentication</tspan></text>
+<rect x="165" y="45" width="110" height="32" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="220.0" y="65.5">Pagination</tspan></text>
+<rect x="290" y="45" width="110" height="32" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="345.0" y="65.5">Rate limits</tspan></text>
+<rect x="150" y="225" width="100" height="32" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="200.0" y="245.5">Retries</tspan></text>
+<rect x="270" y="225" width="130" height="32" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="335.0" y="245.5">Schema changes</tspan></text>
+</svg></div></div><p class="fcap">I let the extraction layer fight the API. Downstream pipelines then only worry about transformation and modeling. This is a pattern, not a rule.</p></figure>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> For sources with no managed connector, Lakeflow Connect also documents <a href="https://docs.databricks.com/aws/en/ingestion/community-connectors" target="_blank" rel="noopener noreferrer">community connectors</a> and <a href="https://docs.databricks.com/aws/en/ingestion/custom-connectors" target="_blank" rel="noopener noreferrer">custom connectors</a>. I would check both before writing extraction code from scratch.</p></aside>
+<h3 id="zerobus">3.6 Zerobus</h3>
+<p><a href="https://docs.databricks.com/aws/en/ingestion/zerobus-overview" target="_blank" rel="noopener noreferrer">Zerobus</a> is a different pattern. It is a <strong>push-based ingestion path</strong> for application and event-producing workloads. Databricks does not pull from a source again and again. The app or producer sends records straight toward Databricks ingestion.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Application / Event Producer -&gt; Zerobus -&gt; Delta</code></pre></figure>
+<p>This makes Zerobus relevant for application events and telemetry. The distinction is architectural.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Traditional   Producer -&gt; message system -&gt; consumer -&gt; Databricks
+Zerobus       direct push-oriented path into Databricks</code></pre></figure>
+<p>The source warns that Zerobus is not a universal replacement for Kafka or other event infrastructure. The right choice depends on what the overall event architecture needs.</p>
+<figure class="diagram" id="fig-zerobus"><figcaption class="ftitle"><span>Diagram 15. Push-based ingestion with Zerobus</span><button type="button" class="zoom" data-title="Push-based ingestion with Zerobus" aria-label="Expand diagram: Push-based ingestion with Zerobus">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:633px"><svg viewBox="0 0 880 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-zerobus d-zerobus" data-w="880" data-h="270">
+<title id="t-zerobus">Push-based ingestion with Zerobus</title><desc id="d-zerobus">I compare the number of hops. Zerobus is a direct push path. The source says it is not a universal replacement for Kafka. The whole event architecture decides.</desc>
+<defs><marker id="ah15" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="10" y="10" width="860" height="115" rx="12" class="grp g-blue"/>
+<text x="22" y="29" class="glabel">Traditional streaming</text>
+<rect x="10" y="140" width="860" height="115" rx="12" class="grp g-green"/>
+<text x="22" y="159" class="glabel">Push-based</text>
+<polyline points="180.0,78.0 245.0,78.0" class="edge" marker-end="url(#ah15)"/>
+<polyline points="405.0,78.0 470.0,78.0" class="edge" marker-end="url(#ah15)"/>
+<polyline points="620.0,78.0 690.0,78.0" class="edge" marker-end="url(#ah15)"/>
+<polyline points="200.0,205.0 390.0,208.0" class="edge" marker-end="url(#ah15)"/>
+<polyline points="540.0,208.0 690.0,208.0" class="edge" marker-end="url(#ah15)"/>
+<rect x="30" y="55" width="150" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="105.0" y="82.5">Producer</tspan></text>
+<rect x="245" y="55" width="160" height="46" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="325.0" y="82.5">Message system</tspan></text>
+<rect x="470" y="55" width="150" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="545.0" y="82.5">Consumer</tspan></text>
+<rect x="690" y="55" width="150" height="46" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="765.0" y="82.5">Databricks</tspan></text>
+<rect x="30" y="180" width="170" height="50" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="115.0" y="202.0">Application /</tspan><tspan x="115.0" y="217.0">event producer</tspan></text>
+<rect x="390" y="185" width="150" height="46" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="465.0" y="212.5">Zerobus</tspan></text>
+<rect x="690" y="185" width="150" height="46" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="765.0" y="212.5">Delta</tspan></text>
+</svg></div></div><p class="fcap">I compare the number of hops. Zerobus is a direct push path. The source says it is not a universal replacement for Kafka. The whole event architecture decides.</p></figure>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> The official name is Zerobus Ingest. The <a href="https://docs.databricks.com/aws/en/ingestion/zerobus-overview" target="_blank" rel="noopener noreferrer">overview</a> calls it a push-based streaming API that writes straight into Unity Catalog Delta tables. It lists SDKs over gRPC, a REST API, OpenTelemetry, MQTT and Kafka-compatible APIs as ways to send data. It also says that if I run Kafka for other consumers and want a copy in the lakehouse, managed streaming connectors fit better. Check <a href="https://docs.databricks.com/aws/en/resources/feature-region-support#ingestion" target="_blank" rel="noopener noreferrer">regional availability</a> before planning around it. An earlier <a href="https://www.databricks.com/blog/announcing-public-preview-zerobus-ingest" target="_blank" rel="noopener noreferrer">official blog post</a> announced a Public Preview. The overview page I read did not show a release label.</p></aside>
+<figure class="code"><figcaption><span class="lang">sql</span><span class="lbl">From the official Zerobus Ingest overview: step 1, create the target table</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-sql">CREATE TABLE main.default.air_quality (
+  device_name STRING,
+  temp INT,
+  humidity INT
+);</code></pre></figure>
+<figure class="code"><figcaption><span class="lang">python</span><span class="lbl">From the official Zerobus Ingest overview: step 2, push records</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-python">from zerobus.sdk.sync import ZerobusSdk
+from zerobus.sdk.shared import TableProperties
+
+sdk = ZerobusSdk(SERVER_ENDPOINT, DATABRICKS_WORKSPACE_URL)
+table_properties = TableProperties(&quot;main.default.air_quality&quot;)
+stream = sdk.create_stream(CLIENT_ID, CLIENT_SECRET, table_properties)
+
+stream.ingest_record_offset({&quot;device_name&quot;: &quot;sensor-1&quot;, &quot;temp&quot;: 22, &quot;humidity&quot;: 55})
+stream.close()</code></pre></figure>
+<h3 id="federation">3.7 Federation</h3>
+<p>Now a different question: <strong>does the data need to move at all?</strong></p>
+<ul><li><strong>Ingestion:</strong> External source → data moves → Delta.</li><li><strong>Federation:</strong> External source ← query ← Databricks. The data stays in the external system.</li></ul>
+<p>This makes <a href="https://docs.databricks.com/aws/query-federation" target="_blank" rel="noopener noreferrer">Lakehouse Federation</a> fundamentally different from ingestion. Sometimes the best ingestion decision is not to ingest.</p>
+<figure class="code"><figcaption><span class="lang">sql</span><span class="lbl">From the official Lakehouse Federation docs</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-sql">CREATE FOREIGN CATALOG [IF NOT EXISTS] &lt;catalog-name&gt; USING CONNECTION &lt;connection-name&gt;</code></pre></figure>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> The docs describe <a href="https://docs.databricks.com/en/query-federation/index.html" target="_blank" rel="noopener noreferrer">query federation and catalog federation</a>. Query federation pushes queries down to the foreign database over JDBC. Catalog federation reads foreign tables directly in object storage. The docs suggest federation for ad hoc reporting and proof-of-concept work on ETL pipelines. When a source supports both federation and Lakeflow Connect, they recommend Lakeflow Connect if high volume and low latency matter most.</p></aside>
+</section>
+<section id="tradeoffs" class="sec"><span class="ref">Source: §4</span><h2>Architectural trade-offs</h2>
+<p>Choosing a pattern is not only about whether data can reach Databricks. The better question: <strong>what does this choice make easier, and what does it make harder?</strong></p>
+<p>Each approach moves the trade-offs somewhere else. A managed connector may cut infrastructure work but give me less control. A custom pipeline may give more control but add code and operational duty.</p>
+<figure class="diagram" id="fig-tradeoffs"><figcaption class="ftitle"><span>Diagram 16. The ingestion trade-off space</span><button type="button" class="zoom" data-title="The ingestion trade-off space" aria-label="Expand diagram: The ingestion trade-off space">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:518px"><svg viewBox="0 0 720 345" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-tradeoffs d-tradeoffs" data-w="720" data-h="345">
+<title id="t-tradeoffs">The ingestion trade-off space</title><desc id="d-tradeoffs">Each choice moves a slider. A managed option shifts work to the platform. A custom option shifts work to my team. There is no best position for every workload.</desc>
+<defs><marker id="ah16" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="10" y="10" width="700" height="72" rx="12" class="grp g-blue"/>
+<text x="22" y="29" class="glabel">Latency</text>
+<rect x="10" y="92" width="700" height="72" rx="12" class="grp g-green"/>
+<text x="22" y="111" class="glabel">Source impact</text>
+<rect x="10" y="174" width="700" height="72" rx="12" class="grp g-gold"/>
+<text x="22" y="193" class="glabel">Control</text>
+<rect x="10" y="256" width="700" height="72" rx="12" class="grp g-red"/>
+<text x="22" y="275" class="glabel">Operational responsibility</text>
+<polyline points="230.0,53.0 480.0,53.0" class="edge" marker-end="url(#ah16)" marker-start="url(#ah16)"/>
+<polyline points="230.0,135.0 480.0,135.0" class="edge" marker-end="url(#ah16)" marker-start="url(#ah16)"/>
+<polyline points="230.0,217.0 480.0,217.0" class="edge" marker-end="url(#ah16)" marker-start="url(#ah16)"/>
+<polyline points="230.0,299.0 480.0,299.0" class="edge" marker-end="url(#ah16)" marker-start="url(#ah16)"/>
+<rect x="40" y="34" width="190" height="38" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="135.0" y="57.5">Scheduled</tspan></text>
+<rect x="480" y="34" width="190" height="38" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="575.0" y="57.5">Continuous</tspan></text>
+<rect x="40" y="116" width="190" height="38" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="135.0" y="139.5">Lower source load</tspan></text>
+<rect x="480" y="116" width="190" height="38" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="575.0" y="139.5">Higher source load</tspan></text>
+<rect x="40" y="198" width="190" height="38" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="135.0" y="221.5">Managed</tspan></text>
+<rect x="480" y="198" width="190" height="38" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="575.0" y="221.5">Custom</tspan></text>
+<rect x="40" y="280" width="190" height="38" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="135.0" y="303.5">Platform / managed</tspan></text>
+<rect x="480" y="280" width="190" height="38" rx="9" class="node n-red"/>
+<text class="ntext" text-anchor="middle"><tspan x="575.0" y="303.5">Engineering team</tspan></text>
+</svg></div></div><p class="fcap">Each choice moves a slider. A managed option shifts work to the platform. A custom option shifts work to my team. There is no best position for every workload.</p></figure>
+<h3 id="t-latency">Latency</h3>
+<p>How quickly do I need the data? A daily finance extract does not need the same design as app telemetry or an event stream. Batch fits scheduled intervals. Streaming fits continuous or low-latency needs. Streaming is not always better. The requirement comes first.</p>
+<h3 id="t-source">Source impact</h3>
+<p>How much load can I put on the source? It is easy to miss, because the pipeline runs in Databricks but the source still serves the data.</p>
+<ul><li><strong>Database:</strong> query frequency, query complexity, connection usage, transaction-log retention, CDC overhead.</li><li><strong>API:</strong> request limits, pagination, rate limits, authentication limits.</li><li><strong>SaaS:</strong> the provider may set its own API or usage limits.</li></ul>
+<p>A design that works perfectly inside Databricks can still be poor if it puts too much pressure on the source.</p>
+<h3 id="t-control">Control</h3>
+<p>How much customization does the workload need? Managed ingestion cuts the connector and infrastructure code I run. Custom ingestion gives control over extraction logic, retries, scheduling, transformations, source-specific behavior and error handling. More control means more responsibility.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">CONTROL
+Managed &lt;----------------------------&gt; Custom</code></pre></figure>
+<p>No position is right for every workload. It depends on how much source-specific behavior the application needs.</p>
+<h3 id="t-schema">Schema change</h3>
+<p>What happens when the source changes? A new field may be harmless. A renamed field may break downstream logic. A type change may cause a serious compatibility problem. An unexpected value may expose a data-quality issue.</p>
+<p>Schema inference, evolution and rescued data can automate part of the response. They do not remove the need to understand what the change means downstream. So I do not ask "Does this tool support schema evolution?" I ask "What happens to my pipeline when the source schema changes?"</p>
+<h3 id="t-failure">Failure recovery</h3>
+<p>What happens when ingestion fails? Failures can happen anywhere: Source → Network → Ingestion → Destination. A source may go down. A network link may fail. A pipeline may restart. A batch may half finish.</p>
+<ul><li>Where is progress stored?</li><li>Can the operation be retried safely?</li><li>What happens to partly processed data?</li><li>How does the pipeline resume?</li><li>How do I find records or files that need attention?</li></ul>
+<p>State tracking and transactional writes can make recovery more predictable. Recovery still depends on the pattern. I design for failure before the first production failure.</p>
+<h3 id="t-security">Security</h3>
+<p>How do authentication, identity, networking and permissions work? Ingestion crosses a boundary, so security cannot be added after the pipeline works. I need to know:</p>
+<ul><li>how the source authenticates the connection</li><li>which identity runs the ingestion</li><li>which network path is allowed</li><li>which permissions exist on the source</li><li>where the destination data is written</li><li>who can access the resulting tables</li></ul>
+<p>A connector that can technically read a source may still not fit the organization's security model.</p>
+<h3 id="t-ops">Operations</h3>
+<p>Who maintains the ingestion system? This grows in importance as sources multiply. A custom service may need me to maintain deployment, credentials, retries, monitoring, upgrades, API compatibility and failure handling. A managed connector cuts some of that. It does not remove operations. Someone still monitors the pipeline, investigates failures, manages access, tracks source changes and validates the data. The difference is where the work lives.</p>
+<h3 id="t-cost">Cost</h3>
+<p>Cost is a set of drivers, not a label like "cheap" or "expensive".</p>
+<ul><li>compute</li><li>storage</li><li>network transfer</li><li>source-system usage</li><li>managed connector usage</li><li>pipeline execution</li><li>engineering and operational effort</li></ul>
+<p>A design that lowers Databricks compute may raise source load. A heavily customized pipeline may reduce reliance on a managed service and raise engineering effort. So I ask "What are the cost drivers for this architecture?" and not "Which is cheaper?"</p>
+<div class="tablewrap"><table id="tradeoff-table"><caption>The trade-off questions from Source §4.</caption><thead><tr><th scope="col">Question</th><th scope="col">What I am really evaluating</th></tr></thead><tbody><tr><td data-label="Question">Latency</td><td data-label="What I am really evaluating">How quickly must new data become available?</td></tr><tr><td data-label="Question">Source impact</td><td data-label="What I am really evaluating">How much load can the source tolerate?</td></tr><tr><td data-label="Question">Control</td><td data-label="What I am really evaluating">How much custom behavior do I need?</td></tr><tr><td data-label="Question">Schema change</td><td data-label="What I am really evaluating">How will the pipeline respond when the source changes?</td></tr><tr><td data-label="Question">Failure recovery</td><td data-label="What I am really evaluating">How does ingestion resume after a failure?</td></tr><tr><td data-label="Question">Security</td><td data-label="What I am really evaluating">How do identity, networking and permissions work?</td></tr><tr><td data-label="Question">Operations</td><td data-label="What I am really evaluating">How much of the system will my team maintain?</td></tr><tr><td data-label="Question">Cost</td><td data-label="What I am really evaluating">What compute, storage, network, service and engineering costs exist?</td></tr></tbody></table></div>
+<p>I judge these together. A highly customized solution gives control and also adds operational work. A managed connector cuts implementation effort and may bring source or connector limits. There is no universal winner. The design must fit the source, the workload and the team that runs it.</p>
+</section>
+<section id="patterns" class="sec"><span class="ref">Source: §5</span><h2>Patterns and relationships</h2>
+<p>Ingestion is one part of a data platform. Once data enters Databricks, it joins a bigger design. Ingestion connects to medallion architecture, ETL/ELT, governance, change capture and data modeling. I keep the boundaries clear.</p>
+<h3 id="p-medallion">5.1 Ingestion + Medallion</h3>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Source -&gt; Ingestion -&gt; Bronze -&gt; Transformation -&gt; Silver -&gt; Gold</code></pre></figure>
+<p>Ingestion gets data into the platform. <a href="https://docs.databricks.com/aws/lakehouse/medallion" target="_blank" rel="noopener noreferrer">Bronze</a> can keep the incoming data close to the source form. Transformation shapes it into easier structures. Silver and Gold are more refined data products. In short: <strong>ingestion gets the data in, transformation makes it useful.</strong></p>
+<h3 id="p-etl">5.2 Ingestion + ETL/ELT</h3>
+<p>They are related but ask different questions. Ingestion asks how data enters the platform. ETL/ELT asks where and when transformation happens.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Source -&gt; ingestion -&gt; Bronze -&gt; transformation -&gt; Silver</code></pre></figure>
+<p>The ingestion mechanism could be Auto Loader, a managed connector, CDC or something else. Transformation can be built separately. So changing the ingestion mechanism does not force a change to the business transformations. A database source can move to a new ingestion approach while the Silver and Gold logic stays the same in concept.</p>
+<h3 id="p-uc">5.3 Ingestion + Unity Catalog</h3>
+<p>Ingestion also has a governance boundary. <a href="https://docs.databricks.com/en/data-governance/unity-catalog/" target="_blank" rel="noopener noreferrer">Unity Catalog</a> is the governance layer around the data and its access.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Source -&gt; Authentication -&gt; Identity -&gt; Network -&gt; Ingestion -&gt; Governed Destination</code></pre></figure>
+<ul><li><strong>Authentication:</strong> Can the ingestion process connect to the source?</li><li><strong>Identity:</strong> Which identity performs the operation?</li><li><strong>Network:</strong> Is the needed communication path allowed?</li><li><strong>Ingestion:</strong> How is the data extracted and loaded?</li><li><strong>Destination:</strong> Where does the data land, and who can access it?</li></ul>
+<p>So governance does not start after ingestion. The ingestion path has its own security and identity needs.</p>
+<h3 id="p-cdc">5.4 CDC + ingestion</h3>
+<p>CDC (Change Data Capture) is one way a source exposes changes. Instead of asking the database for its current state again and again, ingestion can read information about changes made at the source.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Database -&gt; source changes -&gt; CDC -&gt; Delta</code></pre></figure>
+<p>CDC is part of the ingestion design. It answers: "How do I capture changes coming from the source?" That differs from how those changes are later modeled or used.</p>
+<h3 id="p-cdf">5.5 CDF + ingestion</h3>
+<p>CDF (Change Data Feed) is different. It is a Delta Lake capability that exposes changes <strong>after</strong> data is already in Delta.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">CDC   Source -&gt; Databricks
+CDF   Delta -&gt; Downstream consumer</code></pre></figure>
+<p>CDC and CDF can sit side by side in one architecture. They work at different boundaries. CDC deals with changes at the source. CDF deals with changes in Delta.</p>
+<figure class="code"><figcaption><span class="lang">sql</span><span class="lbl">From the official CDF docs. Legacy CDF needs this per table.</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-sql">ALTER TABLE myDeltaTable SET TBLPROPERTIES (delta.enableChangeDataFeed = true)</code></pre></figure>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> The <a href="https://docs.databricks.com/aws/en/delta/delta-change-data-feed" target="_blank" rel="noopener noreferrer">CDF page</a> now describes two kinds: automatic CDF, which computes changes at read time using row tracking, and legacy CDF, which writes change data at write time and needs the table property above. The source does not split them. This is not an error in the source. It is newer detail.</p></aside>
+<h3 id="p-scd">5.6 SCD + ingestion</h3>
+<p>SCD (Slowly Changing Dimensions) is easy to mix up with CDC. SCD is <strong>downstream data modeling</strong>. An SCD Type 2 model can keep historical versions of a customer record.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Source -&gt; ingestion -&gt; Bronze -&gt; transformation -&gt; customer dimension</code></pre></figure>
+<p>Ingestion gets the source data in. SCD logic decides how that data is kept over time.</p>
+<ul><li><strong>CDC</strong> = source-side change capture</li><li><strong>CDF</strong> = Delta-side change exposure</li><li><strong>SCD</strong> = downstream history modeling</li></ul>
+<p>All three can appear in one architecture. They answer different questions.</p>
+<figure class="diagram" id="fig-cdc_cdf_scd"><figcaption class="ftitle"><span>Diagram 17. CDC, CDF and SCD work at different boundaries</span><button type="button" class="zoom" data-title="CDC, CDF and SCD work at different boundaries" aria-label="Expand diagram: CDC, CDF and SCD work at different boundaries">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:648px"><svg viewBox="0 0 900 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-cdc_cdf_scd d-cdc_cdf_scd" data-w="900" data-h="290">
+<title id="t-cdc_cdf_scd">CDC, CDF and SCD work at different boundaries</title><desc id="d-cdc_cdf_scd">CDC is source-side change capture. CDF exposes changes after data is in Delta. SCD is downstream modeling. The three can share one architecture. They answer different questions.</desc>
+<defs><marker id="ah17" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<polyline points="175.0,68.0 360.0,68.0" class="edge" marker-end="url(#ah17)"/>
+<polyline points="530.0,68.0 715.0,68.0" class="edge" marker-end="url(#ah17)"/>
+<polyline points="445.0,96.0 445.0,190.0" class="edge" marker-end="url(#ah17)"/>
+<polyline points="530.0,218.0 700.0,218.0" class="edge" marker-end="url(#ah17)"/>
+<rect x="15" y="40" width="160" height="56" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="95.0" y="72.5">Source database</tspan></text>
+<rect x="360" y="40" width="170" height="56" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="445.0" y="65.0">Delta table</tspan><tspan x="445.0" y="80.0">(Bronze)</tspan></text>
+<rect x="715" y="40" width="170" height="56" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="800.0" y="65.0">Downstream</tspan><tspan x="800.0" y="80.0">consumer</tspan></text>
+<rect x="360" y="190" width="170" height="56" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="445.0" y="222.5">Transformation</tspan></text>
+<rect x="700" y="190" width="185" height="56" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="792.5" y="215.0">Customer dimension</tspan><tspan x="792.5" y="230.0">(SCD Type 2)</tspan></text>
+<rect x="201.7" y="59.0" width="131.6" height="18" rx="4" class="elabel-bg"/>
+<text x="267.5" y="72.0" text-anchor="middle" class="elabel">CDC: source changes</text>
+<rect x="559.9" y="59.0" width="125.2" height="18" rx="4" class="elabel-bg"/>
+<text x="622.5" y="72.0" text-anchor="middle" class="elabel">CDF: Delta changes</text>
+<rect x="542.8" y="209.0" width="144.4" height="18" rx="4" class="elabel-bg"/>
+<text x="615.0" y="222.0" text-anchor="middle" class="elabel">SCD: history modeling</text>
+</svg></div></div><p class="fcap">CDC is source-side change capture. CDF exposes changes after data is in Delta. SCD is downstream modeling. The three can share one architecture. They answer different questions.</p></figure>
+<h3 id="p-bigger">5.7 The bigger picture</h3>
+<p>Put it together: Source → Ingestion → Bronze → Transformation → Silver → Gold. Along the way, different technologies solve different problems.</p>
+<ul><li>Auto Loader handles incremental file ingestion.</li><li>CDC captures source-side database changes.</li><li>CDF exposes changes from Delta.</li><li>SCD models history for business entities.</li><li>Unity Catalog governs the data and its access.</li></ul>
+<p>None of them replaces the others. They work at different layers. That is the relationship to remember.</p>
+<figure class="diagram" id="fig-e2e"><figcaption class="ftitle"><span>Diagram 18. End to end: source to governed table</span><button type="button" class="zoom" data-title="End to end: source to governed table" aria-label="Expand diagram: End to end: source to governed table">Expand</button></figcaption><div class="dscroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><div class="dinner" style="min-width:691px"><svg viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-e2e d-e2e" data-w="960" data-h="300">
+<title id="t-e2e">End to end: source to governed table</title><desc id="d-e2e">I read the top row as the questions ingestion must pass: who connects, as which identity, over which path. Then data lands in Bronze and moves on through transformation to Silver and Gold, under governance.</desc>
+<defs><marker id="ah18" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="10" y="8" width="940" height="100" rx="12" class="grp g-blue"/>
+<text x="22" y="27" class="glabel">System boundary: what must be allowed before data can move</text>
+<rect x="10" y="160" width="940" height="130" rx="12" class="grp g-gold"/>
+<text x="22" y="179" class="glabel">Governed destination: where the data lands and who can read it</text>
+<polyline points="155.0,68.0 205.0,68.0" class="edge" marker-end="url(#ah18)"/>
+<polyline points="345.0,68.0 395.0,68.0" class="edge" marker-end="url(#ah18)"/>
+<polyline points="525.0,68.0 575.0,68.0" class="edge" marker-end="url(#ah18)"/>
+<polyline points="705.0,68.0 755.0,68.0" class="edge" marker-end="url(#ah18)"/>
+<polyline points="840.0,91.0 840.0,153.0 100.0,153.0 100.0,215.0" class="edge" marker-end="url(#ah18)"/>
+<polyline points="175.0,240.0 285.0,240.0" class="edge" marker-end="url(#ah18)"/>
+<polyline points="455.0,240.0 565.0,240.0" class="edge" marker-end="url(#ah18)"/>
+<polyline points="715.0,240.0 785.0,240.0" class="edge" marker-end="url(#ah18)"/>
+<rect x="25" y="45" width="130" height="46" rx="9" class="node n-blue"/>
+<text class="ntext" text-anchor="middle"><tspan x="90.0" y="72.5">Source</tspan></text>
+<rect x="205" y="45" width="140" height="46" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="275.0" y="72.5">Authentication</tspan></text>
+<rect x="395" y="45" width="130" height="46" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="460.0" y="72.5">Identity</tspan></text>
+<rect x="575" y="45" width="130" height="46" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="640.0" y="72.5">Network</tspan></text>
+<rect x="755" y="45" width="170" height="46" rx="9" class="node n-purple"/>
+<text class="ntext" text-anchor="middle"><tspan x="840.0" y="72.5">Ingestion</tspan></text>
+<rect x="25" y="215" width="150" height="50" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="100.0" y="244.5">Bronze</tspan></text>
+<rect x="285" y="215" width="170" height="50" rx="9" class="node n-green"/>
+<text class="ntext" text-anchor="middle"><tspan x="370.0" y="244.5">Transformation</tspan></text>
+<rect x="565" y="215" width="150" height="50" rx="9" class="node n-gray"/>
+<text class="ntext" text-anchor="middle"><tspan x="640.0" y="244.5">Silver</tspan></text>
+<rect x="785" y="215" width="140" height="50" rx="9" class="node n-gold"/>
+<text class="ntext" text-anchor="middle"><tspan x="855.0" y="244.5">Gold</tspan></text>
+</svg></div></div><p class="fcap">I read the top row as the questions ingestion must pass: who connects, as which identity, over which path. Then data lands in Bronze and moves on through transformation to Silver and Gold, under governance.</p></figure>
+</section>
+<section id="perspective" class="sec"><span class="ref">Source: §6</span><h2>The Databricks perspective</h2>
+<p>The ingestion ecosystem can look like a long feature list: Lakeflow Connect, Lakeflow Pipelines, Auto Loader, COPY INTO, Structured Streaming, Zerobus and Lakehouse Federation. It is easier when I start with the problem each one solves. A file in cloud storage is not a Salesforce API, a database log or an event stream. So there is no single ingestion mechanism.</p>
+<h3 id="l-connect">6.1 Lakeflow Connect</h3>
+<p><a href="https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/" target="_blank" rel="noopener noreferrer">Lakeflow Connect</a> gives managed ingestion for supported sources. Instead of building and running every connector, I use a managed path for supported SaaS apps, databases, files and streaming sources. Depending on the connector, it can cover parts of:</p>
+<ul><li>authentication</li><li>incremental extraction</li><li>schema handling</li><li>retries</li><li>connector infrastructure</li><li>ingestion orchestration</li></ul>
+<p>This cuts engineering work. It does not remove engineering duty. I still need to understand the source, permissions, network needs, data quality, schema behavior and downstream use. Connector availability varies by source and environment, so I check the current connector docs before I commit.</p>
+<aside class="note n-added"><span class="tag">Added: current docs</span><p><strong>Added context (current docs):</strong> The <a href="https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/" target="_blank" rel="noopener noreferrer">connector concepts page</a> lists database (CDC), file, query-based, SaaS and streaming connectors, plus community and custom connectors. It says connectors are in various release states. The page was updated on 3 Nov 2026 when I read it. This matches the scope in the source.</p></aside>
+<h3 id="l-pipelines">6.2 Lakeflow Pipelines</h3>
+<p>Lakeflow Pipelines gives a managed way to build and run batch and streaming pipelines. I think of it as a pipeline abstraction. It does not replace every ingestion mechanism. A pipeline can use different ingestion patterns underneath. That separates <strong>how the source is ingested</strong> from <strong>how the pipeline is defined and run</strong>. It helps most when ingestion and transformation live in the same managed pipeline design.</p>
+<aside class="note n-accuracy"><span class="tag">Accuracy note</span><p><strong>Name check:</strong> The current official name is <a href="https://docs.databricks.com/aws/en/ldp/concepts/spark-declarative-pipelines" target="_blank" rel="noopener noreferrer">Lakeflow Spark Declarative Pipelines (SDP)</a>. The docs also say "Lakeflow pipelines". Older material called it Delta Live Tables. The source uses "Lakeflow Pipelines". I keep that name here and treat them as the same product.</p></aside>
+<h3 id="l-autoloader">6.3 Auto Loader</h3>
+<p>Auto Loader stays important for cloud-file ingestion. Its job is narrow: find and process new files incrementally. It handles file discovery, state and schema behavior for recurring file ingestion. That makes it different from Lakeflow Connect. Lakeflow Connect is for managed connectors to supported sources. Auto Loader is for incremental file ingestion. They sit at different points in the architecture.</p>
+<h3 id="l-copyinto">6.4 COPY INTO</h3>
+<p>COPY INTO is a SQL-oriented way to ingest files. It fits a straightforward load better than a continuously running incremental one. The choice between it and Auto Loader comes from the workload. I do not ask "Which is the modern tool?" I ask "What kind of file-ingestion workflow am I running?"</p>
+<h3 id="l-streaming">6.5 Structured Streaming</h3>
+<p>Structured Streaming is the lower-level streaming model. It gives direct control over streaming queries, source behavior, transformations, checkpoints and other streaming concerns. That helps when a workload needs custom behavior a managed layer does not offer. The cost is operational duty. More control means more of the streaming build is mine to design, test, monitor and maintain. It keeps a real role even as managed options grow.</p>
+<h3 id="l-zerobus">6.6 Zerobus</h3>
+<p>Zerobus Ingest covers a different source pattern: a push-based path for apps and event-producing workloads.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Application -&gt; Zerobus -&gt; Delta</code></pre></figure>
+<p>This differs from a pull-based design where ingestion reads from a source again and again. It fits when the app or producer already generates events that must reach Databricks. It is not a universal replacement for Kafka or other event infrastructure. The surrounding event architecture still matters.</p>
+<h3 id="l-federation">6.7 Lakehouse Federation</h3>
+<p>Lakehouse Federation sits outside the physical ingestion model. It queries supported external sources without first copying their data into Delta.</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Ingestion   Source -&gt; data moves -&gt; Databricks
+Federation  Source &lt;- query -&gt; Databricks</code></pre></figure>
+<p>So it is part of the ingestion decision even though it is not ingestion. Sometimes the right design is to move the data. Sometimes it is to leave it where it is.</p>
+<h3 id="l-managed">6.8 The move toward more managed ingestion</h3>
+<p>There is a clear direction toward more managed ingestion. Instead of every team building its own connector, retry system, schema handling and infrastructure, more of that comes as managed service. That changes where effort goes. I can spend more time on:</p>
+<ul><li>What data should I ingest?</li><li>How often should it arrive?</li><li>What should happen when the source changes?</li><li>How should the data be governed?</li><li>What should the downstream model look like?</li><li>Which failures need a human?</li></ul>
+<p>But managed does not mean automatic. A managed connector can cut infrastructure work. It cannot decide whether source data is correct, whether a schema change makes business sense, whether the source can take the load, or whether the resulting table is useful.</p>
+<h3 id="l-one">6.9 One ecosystem, different problems</h3>
+<p>The easy mistake is to expect one universal ingestion tool. Databricks does not have one, and does not need one. I look at the source first.</p>
+<div class="tablewrap"><table id="source-table"><caption>Source §6.9. It is not a product ranking. It connects source traits to architecture patterns.</caption><thead><tr><th scope="col">Source or requirement</th><th scope="col">Relevant Databricks approach</th></tr></thead><tbody><tr><td data-label="Source or requirement">Cloud files arriving continuously</td><td data-label="Relevant Databricks approach">Auto Loader</td></tr><tr><td data-label="Source or requirement">Straightforward SQL file loading</td><td data-label="Relevant Databricks approach">COPY INTO</td></tr><tr><td data-label="Source or requirement">Supported SaaS application</td><td data-label="Relevant Databricks approach">Lakeflow Connect</td></tr><tr><td data-label="Source or requirement">Supported database changes</td><td data-label="Relevant Databricks approach">Lakeflow Connect / CDC</td></tr><tr><td data-label="Source or requirement">Streaming source requiring direct control</td><td data-label="Relevant Databricks approach">Structured Streaming</td></tr><tr><td data-label="Source or requirement">Managed streaming workload</td><td data-label="Relevant Databricks approach">Lakeflow Connect / Lakeflow Pipelines</td></tr><tr><td data-label="Source or requirement">Application or event producer</td><td data-label="Relevant Databricks approach">Zerobus</td></tr><tr><td data-label="Source or requirement">Supported external source that does not need physical copying</td><td data-label="Relevant Databricks approach">Lakehouse Federation</td></tr></tbody></table></div>
+<p>Different mechanisms exist because different sources create different engineering problems. The architecture still starts with the source and the workload.</p>
+</section>
+<section id="antipatterns" class="sec"><span class="ref">Source: §7</span><h2>Anti-patterns</h2>
+<p>Ingestion problems often start before any code. The usual mistake is to start from the tool instead of the source and the workload. These are the patterns I watch for. Each one opens to show the question I should ask.</p>
+<details><summary>7.1 Custom API code when a managed connector exists</summary><div class="dbody"><p>A custom API client means I own authentication, pagination, rate limits, retries, schema changes and monitoring. If a suitable managed connector already supports the source and the behavior I need, custom code may add work and solve nothing. Custom ingestion is not wrong. Sometimes the connector lacks the control I need.</p>
+<p><strong>Question:</strong> What does the custom build give me that the managed option cannot?</p></div></details>
+<details><summary>7.2 Moving data when federation would be enough</summary><div class="dbody"><p>Sometimes I copy data only because that is what I usually do. If the workload only needs to query supported external data, physical ingestion may be unnecessary. With federation the data stays outside Delta. With ingestion it moves into Delta.</p>
+<p><strong>Question:</strong> Does this data actually need to move?</p></div></details>
+<details><summary>7.3 Treating every database problem as CDC</summary><div class="dbody"><p>CDC helps when the source exposes changes in a way my architecture can use. Not every database workload needs it. Some can use query-based ingestion. The choice depends on:</p>
+<ul><li>how often the data changes</li><li>what latency I need</li><li>what the source supports</li><li>how much source load is acceptable</li><li>what change behavior the destination needs</li></ul>
+<p>The mistake is picking CDC before I understand the source and workload.</p></div></details>
+<details><summary>7.4 Heavy custom streaming code when a managed option is enough</summary><div class="dbody"><p>Direct Structured Streaming gives control. It also means I own more of the build. If a managed connector or managed pipeline already fits, a lot of custom streaming code adds duty for no gain.</p>
+<p><strong>Question:</strong> What requirement justifies the extra control?</p></div></details>
+<details><summary>7.5 Loading data without thinking about source impact</summary><div class="dbody"><p>The destination is Databricks, but the source still has to provide the data. A poor design can strain:</p>
+<ul><li>production databases</li><li>APIs</li><li>SaaS platforms</li><li>transaction logs</li><li>network connections</li></ul>
+<p>A technically valid pattern can still be a poor production design if it hits the source too hard.</p></div></details>
+<details><summary>7.6 Assuming schema evolution makes schema problems disappear</summary><div class="dbody"><p>Schema evolution automates some changes. It does not automate schema design. A new column may be safe. A changed data type may not be. A renamed field may need downstream changes. An unexpected value may reveal a data-quality problem. Engineers still decide if the resulting data makes sense.</p></div></details>
+<details><summary>7.7 Mixing heavy business logic into ingestion</summary><div class="dbody"><p>Ingestion should build a reliable boundary between the source and the platform. It is tempting to add business transformations because the data is already in flight. That makes the pipeline harder to change later. A cleaner split is:</p>
+<figure class="code"><figcaption><span class="lang">text</span><span class="lbl">From the source</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code class="language-text">Source -&gt; ingestion -&gt; raw or Bronze data -&gt; transformation -&gt; business-ready data</code></pre></figure>
+<p>This keeps source extraction apart from business logic.</p></div></details>
+<details><summary>7.8 Treating every source like a file</summary><div class="dbody"><p>A file is not a database. A database is not an API. An API is not an event stream.</p>
+<ul><li>Files are discovered.</li><li>Databases expose state and, in some cases, changes.</li><li>APIs expose requests and responses.</li><li>Event systems expose continuous records.</li></ul>
+<p>That difference should drive the design.</p></div></details>
+</section>
+<section id="framework" class="sec"><span class="ref">Source: Decision Framework</span><h2>Questions I ask before choosing</h2>
+<p>I do not memorize which feature goes with which source. I use a short sequence of questions. This is the checklist. I can tick items off as I work through a design. My ticks stay in this browser only.</p>
+<div class="checkbox-wrap" data-check="decision-checklist"><div class="ckbar"><span class="ckcount" aria-live="polite">0 of 8 done</span><button type="button" class="ckreset">Reset</button></div><ul class="check"><li><label><input type="checkbox" data-ck="decision-checklist-0"><span><strong>Where does the data live?</strong><span class="d">Cloud storage, database, SaaS app, API, event stream, or an external system I could query. The source type removes many wrong options at once.</span></span></label></li><li><label><input type="checkbox" data-ck="decision-checklist-1"><span><strong>Does the data actually need to move?</strong><span class="d">If federation can meet the need, copying into Delta may be pointless. If I must transform it, join it with lakehouse data, keep it locally or serve it downstream, physical ingestion may fit better. I decide on movement before I decide on a tool.</span></span></label></li><li><label><input type="checkbox" data-ck="decision-checklist-2"><span><strong>How does the source change?</strong><span class="d">Files: new files appear. Database: inserts, updates and deletes. API: endpoints, pagination or incremental parameters. Event stream: new events arrive nonstop. The change model is one of the strongest signals.</span></span></label></li><li><label><input type="checkbox" data-ck="decision-checklist-3"><span><strong>What latency is required?</strong><span class="d">Once a day, every hour, every few minutes, or continuous. I do not use streaming just because the source can stream.</span></span></label></li><li><label><input type="checkbox" data-ck="decision-checklist-4"><span><strong>Is there a managed connector?</strong><span class="d">If one exists, I check: source support, required features, authentication, incremental behavior, schema handling, networking, limits, and cloud or region availability.</span></span></label></li><li><label><input type="checkbox" data-ck="decision-checklist-5"><span><strong>If not, how much customization is needed?</strong><span class="d">API: authentication, pagination, rate-limit handling, retries, raw landing. Stream: custom source logic or processing. Database: a query-based extraction pattern. I add custom code because the requirement needs it, not because it is familiar.</span></span></label></li><li><label><input type="checkbox" data-ck="decision-checklist-6"><span><strong>What security and network limits exist?</strong><span class="d">Who connects? How is it authenticated? Which network path is allowed? Which permissions are required? Where can the data be stored? These can rule out otherwise valid patterns.</span></span></label></li><li><label><input type="checkbox" data-ck="decision-checklist-7"><span><strong>What operational work will I own?</strong><span class="d">Monitoring, retries, upgrades, credentials, schema changes, source failures, pipeline failures and incident response. The design should match what my team can run.</span></span></label></li></ul></div>
+<aside class="note n-source"><span class="tag">From the source</span><p><strong>A simple rule (source):</strong> When a design feels complicated, I go back to the start. Source → movement → change pattern → latency → managed option → control → security → operations. The goal is not one tool for every workload. The goal is a pattern that fits the source, the data and the team that will run it.</p></aside>
+</section>
+<section id="recap" class="sec"><span class="ref">Mine, built from the whole source</span><h2>Quick recap and revision prompts</h2>
+<ul><li>The source type is the first boundary. It shapes the ingestion problem.</li><li>Ask "does the data need to move?" before "which tool?".</li><li>Ingestion moves data in. Transformation shapes it. Federation leaves it in place.</li><li>Batch and streaming are two operating models, not fast and slow.</li><li>Managed cuts connector work. It does not cut responsibility.</li><li>CDC is at the source. CDF is in Delta. SCD is downstream modeling.</li></ul>
+<details><summary>Revision prompt 1: Why does a daily finance extract not need the same design as telemetry?</summary><div class="dbody"><p>Because latency should follow the workload. Batch fits scheduled data. Streaming fits continuous or low-latency needs. Streaming is not always better.</p></div></details>
+<details><summary>Revision prompt 2: What is the difference between CDC and CDF?</summary><div class="dbody"><p>CDC captures changes at the source and brings them toward Databricks. CDF exposes changes after the data is already in Delta, for downstream consumers.</p></div></details>
+<details><summary>Revision prompt 3: When is federation the better answer?</summary><div class="dbody"><p>When the workload only needs to query supported external data and does not need the data copied. The source says to ask whether the data must move before picking a tool.</p></div></details>
+<details><summary>Revision prompt 4: What does a managed connector still leave me to manage?</summary><div class="dbody"><p>Authentication, permissions, networking, source behavior, data quality and downstream modeling. It also leaves monitoring, access and validation.</p></div></details>
+<details><summary>Revision prompt 5: Why keep business logic out of ingestion?</summary><div class="dbody"><p>Ingestion builds a reliable boundary from the source. Business logic inside it makes the pipeline harder to change. A separate transformation layer lets me swap ingestion without touching Silver and Gold logic.</p></div></details>
+</section>
+<section id="accuracy" class="sec"><span class="ref">Checked 8 Nov 2026</span><h2>Version and accuracy notes</h2>
+<p>I compared the source with the official Databricks docs on 8 Nov 2026. I found no technical error in the source. I found naming drift and newer detail. I list each one so nothing changes silently.</p>
+<ul><li><strong>Lakeflow Pipelines.</strong> Current official name: <a href="https://docs.databricks.com/aws/en/ldp/concepts/spark-declarative-pipelines" target="_blank" rel="noopener noreferrer">Lakeflow Spark Declarative Pipelines</a>. Also called Lakeflow pipelines. Older name: Delta Live Tables.</li><li><strong>Zerobus.</strong> Official name is Zerobus Ingest. It sits under Lakeflow Connect in the docs. I could not confirm its current release label. Check the <a href="https://docs.databricks.com/aws/en/resources/feature-region-support#ingestion" target="_blank" rel="noopener noreferrer">region page</a>.</li><li><strong>Lakeflow Connect scope.</strong> Source §6.1 lists SaaS, databases, files and streaming sources. The docs match, and also list query-based, community and custom connectors. Release state varies per connector.</li><li><strong>Database patterns.</strong> The source names CDC and query-based ingestion. The docs have a separate connector type for each.</li><li><strong>Streaming connectors.</strong> The source says "managed streaming connectors" without naming any. The docs name RabbitMQ as an example. The Zerobus overview points to managed streaming connectors for copying Kafka data. I did not find a Kafka connector name.</li><li><strong>Change Data Feed.</strong> The docs now describe automatic and legacy CDF. The source treats CDF as one feature. Not an error.</li><li><strong>Unclear in the source.</strong> The "reference blog" and "supplied research brief" are never named. The PDF text has no page numbers, so I cite sections.</li><li><strong>Source images.</strong> I redrew the diagrams from the source text and images. I merged the simple "Source Type Is the First Boundary" fan-in into the overview diagram.</li></ul>
+</section>
+<section id="verify" class="sec"><span class="ref">Open items</span><h2>Documentation links to verify</h2>
+<p>These are things I could not settle from the pages I read. I would check them before relying on them.</p>
+<ul><li>Whether the COPY INTO docs recommend streaming tables for SQL users who want a more scalable file ingestion path. I saw this on a translated page only. Search: "Databricks COPY INTO streaming tables recommendation".</li><li>The current release state of each Lakeflow Connect connector I plan to use. Start at the <a href="https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/" target="_blank" rel="noopener noreferrer">connector concepts page</a>.</li><li>Regional and cloud availability of Zerobus Ingest. Start at the <a href="https://docs.databricks.com/aws/en/resources/feature-region-support#ingestion" target="_blank" rel="noopener noreferrer">region page</a>.</li><li>The current list of sources supported by Lakehouse Federation. Start at the <a href="https://docs.databricks.com/aws/query-federation" target="_blank" rel="noopener noreferrer">federation overview</a>.</li><li>The Auto Loader option names in my sketch. Search: "Databricks Auto Loader options cloudFiles".</li></ul>
+</section>
+  <section id="coverage" class="sec"><span class="ref">Provenance</span><h2>Source coverage map</h2>
+    <details><summary>Show which guide section covers which part of the source</summary><div class="dbody"><ul class="cov"><li><a href="#overview">Overview: how should data enter Databricks?</a> <span class="ref">Source: Overview</span></li><li><a href="#glance">At a glance: decision flowchart and matrix</a> <span class="ref">Built from: Source §3, §6.9, §7</span></li><li><a href="#foundations">Foundations</a> <span class="ref">Source: Foundations</span></li><li><a href="#architecture">Architecture by source type</a> <span class="ref">Source: §3 Architecture &amp; Layers</span></li><li><a href="#tradeoffs">Architectural trade-offs</a> <span class="ref">Source: §4</span></li><li><a href="#patterns">Patterns and relationships</a> <span class="ref">Source: §5</span></li><li><a href="#perspective">The Databricks perspective</a> <span class="ref">Source: §6</span></li><li><a href="#antipatterns">Anti-patterns</a> <span class="ref">Source: §7</span></li><li><a href="#framework">Questions I ask before choosing</a> <span class="ref">Source: Decision Framework</span></li><li><a href="#recap">Quick recap and revision prompts</a> <span class="ref">Mine, built from the whole source</span></li><li><a href="#accuracy">Version and accuracy notes</a> <span class="ref">Checked 8 Nov 2026</span></li><li><a href="#verify">Documentation links to verify</a> <span class="ref">Open items</span></li></ul></div></details>
+  </section>
+  <footer>Built from the source PDF and official Databricks documentation, checked 8 Nov 2026. Product names and availability change. Check the linked docs before you build.</footer>
+</main>
+</div>
+<button class="btn" id="top" type="button" aria-label="Back to top">Back to top</button>
+<dialog id="zoomdlg" aria-label="Expanded diagram">
+  <div class="zhead"><strong id="ztitle"></strong><button class="btn" id="zout" type="button" aria-label="Zoom out">-</button><button class="btn" id="zin" type="button" aria-label="Zoom in">+</button><button class="btn" id="zreset" type="button">Fit</button><button class="btn" id="zclose" type="button">Close</button></div>
+  <div class="zbody" id="zbody" tabindex="0"></div>
+</dialog>
+<script>
+(function(){
+var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+/* theme */
+var root=document.documentElement,tb=$('#theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.setAttribute('aria-pressed',t==='dark');tb.textContent=t==='dark'?'Light':'Dark';ls('dbx-theme',t)}
+setTheme(root.getAttribute('data-theme')||'light');
+tb.addEventListener('click',function(){setTheme(root.getAttribute('data-theme')==='dark'?'light':'dark')});
+/* progress + back to top */
+var bar=$('#progress'),topb=$('#top');
+function onScroll(){var h=document.documentElement,max=h.scrollHeight-h.clientHeight,p=max>0?Math.min(100,Math.round(h.scrollTop/max*100)):0;bar.style.width=p+'%';bar.setAttribute('aria-valuenow',p);topb.classList.toggle('show',h.scrollTop>700)}
+addEventListener('scroll',onScroll,{passive:true});onScroll();
+topb.addEventListener('click',function(){scrollTo({top:0})});
+/* mobile menu */
+var side=$('#side'),menu=$('#menu');
+menu.addEventListener('click',function(){var o=side.classList.toggle('open');menu.setAttribute('aria-expanded',o)});
+$$('#toc a').forEach(function(a){a.addEventListener('click',function(){side.classList.remove('open');menu.setAttribute('aria-expanded','false')})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('open')){side.classList.remove('open');menu.setAttribute('aria-expanded','false')}});
+/* active section */
+var secs=$$('main section.sec'),links={};$$('#toc li.tocsec').forEach(function(li){links[li.dataset.sec]=li});
+if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){Object.keys(links).forEach(function(k){links[k].classList.remove('active')});if(links[en.target.id])links[en.target.id].classList.add('active')}})},{rootMargin:'-20% 0px -70% 0px'});secs.forEach(function(s){io.observe(s)})}
+/* search */
+var q=$('#q'),qc=$('#qcount'),texts={};secs.forEach(function(s){texts[s.id]=s.textContent.toLowerCase()});
+function doSearch(){var t=q.value.trim().toLowerCase(),n=0,first=null;
+ Object.keys(links).forEach(function(k){var hit=!t||(texts[k]||'').indexOf(t)>-1;links[k].style.display=hit?'':'none';if(hit&&t){n++;if(!first)first=k}});
+ qc.textContent=t?(n+' of '+Object.keys(links).length+' sections match'):'';return first}
+q.addEventListener('input',doSearch);
+q.addEventListener('keydown',function(e){if(e.key==='Enter'){var f=doSearch();if(f){location.hash='#'+f;side.classList.remove('open')}}if(e.key==='Escape'){q.value='';doSearch();q.blur()}});
+document.addEventListener('keydown',function(e){if(e.key==='/'&&!/input|textarea/i.test(document.activeElement.tagName)){e.preventDefault();side.classList.add('open');q.focus()}});
+/* table filter */
+$$('.tfilter input').forEach(function(inp){inp.addEventListener('input',function(){var t=inp.value.trim().toLowerCase();$$('#'+inp.dataset.table+' tbody tr').forEach(function(r){r.style.display=!t||r.textContent.toLowerCase().indexOf(t)>-1?'':'none'})})});
+/* copy buttons */
+$$('.copy').forEach(function(b){b.addEventListener('click',function(){var code=$('code',b.closest('figure')).textContent;
+ function ok(){var o=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=o},1400)}
+ function fb(){var ta=document.createElement('textarea');ta.value=code;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok()}catch(e){b.textContent='Press Ctrl+C'}document.body.removeChild(ta)}
+ if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(code).then(ok,fb)}else fb()})});
+/* expand all */
+var ea=$('#expandall');ea.addEventListener('click',function(){var on=ea.getAttribute('aria-pressed')!=='true';ea.setAttribute('aria-pressed',on);ea.textContent=on?'Collapse all':'Expand all';$$('main details').forEach(function(d){d.open=on})});
+/* checklist */
+$$('.checkbox-wrap').forEach(function(w){var boxes=$$('input[type=checkbox]',w),cnt=$('.ckcount',w);
+ function upd(){var n=boxes.filter(function(b){return b.checked}).length;cnt.textContent=n+' of '+boxes.length+' done'}
+ boxes.forEach(function(b){var v=ls('dbx-'+b.dataset.ck);if(v==='1')b.checked=true;b.addEventListener('change',function(){ls('dbx-'+b.dataset.ck,b.checked?'1':'0');upd()})});
+ $('.ckreset',w).addEventListener('click',function(){boxes.forEach(function(b){b.checked=false;ls('dbx-'+b.dataset.ck,'0')});upd()});upd()});
+/* diagram zoom */
+var dlg=$('#zoomdlg'),zb=$('#zbody'),zt=$('#ztitle'),z=1,base=900,cur=null;
+function applyZ(){if(cur){cur.style.width=Math.round(base*z)+'px'}}
+function fit(){var avail=zb.clientWidth-8;z=Math.min(2,Math.max(.4,avail/base));applyZ()}
+$$('.zoom').forEach(function(b){b.addEventListener('click',function(){var fig=b.closest('figure'),svg=$('svg',fig);zb.innerHTML='';cur=svg.cloneNode(true);cur.removeAttribute('width');zb.appendChild(cur);base=parseInt(svg.getAttribute('data-w'),10)||900;zt.textContent=b.dataset.title;
+ if(dlg.showModal){dlg.showModal()}else{dlg.setAttribute('open','')}fit();$('#zclose').focus()})});
+$('#zin').addEventListener('click',function(){z=Math.min(3,z+.25);applyZ()});$('#zout').addEventListener('click',function(){z=Math.max(.3,z-.25);applyZ()});$('#zreset').addEventListener('click',fit);
+$('#zclose').addEventListener('click',function(){if(dlg.close)dlg.close();else dlg.removeAttribute('open')});
+dlg.addEventListener('click',function(e){if(e.target===dlg&&dlg.close)dlg.close()});
+})();
+</script>
+</body>
+</html>

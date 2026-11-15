@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Incremental Data Engineering Field Guide</title>
+<meta name="description" content="My notes on full loads, incremental loads, CDC, CDF, MERGE, AUTO CDC and SCD.">
+<style>
+:root{
+  --bg:#f7f8fa;--card:#ffffff;--text:#1b2230;--muted:#5a6578;--line:#d5dbe5;
+  --accent:#2f4fd0;--accent-soft:#e8edff;--code-bg:#0f1624;--code-text:#e6ebf5;
+  --src:#1d4ed8;--src-bg:#e3ecff;--add:#8a5a00;--add-bg:#fff0cc;--ext:#0b6b3a;--ext-bg:#dcf5e6;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#0e131d;--card:#161d2b;--text:#e7ecf6;--muted:#a3afc4;--line:#2d3850;
+  --accent:#8fa6ff;--accent-soft:#1d2845;--code-bg:#080c14;--code-text:#e6ebf5;
+  --src:#9db8ff;--src-bg:#1c2b52;--add:#ffd37a;--add-bg:#3a2e10;--ext:#8be0b0;--ext-bg:#12362366;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.65 var(--font)}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--card);padding:8px 12px;border-radius:8px;z-index:100}
+.skip:focus{left:8px}
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:var(--accent);z-index:60}
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+.topbar .brand{font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn{font:inherit;font-size:14px;padding:7px 12px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:32px;max-width:1240px;margin:0 auto;padding:0 20px}
+nav.toc{position:sticky;top:64px;align-self:start;max-height:calc(100vh - 80px);overflow:auto;padding:20px 0;font-size:14.5px}
+nav.toc h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc a{display:block;padding:5px 10px;border-left:3px solid var(--line);color:var(--muted);text-decoration:none}
+nav.toc a:hover{color:var(--text)}
+nav.toc a.active{border-left-color:var(--accent);color:var(--text);font-weight:600;background:var(--accent-soft)}
+main{padding:24px 0 80px;min-width:0}
+.hero{background:linear-gradient(135deg,var(--accent-soft),var(--card));border:1px solid var(--line);border-radius:18px;padding:34px 28px;margin-bottom:28px}
+.hero .eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.hero h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:8px 0 10px}
+.hero p.lead{font-size:19px;margin:0 0 16px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;font-size:14px}
+.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.03em;padding:2px 9px;border-radius:999px;vertical-align:middle;white-space:nowrap}
+.tag.src{background:var(--src-bg);color:var(--src)}
+.tag.add{background:var(--add-bg);color:var(--add)}
+.tag.ext{background:var(--ext-bg);color:var(--ext)}
+section{margin:0 0 44px}
+section>h2{font-size:clamp(23px,3.5vw,30px);line-height:1.25;margin:0 0 6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+section h3{font-size:20px;margin:26px 0 6px}
+p{margin:0 0 14px}
+ul,ol.plain{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:4px}
+.callout{border-left:4px solid var(--accent);background:var(--card);border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:12px 16px;margin:16px 0}
+.callout.warn{border-left-color:#c27b00}
+.callout p:last-child{margin:0}
+figure.diagram{margin:22px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+figure.diagram .fhead{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+figure.diagram .fhead strong{font-size:15px}
+.dbody{overflow-x:auto;padding:14px}
+.dbody svg{display:block;width:100%;height:auto}
+figure.diagram figcaption{padding:12px 16px;border-top:1px solid var(--line);font-size:15.5px;color:var(--muted)}
+svg text{fill:var(--text);font-family:var(--font);font-size:13px}
+svg .tm{text-anchor:middle}
+svg .lbl{fill:var(--muted);font-size:12px}
+svg .nd{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+svg .q{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .ch{fill:var(--card);stroke:var(--muted);stroke-width:1.2}
+svg .box{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:6 4}
+svg .ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg .dash{stroke-dasharray:5 4}
+svg .life{stroke:var(--line);stroke-width:1.2;stroke-dasharray:4 4}
+svg .old{fill:var(--add-bg);stroke:var(--add);stroke-width:1.2}
+svg .cur{fill:var(--ext-bg);stroke:var(--ext);stroke-width:1.2}
+svg .head{font-weight:700}
+svg marker path{fill:var(--muted)}
+.flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:10px;counter-reset:q}
+.flow li{counter-increment:q;position:relative;margin:0;padding:12px 12px 12px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:10px;font-size:14.5px;line-height:1.4}
+.flow li::before{content:"Q" counter(q);display:block;font-weight:800;color:var(--accent);margin-bottom:2px}
+.flow li b{display:block}
+.flow li span{color:var(--muted);font-size:13.5px}
+.flow li:not(:last-child)::after{content:"→";position:absolute;right:-13px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:700;z-index:2}
+pre{margin:0}
+.code{position:relative;margin:14px 0;background:var(--code-bg);border-radius:12px;overflow:hidden}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 6px 14px;background:#00000040;color:#b8c3d8;font:12px var(--mono)}
+.code .copy{font:12px var(--font);padding:4px 10px;border-radius:6px;border:1px solid #475269;background:transparent;color:#e6ebf5;cursor:pointer}
+.code .copy:hover{background:#ffffff18}
+.code pre{padding:14px;overflow-x:auto;color:var(--code-text);font:14px/1.55 var(--mono);tab-size:4}
+.tools{display:flex;gap:10px;margin:10px 0}
+.tools input,.builder select{font:inherit;font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);width:100%;max-width:420px}
+table.cmp{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:15px}
+table.cmp th,table.cmp td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+table.cmp th{background:var(--accent-soft);font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+table.cmp td:first-child{font-weight:700}
+table.cmp tr.hide{display:none}
+.states{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.states table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--card)}
+.states caption{font-weight:700;text-align:left;padding-bottom:4px}
+.states th,.states td{border:1px solid var(--line);padding:6px 8px;text-align:left}
+.states th{background:var(--accent-soft)}
+.builder{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
+.builder .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.builder label{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+.builder output{display:block;margin-top:14px;padding:14px;border-radius:10px;background:var(--accent-soft);border:1px solid var(--accent)}
+.builder output p{margin:0 0 8px}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:2px 14px;margin:8px 0}
+summary{cursor:pointer;padding:10px 0;font-weight:600}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:8px}
+dl.gloss{margin:0}
+dl.gloss div{padding:8px 0;border-bottom:1px solid var(--line)}
+dl.gloss div.hide{display:none}
+dl.gloss dt{font-weight:700}
+dl.gloss dd{margin:0;color:var(--muted)}
+#top{position:fixed;right:18px;bottom:18px;display:none;z-index:40;box-shadow:0 4px 14px #0003}
+dialog{width:min(1100px,96vw);max-height:92vh;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);padding:0}
+dialog::backdrop{background:#000a}
+dialog .dh{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+dialog .dh div{display:flex;gap:8px}
+dialog .zoomwrap{overflow:auto;max-height:calc(92vh - 70px);padding:14px}
+dialog .zoomwrap svg{min-width:760px}
+footer{border-top:1px solid var(--line);padding:20px;text-align:center;color:var(--muted);font-size:14px}
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;gap:0}
+  nav.toc{position:fixed;inset:56px 0 0 0;background:var(--bg);z-index:45;display:none;max-height:none;padding:16px 20px}
+  nav.toc.open{display:block}
+  .flow{grid-template-columns:1fr}
+  .flow li:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-16px;transform:translateX(-50%)}
+  .flow{gap:18px}
+}
+@media (min-width:981px){#tocbtn{display:none}}
+@media (max-width:640px){
+  body{font-size:16px}
+  .hero{padding:24px 18px}
+  .states{grid-template-columns:1fr}
+  .dbody svg{min-width:680px}
+  table.cmp thead{display:none}
+  table.cmp tr{display:block;border-bottom:6px solid var(--bg);padding:6px 0}
+  table.cmp td{display:block;border:0;padding:4px 12px}
+  table.cmp td::before{content:attr(data-label);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  table.cmp td:first-child{font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div id="progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+<header class="topbar">
+  <button class="btn" id="tocbtn" type="button" aria-expanded="false" aria-controls="toc">Contents</button>
+  <div class="brand">Incremental Data Engineering</div>
+  <button class="btn" id="themebtn" type="button" aria-label="Toggle dark theme">Dark</button>
+</header>
+
+<div class="layout">
+<nav class="toc" id="toc" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#problem">1. The problem</a></li>
+    <li><a href="#incremental">2. Incremental processing</a></li>
+    <li><a href="#target">3. What the target does</a></li>
+    <li><a href="#lakehouse">4. Inside the lakehouse</a></li>
+    <li><a href="#five">5. The five questions</a></li>
+    <li><a href="#example">6. Customer-address example</a></li>
+    <li><a href="#apply">7. Applying changes</a></li>
+    <li><a href="#compare">8. Comparison table</a></li>
+    <li><a href="#helper">9. Build my answer</a></li>
+    <li><a href="#notes">10. Version notes</a></li>
+    <li><a href="#revise">11. Revision</a></li>
+    <li><a href="#glossary">12. Glossary</a></li>
+    <li><a href="#provenance">13. Source and coverage</a></li>
+  </ol>
+</nav>
+
+<main id="main">
+<div class="hero">
+  <div class="eyebrow">Field guide</div>
+  <h1>Incremental Data Engineering: Full Loads, CDC, CDF &amp; SCD</h1>
+  <p class="lead">How should changing data be propagated through a data platform?</p>
+  <p>I use these notes to separate five questions. They look like one topic. They are not.</p>
+  <div class="legend" aria-label="Label key">
+    <span><span class="tag src">SOURCE</span> from my PDF</span>
+    <span><span class="tag add">ADDED</span> my explanation</span>
+    <span><span class="tag ext">EXTERNAL</span> official docs, checked 9 Nov 2026</span>
+  </div>
+</div>
+
+<section id="problem">
+  <h2>1. The problem I start with <span class="tag src">SOURCE</span></h2>
+  <p>I have a customer table with 100 million rows. Yesterday, only 5,000 customers changed. Some updated an address. A few were new. Some records were deleted.</p>
+  <p>My question is simple. Do I really want to process all 100 million rows again?</p>
+  <p>Sometimes yes. A <strong>full load</strong> can be simple, reliable and reasonable. It fits when:</p>
+  <ul>
+    <li>the dataset is small</li>
+    <li>I need an initial copy</li>
+    <li>I need a complete snapshot</li>
+  </ul>
+  <p>When a large dataset keeps changing, I do unnecessary work if I process everything again.</p>
+</section>
+
+<section id="incremental">
+  <h2>2. Incremental processing <span class="tag src">SOURCE</span></h2>
+  <p>Instead of processing the whole dataset, I find what is new or changed. Then I process only that part.</p>
+  <p>That raises the next question. <strong>How do I know what changed?</strong> There is no single answer. I might use:</p>
+  <ul>
+    <li>a timestamp</li>
+    <li>an increasing ID</li>
+    <li>a cursor</li>
+    <li>arriving files</li>
+    <li>a snapshot comparison</li>
+    <li>a proper CDC feed from the source system</li>
+  </ul>
+  <p><span class="tag ext">EXTERNAL</span> Two of these have named Databricks features. I use <a href="https://docs.databricks.com/aws/en/ingestion/auto-loader/" target="_blank" rel="noopener">Auto Loader</a> to incrementally process new files in cloud storage. I use <a href="https://docs.databricks.com/aws/en/data-engineering/what-is-cdc" target="_blank" rel="noopener">AUTO CDC FROM SNAPSHOT</a> to compare consecutive snapshots and build a synthetic change feed.</p>
+  <div class="callout warn"><p><span class="tag add">ADDED</span> A timestamp or ID only finds rows that still exist. A hard delete leaves no row to find. I remember this when I pick a detection method. A proper CDC feed carries deletes as events.</p></div>
+</section>
+
+<section id="target">
+  <h2>3. What the target does with the changes <span class="tag src">SOURCE</span></h2>
+  <p>Knowing what changed is not enough. I still decide what the target table does.</p>
+  <ul>
+    <li>Should it keep only the latest value?</li>
+    <li>Should it keep older versions?</li>
+    <li>Should it apply inserts, updates and deletes automatically?</li>
+  </ul>
+  <p>This is where <strong>MERGE</strong>, <strong>AUTO CDC</strong>, <strong>SCD Type 1</strong> and <strong>SCD Type 2</strong> come in.</p>
+</section>
+
+<section id="lakehouse">
+  <h2>4. Data already inside the lakehouse <span class="tag src">SOURCE</span></h2>
+  <p>Things change when the data is already in the lakehouse. If a Delta table or a supported Iceberg table changes, <strong>Change Data Feed (CDF)</strong> can expose those row-level changes to downstream processing.</p>
+  <p>So CDF answers a different question from source-side CDC.</p>
+  <p><span class="tag ext">EXTERNAL</span> Current docs describe two kinds of <a href="https://docs.databricks.com/gcp/en/tables/features/change-data-feed" target="_blank" rel="noopener">change data feed</a>.</p>
+  <ul>
+    <li><strong>Automatic CDF.</strong> It computes changes when I read the table. It needs Databricks Runtime 19 or above. It works on Delta tables with row tracking and on Iceberg v3 tables.</li>
+    <li><strong>Legacy CDF.</strong> It writes change records during table writes. It supports only Delta tables. I <a href="https://docs.databricks.com/aws/en/delta/delta-change-data-feed" target="_blank" rel="noopener">enable it per table</a>.</li>
+  </ul>
+  <p>I cannot use both on the same table.</p>
+</section>
+
+<section id="five">
+  <h2>5. The five questions <span class="tag src">SOURCE</span></h2>
+  <p>These terms are related. They are not five versions of the same technology. I am not choosing between five competing tools. I am answering five different questions.</p>
+
+  <figure class="diagram" id="d1">
+    <div class="fhead"><strong>Diagram 1: Overview, five questions</strong><button class="btn expand" type="button">Expand</button></div>
+    <div class="dbody">
+      <ol class="flow">
+        <li><b>How much?</b><span>Full load or incremental load</span></li>
+        <li><b>How do I know what changed?</b><span>Timestamp, cursor, snapshot comparison, or CDC</span></li>
+        <li><b>Where did it come from?</b><span>A source system or a lakehouse table</span></li>
+        <li><b>How do I apply it?</b><span>MERGE, AUTO CDC, or other logic</span></li>
+        <li><b>How is history kept?</b><span>Current state, SCD Type 1, or SCD Type 2</span></li>
+      </ol>
+    </div>
+    <figcaption><span class="tag add">ADDED</span> I read this left to right on a wide screen, top to bottom on a phone. Each box is a separate decision. Answering one does not answer the others.</figcaption>
+  </figure>
+
+  <figure class="diagram" id="d2">
+    <div class="fhead"><strong>Diagram 2: Decision tree across the five questions</strong><button class="btn expand" type="button">Expand</button></div>
+    <div class="dbody">
+<svg viewBox="0 0 760 750" role="img" aria-labelledby="d2t d2d" xmlns="http://www.w3.org/2000/svg">
+<title id="d2t">Decision tree</title><desc id="d2d">Start at a changed customer table. Choose full or incremental. Then choose how changes are detected, where they come from, how they are applied, and how history is kept.</desc>
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<rect class="nd" x="280" y="10" width="200" height="36" rx="18"/><text class="tm" x="380" y="33">Customer table changed</text>
+<path class="ln" d="M380,46 V70" marker-end="url(#a2)"/>
+<rect class="q" x="220" y="70" width="320" height="44" rx="8"/><text class="tm head" x="380" y="97">1. Process everything again?</text>
+<path class="ln" d="M220,92 H180" marker-end="url(#a2)"/><text class="lbl" x="200" y="84" text-anchor="middle">yes</text>
+<rect class="ch" x="10" y="64" width="170" height="56" rx="8"/><text class="tm" x="95" y="86">Full load</text><text class="tm lbl" x="95" y="105">small, initial, snapshot</text>
+<path class="ln" d="M380,114 V170" marker-end="url(#a2)"/><text class="lbl" x="392" y="146">no, only changes</text>
+<rect class="q" x="220" y="170" width="320" height="44" rx="8"/><text class="tm head" x="380" y="197">2. How do I know what changed?</text>
+<path class="ln" d="M380,214 V226 M88,226 H672"/>
+<path class="ln" d="M88,226 V240" marker-end="url(#a2)"/><path class="ln" d="M234,226 V240" marker-end="url(#a2)"/><path class="ln" d="M380,226 V240" marker-end="url(#a2)"/><path class="ln" d="M526,226 V240" marker-end="url(#a2)"/><path class="ln" d="M672,226 V240" marker-end="url(#a2)"/>
+<rect class="ch" x="23" y="240" width="130" height="34" rx="8"/><text class="tm" x="88" y="262">Timestamp</text>
+<rect class="ch" x="169" y="240" width="130" height="34" rx="8"/><text class="tm" x="234" y="262">ID / cursor</text>
+<rect class="ch" x="315" y="240" width="130" height="34" rx="8"/><text class="tm" x="380" y="262">Arriving files</text>
+<rect class="ch" x="461" y="240" width="130" height="34" rx="8"/><text class="tm" x="526" y="262">Snapshot compare</text>
+<rect class="ch" x="607" y="240" width="130" height="34" rx="8"/><text class="tm" x="672" y="262">CDC feed</text>
+<path class="ln" d="M88,274 V292 M234,274 V292 M380,274 V292 M526,274 V292 M672,274 V292 M88,292 H672"/>
+<path class="ln" d="M380,292 V320" marker-end="url(#a2)"/>
+<rect class="q" x="220" y="320" width="320" height="44" rx="8"/><text class="tm head" x="380" y="347">3. Where did the change come from?</text>
+<path class="ln" d="M380,364 V376 M250,376 H510"/>
+<path class="ln" d="M250,376 V390" marker-end="url(#a2)"/><path class="ln" d="M510,376 V390" marker-end="url(#a2)"/>
+<rect class="ch" x="140" y="390" width="220" height="44" rx="8"/><text class="tm" x="250" y="408">Source system</text><text class="tm lbl" x="250" y="424">source-side CDC</text>
+<rect class="ch" x="400" y="390" width="220" height="44" rx="8"/><text class="tm" x="510" y="408">Lakehouse table</text><text class="tm lbl" x="510" y="424">Change Data Feed</text>
+<path class="ln" d="M250,434 V452 M510,434 V452 M250,452 H510"/>
+<path class="ln" d="M380,452 V480" marker-end="url(#a2)"/>
+<rect class="q" x="220" y="480" width="320" height="44" rx="8"/><text class="tm head" x="380" y="507">4. How do I apply it?</text>
+<path class="ln" d="M380,524 V536 M205,536 H555"/>
+<path class="ln" d="M205,536 V550" marker-end="url(#a2)"/><path class="ln" d="M380,536 V550" marker-end="url(#a2)"/><path class="ln" d="M555,536 V550" marker-end="url(#a2)"/>
+<rect class="ch" x="130" y="550" width="150" height="34" rx="8"/><text class="tm" x="205" y="572">MERGE</text>
+<rect class="ch" x="305" y="550" width="150" height="34" rx="8"/><text class="tm" x="380" y="572">AUTO CDC</text>
+<rect class="ch" x="480" y="550" width="150" height="34" rx="8"/><text class="tm" x="555" y="572">Other logic</text>
+<path class="ln" d="M205,584 V602 M380,584 V602 M555,584 V602 M205,602 H555"/>
+<path class="ln" d="M380,602 V630" marker-end="url(#a2)"/>
+<rect class="q" x="220" y="630" width="320" height="44" rx="8"/><text class="tm head" x="380" y="657">5. How is history kept?</text>
+<path class="ln" d="M380,674 V686 M205,686 H555"/>
+<path class="ln" d="M205,686 V700" marker-end="url(#a2)"/><path class="ln" d="M380,686 V700" marker-end="url(#a2)"/><path class="ln" d="M555,686 V700" marker-end="url(#a2)"/>
+<rect class="ch" x="130" y="700" width="150" height="34" rx="8"/><text class="tm" x="205" y="722">Current state</text>
+<rect class="ch" x="305" y="700" width="150" height="34" rx="8"/><text class="tm" x="380" y="722">SCD Type 1</text>
+<rect class="ch" x="480" y="700" width="150" height="34" rx="8"/><text class="tm" x="555" y="722">SCD Type 2</text>
+</svg>
+    </div>
+    <figcaption><span class="tag add">ADDED</span> I built this tree from the five questions and the answers the source lists. I use it as a check. If I skip a question, I am guessing. On a phone I scroll sideways or tap Expand.</figcaption>
+  </figure>
+</section>
+
+<section id="example">
+  <h2>6. Customer-address example <span class="tag add">ADDED</span></h2>
+  <p>The source talks about customers and addresses. I keep one customer for every diagram. Customer <code>101</code> lives in Pune. Later, the address changes to Mumbai.</p>
+
+  <h3>Where the change starts: source-side CDC</h3>
+  <figure class="diagram" id="d3">
+    <div class="fhead"><strong>Diagram 3: Source-side CDC sequence</strong><button class="btn expand" type="button">Expand</button></div>
+    <div class="dbody">
+<svg viewBox="0 0 820 500" role="img" aria-labelledby="d3t d3d" xmlns="http://www.w3.org/2000/svg">
+<title id="d3t">Source CDC sequence</title><desc id="d3d">A source application updates customer 101. The source database commits it. A CDC event goes to the feed. The pipeline reads the feed and applies the change to the target table.</desc>
+<defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<rect class="nd" x="15" y="10" width="130" height="40" rx="8"/><text class="tm head" x="80" y="35">Source app</text>
+<rect class="nd" x="185" y="10" width="130" height="40" rx="8"/><text class="tm head" x="250" y="35">Source database</text>
+<rect class="nd" x="355" y="10" width="130" height="40" rx="8"/><text class="tm head" x="420" y="35">CDC feed</text>
+<rect class="nd" x="525" y="10" width="130" height="40" rx="8"/><text class="tm head" x="590" y="35">Pipeline</text>
+<rect class="nd" x="685" y="10" width="130" height="40" rx="8"/><text class="tm head" x="750" y="35">Target table</text>
+<path class="life" d="M80,50 V480 M250,50 V480 M420,50 V480 M590,50 V480 M750,50 V480"/>
+<path class="ln" d="M80,100 H250" marker-end="url(#a3)"/><text class="tm" x="165" y="92">1. Update 101 → Mumbai</text>
+<path class="ln" d="M250,150 H290 V172 H252" marker-end="url(#a3)"/><text x="298" y="166">2. Commit; log records it</text>
+<path class="ln" d="M250,225 H420" marker-end="url(#a3)"/><text class="tm" x="335" y="217">3. UPDATE 101, seq 1042</text>
+<path class="ln" d="M590,280 H420" marker-end="url(#a3)"/><text class="tm" x="505" y="272">4. Read new events</text>
+<path class="ln dash" d="M420,330 H590" marker-end="url(#a3)"/><text class="tm" x="505" y="322">5. Events in order</text>
+<path class="ln" d="M590,385 H750" marker-end="url(#a3)"/><text class="tm" x="670" y="377">6. Apply changes</text>
+<rect class="old" x="520" y="415" width="295" height="62" rx="8"/>
+<text x="532" y="436">MERGE or AUTO CDC applies the event.</text><text x="532" y="454">Result: current state or history,</text><text x="532" y="472">depending on the SCD choice.</text>
+</svg>
+    </div>
+    <figcaption>I follow the change from the left. It starts in the source. The feed carries it out. The pipeline reads the feed and applies it. The sequence number matters, because events can arrive out of order. <span class="tag ext">EXTERNAL</span> The <a href="https://docs.databricks.com/delta-live-tables/cdc.html" target="_blank" rel="noopener">AUTO CDC docs</a> say <code>MERGE INTO</code> can give wrong results with out-of-sequence records, or needs complex re-ordering logic.</figcaption>
+  </figure>
+
+  <h3>Where CDF sits</h3>
+  <figure class="diagram" id="d4">
+    <div class="fhead"><strong>Diagram 4: CDF placement</strong><button class="btn expand" type="button">Expand</button></div>
+    <div class="dbody">
+<svg viewBox="0 0 820 370" role="img" aria-labelledby="d4t d4d" xmlns="http://www.w3.org/2000/svg">
+<title id="d4t">CDF placement</title><desc id="d4d">Source-side CDC is outside the lakehouse. CDF is inside the lakehouse, on a Delta or supported Iceberg table, and feeds downstream processing.</desc>
+<defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<rect class="box" x="10" y="30" width="330" height="320" rx="12"/><text class="head" x="24" y="52">Outside the lakehouse</text>
+<rect class="box" x="380" y="30" width="430" height="320" rx="12"/><text class="head" x="394" y="52">Inside the lakehouse</text>
+<rect class="nd" x="50" y="100" width="250" height="50" rx="8"/><text class="tm" x="175" y="130">Source system</text>
+<path class="ln" d="M175,150 V220" marker-end="url(#a4)"/>
+<rect class="q" x="50" y="220" width="250" height="50" rx="8"/><text class="tm" x="175" y="244">Source-side CDC feed</text><text class="tm lbl" x="175" y="260">CDC</text>
+<rect class="nd" x="430" y="90" width="350" height="64" rx="8"/><text class="tm" x="605" y="116">Delta table or supported Iceberg table</text><text class="tm lbl" x="605" y="136">CDF is available on this table</text>
+<path class="ln dash" d="M300,245 H360 V122 H430" marker-end="url(#a4)"/><text class="lbl" x="316" y="236">data lands</text>
+<path class="ln" d="M605,154 V205" marker-end="url(#a4)"/>
+<rect class="q" x="430" y="205" width="350" height="50" rx="8"/><text class="tm" x="605" y="228">Change Data Feed</text><text class="tm lbl" x="605" y="244">row-level changes of that table</text>
+<path class="ln" d="M605,255 V285" marker-end="url(#a4)"/>
+<rect class="nd" x="430" y="285" width="350" height="46" rx="8"/><text class="tm" x="605" y="313">Downstream processing</text>
+</svg>
+    </div>
+    <figcaption>The left box is source-side CDC. The right box is CDF. The dotted line shows that source data can land in a lakehouse table. After that, CDF reports the changes of that table. It does not read the source database. <span class="tag add">ADDED</span> This is why I never treat CDC and CDF as interchangeable.</figcaption>
+  </figure>
+
+  <p><span class="tag ext">EXTERNAL</span> To turn on legacy CDF on a Delta table, I set a table property. Only changes made after this are recorded.</p>
+  <div class="code"><div class="bar"><span>sql</span><button class="copy" type="button">Copy</button></div><pre><code>ALTER TABLE customers
+SET TBLPROPERTIES (delta.enableChangeDataFeed = true);</code></pre></div>
+  <p>CDF rows carry a <code>_change_type</code> column. Its values are <code>insert</code>, <code>update_preimage</code>, <code>update_postimage</code> and <code>delete</code>. The docs recommend reading CDF with Structured Streaming.</p>
+  <div class="code"><div class="bar"><span>python</span><button class="copy" type="button">Copy</button></div><pre><code>(spark.readStream
+    .option("readChangeFeed", "true")
+    .table("customers"))</code></pre></div>
+  <div class="callout"><p>CDF is not a permanent history. Its records follow the table retention. If I need permanent history, I write the records to a new table.</p></div>
+
+  <h3>How history is kept</h3>
+  <figure class="diagram" id="d5">
+    <div class="fhead"><strong>Diagram 5: SCD Type 1 vs SCD Type 2 timeline</strong><button class="btn expand" type="button">Expand</button></div>
+    <div class="dbody">
+<svg viewBox="0 0 820 400" role="img" aria-labelledby="d5t d5d" xmlns="http://www.w3.org/2000/svg">
+<title id="d5t">SCD Type 1 vs Type 2</title><desc id="d5d">At t1 customer 101 is inserted with Pune. At t2 the address changes to Mumbai. SCD Type 1 overwrites the row. SCD Type 2 closes the Pune row and adds a Mumbai row.</desc>
+<path class="ln" d="M140,60 H800"/>
+<text class="tm head" x="240" y="30">t1</text><text class="tm lbl" x="240" y="48">insert: Pune</text>
+<text class="tm head" x="520" y="30">t2</text><text class="tm lbl" x="520" y="48">update: Mumbai</text>
+<text class="tm head" x="780" y="30">now</text>
+<path class="life" d="M240,64 V380 M520,64 V380 M780,64 V380"/>
+<text class="head" x="10" y="128">SCD Type 1</text><text class="lbl" x="10" y="146">one row per key</text>
+<rect class="old" x="240" y="105" width="280" height="44" rx="8"/><text class="tm" x="380" y="132">101 | Pune</text>
+<rect class="cur" x="520" y="105" width="260" height="44" rx="8"/><text class="tm" x="650" y="132">101 | Mumbai</text>
+<text class="lbl" x="240" y="172">Pune is overwritten at t2. The old value is gone.</text>
+<text class="head" x="10" y="246">SCD Type 2</text><text class="lbl" x="10" y="264">one row per version</text>
+<rect class="old" x="240" y="225" width="280" height="44" rx="8"/><text class="tm" x="380" y="252">101 | Pune | t1 → t2</text>
+<rect class="cur" x="520" y="285" width="260" height="44" rx="8"/><text class="tm" x="650" y="312">101 | Mumbai | t2 → open</text>
+<text class="lbl" x="240" y="358">Pune is closed at t2. Mumbai is the current row.</text>
+</svg>
+    </div>
+    <figcaption><span class="tag add">ADDED</span> Same customer, same two events. SCD Type 1 keeps one row and overwrites it. SCD Type 2 closes the old row and adds a new one. The amber bars are old values. The green bars are current values.</figcaption>
+  </figure>
+
+  <div class="states">
+    <table><caption>SCD Type 1 after t2</caption><thead><tr><th>customer_id</th><th>address</th></tr></thead><tbody><tr><td>101</td><td>Mumbai</td></tr></tbody></table>
+    <table><caption>SCD Type 2 after t2</caption><thead><tr><th>customer_id</th><th>address</th><th>start</th><th>end</th></tr></thead><tbody><tr><td>101</td><td>Pune</td><td>t1</td><td>t2</td></tr><tr><td>101</td><td>Mumbai</td><td>t2</td><td>open</td></tr></tbody></table>
+  </div>
+  <p><span class="tag ext">EXTERNAL</span> In <a href="https://docs.databricks.com/delta-live-tables/cdc.html" target="_blank" rel="noopener">AUTO CDC</a>, SCD Type 2 uses <code>__START_AT</code> and <code>__END_AT</code> columns. In the <a href="https://docs.databricks.com/aws/en/dlt/what-is-change-data-capture" target="_blank" rel="noopener">Databricks CDC overview</a>, the current record has a null end value.</p>
+</section>
+
+<section id="apply">
+  <h2>7. Applying the changes <span class="tag ext">EXTERNAL</span></h2>
+  <p>Delta Lake <a href="https://docs.databricks.com/gcp/en/delta/merge" target="_blank" rel="noopener">MERGE</a> supports inserts, updates and deletes. I wrote this example from the documented syntax. I did not run it.</p>
+  <div class="code"><div class="bar"><span>sql</span><button class="copy" type="button">Copy</button></div><pre><code>MERGE INTO customers AS t
+USING customer_updates AS s
+ON t.customer_id = s.customer_id
+WHEN MATCHED AND s.operation = 'DELETE' THEN DELETE
+WHEN MATCHED THEN UPDATE SET *
+WHEN NOT MATCHED THEN INSERT *;</code></pre></div>
+  <p>The <a href="https://docs.databricks.com/aws/dlt-ref/dlt-sql-ref-apply-changes-into" target="_blank" rel="noopener">AUTO CDC INTO</a> statement does the same job for a CDC feed. SCD handling is built in. The default is SCD Type 1. I adapted this example from the documented one. I did not run it.</p>
+  <div class="code"><div class="bar"><span>sql (pipelines)</span><button class="copy" type="button">Copy</button></div><pre><code>CREATE OR REFRESH STREAMING TABLE customers_history;
+
+CREATE FLOW apply_customer_changes AS AUTO CDC INTO customers_history
+FROM stream(cdc_data.customers)
+KEYS (customer_id)
+APPLY AS DELETE WHEN operation = "DELETE"
+SEQUENCE BY sequence_num
+COLUMNS * EXCEPT (operation, sequence_num)
+STORED AS SCD TYPE 2;</code></pre></div>
+  <div class="callout"><p><span class="tag add">ADDED</span> MERGE is a general statement. AUTO CDC is built for CDC feeds. A hand-written SCD Type 2 with MERGE needs extra version logic. That is my reading of the docs. I did not build one.</p></div>
+  <p>The docs also cover <a href="https://docs.databricks.com/aws/en/ldp/cdc-advanced" target="_blank" rel="noopener">advanced AUTO CDC topics</a>, such as reading the change data feed of an AUTO CDC target table.</p>
+</section>
+
+<section id="compare">
+  <h2>8. Comparison table <span class="tag add">ADDED</span></h2>
+  <p>I built this from the source terms. I checked it against the docs linked above. I filter it when I look for one term.</p>
+  <div class="tools"><label for="cmpfilter" class="sr" style="position:absolute;left:-999px">Filter the comparison table</label><input id="cmpfilter" type="search" placeholder="Filter: try CDF, MERGE, SCD" data-filter="#cmp tbody tr"></div>
+  <table class="cmp" id="cmp">
+    <thead><tr><th>Term</th><th>Question it answers</th><th>Where it works</th><th>What it does</th><th>What it does not do</th></tr></thead>
+    <tbody>
+      <tr><td data-label="Term">Full load</td><td data-label="Question">How much? (Q1)</td><td data-label="Where">Pipeline</td><td data-label="Does">Reprocesses the whole dataset</td><td data-label="Does not">Find changes</td></tr>
+      <tr><td data-label="Term">Incremental load</td><td data-label="Question">How much? (Q1)</td><td data-label="Where">Pipeline</td><td data-label="Does">Processes only new or changed data</td><td data-label="Does not">Decide how changes are detected</td></tr>
+      <tr><td data-label="Term">CDC</td><td data-label="Question">What changed, from the source? (Q2, Q3)</td><td data-label="Where">Source system</td><td data-label="Does">Produces a feed of inserts, updates and deletes</td><td data-label="Does not">Decide how the target stores history</td></tr>
+      <tr><td data-label="Term">CDF</td><td data-label="Question">What changed, from a lakehouse table? (Q3)</td><td data-label="Where">Delta table or supported Iceberg table</td><td data-label="Does">Exposes row-level changes of that table</td><td data-label="Does not">Read a source database</td></tr>
+      <tr><td data-label="Term">MERGE</td><td data-label="Question">How do I apply it? (Q4)</td><td data-label="Where">Target Delta table</td><td data-label="Does">Upserts and deletes by a match condition</td><td data-label="Does not">Order out-of-sequence events by itself</td></tr>
+      <tr><td data-label="Term">AUTO CDC</td><td data-label="Question">How do I apply it? (Q4)</td><td data-label="Where">Lakeflow pipelines</td><td data-label="Does">Applies a CDC feed to a streaming table, with sequencing</td><td data-label="Does not">Run outside pipelines</td></tr>
+      <tr><td data-label="Term">SCD Type 1</td><td data-label="Question">How is history kept? (Q5)</td><td data-label="Where">Target table</td><td data-label="Does">Overwrites. Keeps the latest row</td><td data-label="Does not">Keep older versions</td></tr>
+      <tr><td data-label="Term">SCD Type 2</td><td data-label="Question">How is history kept? (Q5)</td><td data-label="Where">Target table</td><td data-label="Does">Adds a new row per version</td><td data-label="Does not">Stay one row per key</td></tr>
+    </tbody>
+  </table>
+  <p id="cmpnone" hidden>No row matches that filter.</p>
+</section>
+
+<section id="helper">
+  <h2>9. Build my answer <span class="tag add">ADDED</span></h2>
+  <p>I pick one answer per question. The page writes my design in plain words. It is a study helper, not a design tool.</p>
+  <div class="builder">
+    <div class="row">
+      <div><label for="q1">1. How much?</label><select id="q1"><option value="inc">Incremental load</option><option value="full">Full load</option></select></div>
+      <div><label for="q2">2. How do I know what changed?</label><select id="q2"><option value="cdc">CDC feed</option><option value="ts">Timestamp</option><option value="id">ID or cursor</option><option value="files">Arriving files</option><option value="snap">Snapshot comparison</option></select></div>
+      <div><label for="q3">3. Where did it come from?</label><select id="q3"><option value="src">Source system</option><option value="lake">Lakehouse table</option></select></div>
+      <div><label for="q4">4. How do I apply it?</label><select id="q4"><option value="autocdc">AUTO CDC</option><option value="merge">MERGE</option><option value="other">Other logic</option></select></div>
+      <div><label for="q5">5. How is history kept?</label><select id="q5"><option value="scd1">SCD Type 1</option><option value="scd2">SCD Type 2</option><option value="cur">Current state</option></select></div>
+    </div>
+    <output id="out" aria-live="polite"></output>
+  </div>
+</section>
+
+<section id="notes">
+  <h2>10. Version and accuracy notes <span class="tag add">ADDED</span></h2>
+  <ul>
+    <li><strong>Source scope.</strong> My PDF has the Overview only. The sequence diagram, SCD timeline, CDF placement diagram, comparison table and all code are my additions.</li>
+    <li><strong>"Supported Iceberg table".</strong> The source uses this phrase. The <a href="https://docs.databricks.com/gcp/en/tables/features/change-data-feed" target="_blank" rel="noopener">current CDF page</a> names Iceberg v3 tables for automatic CDF. The <a href="https://docs.databricks.com/aws/en/tables/automatic-upgrades" target="_blank" rel="noopener">automatic upgrades page</a> lists automatic CDF as Public Preview. I read "supported" as "check the current requirements".</li>
+    <li><strong>Two kinds of CDF.</strong> Older pages describe only the Delta table property. Newer pages split automatic and legacy CDF. I checked both.</li>
+    <li><strong>AUTO CDC naming.</strong> Older material calls it <code>APPLY CHANGES</code>. Current pages say <code>AUTO CDC</code>. The source says <code>AUTO CDC</code>.</li>
+    <li><strong>AUTO CDC FROM SNAPSHOT.</strong> One docs page says Python only. Another says Python and SQL. I could not settle this, so I claim neither.</li>
+    <li><strong>Apache Iceberg.</strong> For background, I use the <a href="https://docs.databricks.com/aws/en/iceberg" target="_blank" rel="noopener">Iceberg on Databricks</a> page.</li>
+    <li><strong>Not done.</strong> I did not run any code. I did not test the Iceberg CDF path. I took every link from a search result and did not open each page.</li>
+  </ul>
+</section>
+
+<section id="revise">
+  <h2>11. Revision prompts <span class="tag add">ADDED</span></h2>
+  <details><summary>What are the five questions? Which one does CDF answer?</summary><p>How much, how I know what changed, where the change came from, how I apply it, how history is kept. CDF answers question 3 for lakehouse tables.</p></details>
+  <details><summary>Why is CDC not the same as CDF?</summary><p>CDC starts in a source system. CDF reports row-level changes of a lakehouse table. They sit in different places.</p></details>
+  <details><summary>When is a full load a good choice?</summary><p>When the dataset is small, when I need an initial copy, or when I need a complete snapshot.</p></details>
+  <details><summary>What does SCD Type 2 keep that SCD Type 1 does not?</summary><p>Older versions of a row. Type 1 keeps only the latest value.</p></details>
+  <details><summary>Why can an out-of-order event hurt a MERGE?</summary><p>MERGE applies what it sees. Without ordering logic, an old event can overwrite a newer one. AUTO CDC uses a sequencing column for this.</p></details>
+</section>
+
+<section id="glossary">
+  <h2>12. Glossary <span class="tag add">ADDED</span></h2>
+  <div class="tools"><label for="glfilter" style="position:absolute;left:-999px">Filter the glossary</label><input id="glfilter" type="search" placeholder="Filter the glossary" data-filter="#gloss div"></div>
+  <dl class="gloss" id="gloss">
+    <div><dt>Full load</dt><dd>Process the whole dataset again.</dd></div>
+    <div><dt>Incremental load</dt><dd>Process only what is new or changed.</dd></div>
+    <div><dt>CDC</dt><dd>A feed of row changes from a source system.</dd></div>
+    <div><dt>CDF</dt><dd>Row-level changes exposed by a Delta or supported Iceberg table.</dd></div>
+    <div><dt>MERGE</dt><dd>A statement that upserts or deletes rows by a match condition.</dd></div>
+    <div><dt>AUTO CDC</dt><dd>A pipeline feature that applies a CDC feed to a target table.</dd></div>
+    <div><dt>SCD Type 1</dt><dd>Overwrite. Keep the latest value.</dd></div>
+    <div><dt>SCD Type 2</dt><dd>Keep versions as separate rows.</dd></div>
+    <div><dt>Snapshot</dt><dd>The full state of a table at one point in time.</dd></div>
+  </dl>
+</section>
+
+<section id="provenance">
+  <h2>13. Source and coverage</h2>
+  <p><strong>Source:</strong> "Incremental Data Engineering: Full Loads, CDC, CDF &amp; SCD", Overview, page 1.</p>
+  <table class="cmp" id="cov">
+    <thead><tr><th>Source topic</th><th>Where I cover it</th><th>Label</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td data-label="Topic">100M rows, 5,000 changed</td><td data-label="Where"><a href="#problem">Section 1</a></td><td data-label="Label">Source</td><td data-label="Notes">Overview p.1</td></tr>
+      <tr><td data-label="Topic">Full load, when it fits</td><td data-label="Where"><a href="#problem">Section 1</a></td><td data-label="Label">Source</td><td data-label="Notes">Overview p.1</td></tr>
+      <tr><td data-label="Topic">Incremental, ways to detect change</td><td data-label="Where"><a href="#incremental">Section 2</a></td><td data-label="Label">Source + External</td><td data-label="Notes">Doc links are added</td></tr>
+      <tr><td data-label="Topic">Target decisions</td><td data-label="Where"><a href="#target">Section 3</a></td><td data-label="Label">Source</td><td data-label="Notes">Overview p.1</td></tr>
+      <tr><td data-label="Topic">CDF for Delta or supported Iceberg</td><td data-label="Where"><a href="#lakehouse">Section 4</a></td><td data-label="Label">Source + External</td><td data-label="Notes">Version notes in section 10</td></tr>
+      <tr><td data-label="Topic">Five questions, not five competing tools</td><td data-label="Where"><a href="#five">Section 5</a>, <a href="#compare">8</a></td><td data-label="Label">Source + Added</td><td data-label="Notes">Diagrams are added</td></tr>
+      <tr><td data-label="Topic">MERGE, AUTO CDC, SCD 1, SCD 2</td><td data-label="Where"><a href="#example">Sections 6</a>, <a href="#apply">7</a></td><td data-label="Label">Added + External</td><td data-label="Notes">Source names them only</td></tr>
+    </tbody>
+  </table>
+</section>
+</main>
+</div>
+
+<footer>Built from my study notes. Docs checked 9 Nov 2026. Check current docs before you rely on syntax.</footer>
+<button class="btn" id="top" type="button" aria-label="Back to top">↑ Top</button>
+
+<dialog id="zoom" aria-label="Expanded diagram">
+  <div class="dh"><strong id="zoomtitle">Diagram</strong>
+    <div><button class="btn" type="button" id="zout" aria-label="Zoom out">−</button><button class="btn" type="button" id="zreset">100%</button><button class="btn" type="button" id="zin" aria-label="Zoom in">+</button><button class="btn" type="button" id="zclose">Close</button></div></div>
+  <div class="zoomwrap" id="zbody"></div>
+</dialog>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  // Theme
+  var saved=null;
+  try{saved=localStorage.getItem('ide-theme');}catch(e){}
+  if(!saved&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){saved='dark';}
+  var themeBtn=document.getElementById('themebtn');
+  function setTheme(t){root.setAttribute('data-theme',t);themeBtn.textContent=t==='dark'?'Light':'Dark';themeBtn.setAttribute('aria-label','Switch to '+(t==='dark'?'light':'dark')+' theme');}
+  setTheme(saved==='dark'?'dark':'light');
+  themeBtn.addEventListener('click',function(){
+    var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);
+    try{localStorage.setItem('ide-theme',t);}catch(e){}
+  });
+
+  // Progress + back to top
+  var bar=document.getElementById('progress'),topBtn=document.getElementById('top');
+  function onScroll(){
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    var p=h>0?Math.min(100,Math.max(0,window.scrollY/h*100)):0;
+    bar.style.width=p+'%';bar.setAttribute('aria-valuenow',Math.round(p));
+    topBtn.style.display=window.scrollY>600?'block':'none';
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  topBtn.addEventListener('click',function(){window.scrollTo({top:0});});
+
+  // TOC drawer on small screens
+  var toc=document.getElementById('toc'),tocBtn=document.getElementById('tocbtn');
+  tocBtn.addEventListener('click',function(){
+    var open=toc.classList.toggle('open');tocBtn.setAttribute('aria-expanded',open?'true':'false');
+  });
+  toc.addEventListener('click',function(e){
+    if(e.target.tagName==='A'){toc.classList.remove('open');tocBtn.setAttribute('aria-expanded','false');}
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&toc.classList.contains('open')){toc.classList.remove('open');tocBtn.setAttribute('aria-expanded','false');tocBtn.focus();}
+  });
+
+  // TOC active highlight
+  var links={};
+  Array.prototype.forEach.call(toc.querySelectorAll('a'),function(a){links[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          Object.keys(links).forEach(function(k){links[k].classList.remove('active');links[k].removeAttribute('aria-current');});
+          var a=links[en.target.id];if(a){a.classList.add('active');a.setAttribute('aria-current','true');}
+        }
+      });
+    },{rootMargin:'-20% 0px -70% 0px'});
+    Array.prototype.forEach.call(document.querySelectorAll('main section[id]'),function(s){io.observe(s);});
+  }
+
+  // Copy buttons
+  Array.prototype.forEach.call(document.querySelectorAll('.code .copy'),function(btn){
+    btn.addEventListener('click',function(){
+      var text=btn.closest('.code').querySelector('code').textContent;
+      function done(ok){btn.textContent=ok?'Copied':'Copy failed';setTimeout(function(){btn.textContent='Copy';},1500);}
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){done(true);},function(){fallback();});
+      }else{fallback();}
+      function fallback(){
+        var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+        document.body.appendChild(ta);ta.select();var ok=false;
+        try{ok=document.execCommand('copy');}catch(e){}
+        document.body.removeChild(ta);done(ok);
+      }
+    });
+  });
+
+  // Filters
+  Array.prototype.forEach.call(document.querySelectorAll('input[data-filter]'),function(inp){
+    inp.addEventListener('input',function(){
+      var q=inp.value.trim().toLowerCase(),shown=0;
+      Array.prototype.forEach.call(document.querySelectorAll(inp.getAttribute('data-filter')),function(el){
+        var m=!q||el.textContent.toLowerCase().indexOf(q)>-1;
+        el.classList.toggle('hide',!m);if(m)shown++;
+      });
+      if(inp.id==='cmpfilter'){document.getElementById('cmpnone').hidden=shown>0;}
+    });
+  });
+
+  // Diagram expand + zoom
+  var dlg=document.getElementById('zoom'),zbody=document.getElementById('zbody'),ztitle=document.getElementById('zoomtitle');
+  var scale=1,lastBtn=null;
+  function applyZoom(){zbody.style.zoom=scale;document.getElementById('zreset').textContent=Math.round(scale*100)+'%';}
+  Array.prototype.forEach.call(document.querySelectorAll('.expand'),function(btn){
+    btn.addEventListener('click',function(){
+      var fig=btn.closest('figure');lastBtn=btn;
+      ztitle.textContent=fig.querySelector('.fhead strong').textContent;
+      zbody.innerHTML='';zbody.appendChild(fig.querySelector('.dbody').cloneNode(true));
+      scale=1;applyZoom();
+      if(dlg.showModal){dlg.showModal();}else{dlg.setAttribute('open','');}
+    });
+  });
+  document.getElementById('zin').addEventListener('click',function(){scale=Math.min(2.5,scale+0.25);applyZoom();});
+  document.getElementById('zout').addEventListener('click',function(){scale=Math.max(0.5,scale-0.25);applyZoom();});
+  document.getElementById('zreset').addEventListener('click',function(){scale=1;applyZoom();});
+  function closeDlg(){if(dlg.close){dlg.close();}else{dlg.removeAttribute('open');}if(lastBtn)lastBtn.focus();}
+  document.getElementById('zclose').addEventListener('click',closeDlg);
+  dlg.addEventListener('click',function(e){if(e.target===dlg)closeDlg();});
+
+  // Build my answer
+  var ids=['q1','q2','q3','q4','q5'];
+  var names={
+    inc:'incremental load',full:'full load',
+    cdc:'a CDC feed',ts:'a timestamp',id:'an ID or cursor',files:'arriving files',snap:'a snapshot comparison',
+    src:'a source system',lake:'a lakehouse table',
+    autocdc:'AUTO CDC',merge:'MERGE',other:'other processing logic',
+    scd1:'SCD Type 1',scd2:'SCD Type 2',cur:'current state only'
+  };
+  var out=document.getElementById('out');
+  function render(){
+    var v={};ids.forEach(function(i){v[i]=document.getElementById(i).value;});
+    var p=[];
+    p.push('<p>I process data as a <strong>'+names[v.q1]+'</strong>. I find changes with <strong>'+names[v.q2]+'</strong>. The change comes from <strong>'+names[v.q3]+'</strong>. I apply it with <strong>'+names[v.q4]+'</strong>. The target keeps <strong>'+names[v.q5]+'</strong>.</p>');
+    if(v.q1==='full'){p.push('<p>A full load reprocesses everything. Questions 2 and 3 matter less here.</p>');}
+    if(v.q3==='lake'){p.push('<p>A lakehouse table as the origin means Change Data Feed. That is not source-side CDC.</p>');}
+    if(v.q3==='src'&&v.q2!=='cdc'&&v.q1==='inc'){p.push('<p>I do not have a CDC feed here. Hard deletes may be missed unless the source marks them.</p>');}
+    if(v.q4==='autocdc'&&v.q2!=='cdc'&&v.q2!=='snap'&&v.q1==='inc'){p.push('<p>AUTO CDC reads a CDC feed. For snapshots there is AUTO CDC FROM SNAPSHOT. I would check how my detection method fits.</p>');}
+    if(v.q4==='merge'&&v.q5==='scd2'){p.push('<p>MERGE can support this, but I write the version logic myself.</p>');}
+    if(v.q4==='merge'&&v.q2==='cdc'){p.push('<p>With a CDC feed, I watch for out-of-order events. MERGE does not order them for me.</p>');}
+    out.innerHTML=p.join('');
+  }
+  ids.forEach(function(i){document.getElementById(i).addEventListener('change',render);});
+  render();
+})();
+</script>
+</body>
+</html>
